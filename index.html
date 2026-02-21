@@ -1,335 +1,64 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leonardo AI Video Studio</title>
-    <!-- Tailwind CSS untuk Desain UI -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Animasi loading sederhana */
-        .loading-dots::after {
-            content: '';
-            animation: dots 1.5s steps(4, end) infinite;
-        }
-        @keyframes dots {
-            0%, 20% { content: ''; }
-            40% { content: '.'; }
-            60% { content: '..'; }
-            80%, 100% { content: '...'; }
-        }
-    </style>
-</head>
-<body class="bg-slate-50 text-slate-800 font-sans p-4 md:p-8 pb-20">
+// api/leonardo.js
+export default async function handler(req, res) {
+    // 1. Menangani preflight request CORS (agar browser mengizinkan)
+    if (req.method === 'OPTIONS') {
+        res.status(200).setHeader('Access-Control-Allow-Origin', '*').setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS').setHeader('Access-Control-Allow-Headers', 'Content-Type');
+        return res.end();
+    }
 
-    <div class="max-w-2xl mx-auto space-y-6">
+    // Hanya menerima method POST
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    try {
+        const payload = req.body;
         
-        <!-- HEADER -->
-        <div class="text-center mt-4 mb-8">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
-                🎬 Leonardo Video Studio
-            </h1>
-            <p class="text-slate-500 text-sm md:text-base font-medium">Ubah Gambar Menjadi Video Animasi Sinematik</p>
-        </div>
+        // 2. Ambil API Key dari Environment Variable Vercel (DIREKOMENDASIKAN)
+        // Atau, jika Mas ingin cepat, Mas BISA menaruh API Key langsung di sini (ganti process.env.LEONARDO_API_KEY)
+        const apiKey = process.env.LEONARDO_API_KEY || "TARUH_API_KEY_LEONARDO_MAS_DI_SINI";
 
-        <!-- ⚙️ PENGATURAN API KEY -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="bg-slate-100 px-5 py-3 border-b border-slate-200 flex items-center gap-2">
-                <span class="text-lg">🔑</span>
-                <h2 class="font-bold text-slate-700">Kunci Akses (API Key)</h2>
-            </div>
-            <div class="p-5">
-                <label class="text-xs font-bold text-slate-600 mb-2 block">API Key Leonardo AI Anda <span class="text-red-500">*</span></label>
-                <input type="password" id="leonardoKey" placeholder="Paste API Key Leonardo di sini..." class="w-full p-3 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-400 outline-none bg-white transition-all">
-                <p class="text-[10px] text-slate-400 mt-2">*API Key ini aman dan hanya digunakan langsung dari browser Anda ke server Leonardo.</p>
-            </div>
-        </div>
-
-        <!-- 🎥 VIDEO CREATOR FORM -->
-        <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
-            <div class="bg-blue-50 px-5 py-4 border-b border-blue-100 flex items-center gap-3">
-                <span class="bg-blue-600 text-white w-6 h-6 rounded-full flex justify-center items-center text-xs font-bold shadow-sm">🎥</span>
-                <h2 class="font-bold text-blue-900">Pengaturan Video</h2>
-            </div>
-
-            <div class="p-5 space-y-5">
-                <!-- Resolusi -->
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">Pilih Resolusi Video</label>
-                    <select id="resolusiPilihan" class="w-full p-3 text-sm border border-slate-300 rounded-xl bg-white outline-none focus:ring-2 focus:ring-blue-400 transition-shadow">
-                        <option value="9:16">📱 Format TikTok / Reels (9:16 Vertical)</option>
-                        <option value="16:9">💻 Format YouTube (16:9 Horizontal)</option>
-                    </select>
-                </div>
-
-                <!-- Upload Frame Awal -->
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">Start Frame (Gambar Awal) <span class="text-red-500">*</span></label>
-                    
-                    <!-- Kotak Upload -->
-                    <div id="uploadAreaStart" class="border-2 border-dashed border-slate-300 rounded-xl h-40 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-all group" onclick="document.getElementById('fileStart').click()">
-                        <span class="text-4xl mb-2 group-hover:scale-110 transition-transform">🖼️</span>
-                        <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Klik Untuk Upload Gambar</span>
-                    </div>
-                    <input type="file" id="fileStart" accept="image/*" class="hidden" onchange="previewFile(event, 'previewImgStart', 'uploadAreaStart')">
-                    
-                    <!-- Area Preview Gambar -->
-                    <div id="previewContainerStart" class="hidden relative rounded-xl overflow-hidden border border-slate-200 h-48 group shadow-sm mt-2 sm:w-2/3 mx-auto">
-                        <img id="previewImgStart" class="w-full h-full object-cover">
-                        <button onclick="hapusPreview('previewContainerStart', 'uploadAreaStart', 'fileStart')" class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-sm font-bold uppercase tracking-wider">
-                            ❌ Hapus Gambar
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Prompt Video -->
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">Prompt Gerakan Kamera <span class="text-red-500">*</span></label>
-                    <textarea id="promptVideo" rows="4" placeholder="Contoh: Kamera perlahan mendekat ke objek, pencahayaan sinematik dramatis, kualitas 8k, super detail..." class="w-full p-4 text-sm border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 resize-none transition-shadow bg-white"></textarea>
-                </div>
-
-                <!-- Tombol Action Video -->
-                <button id="btnBuatVideo" onclick="prosesVideo()" class="w-full py-4 rounded-xl font-bold text-white shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-indigo-500/30 hover:scale-[1.02] active:scale-95 transition-all flex justify-center items-center gap-2 mt-2">
-                    🚀 Generate Video Sekarang
-                </button>
-                
-                <!-- Box Status Loading -->
-                <div id="statusVideo" class="hidden text-center text-sm font-bold text-blue-700 p-4 bg-blue-50 border border-blue-100 rounded-xl"></div>
-                
-                <!-- Box Error -->
-                <div id="errorVideo" class="hidden text-center text-sm font-bold text-red-600 p-4 bg-red-50 border border-red-100 rounded-xl"></div>
-
-                <!-- Hasil Video Selesai -->
-                <div id="hasilVideoContainer" class="hidden mt-6 p-5 bg-green-50 border border-green-200 rounded-2xl text-center shadow-sm">
-                    <h3 class="font-bold text-green-700 mb-4 text-lg flex items-center justify-center gap-2">✅ Video Berhasil Dirender!</h3>
-                    <video id="playerVideo" controls autoplay loop class="w-full rounded-xl shadow-lg bg-black aspect-video"></video>
-                    <p class="text-xs text-green-600 mt-4 font-medium bg-white/50 inline-block px-3 py-1 rounded-full border border-green-200">
-                        *Klik tombol opsi (titik tiga) di pojok bawah video untuk mendownload.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- LOGIKA JAVASCRIPT -->
-    <script>
-        // Utilities Fungsi Tampil/Sembunyi Elemen
-        function showEl(id) { document.getElementById(id).classList.remove('hidden'); }
-        function hideEl(id) { document.getElementById(id).classList.add('hidden'); }
-
-        // Fungsi Preview Gambar & Hapus
-        function previewFile(e, imgId, uploadAreaId) {
-            const file = e.target.files[0];
-            if(file) {
-                const url = URL.createObjectURL(file);
-                document.getElementById(imgId).src = url;
-                
-                // Menyembunyikan kotak upload, lalu menampilkan gambar
-                hideEl(uploadAreaId);
-                showEl('previewContainerStart');
-            }
+        if (!apiKey || apiKey === "TARUH_API_KEY_LEONARDO_MAS_DI_SINI") {
+             return res.status(500).json({ error: "API Key Leonardo belum disetting di backend Vercel." });
         }
 
-        function hapusPreview(containerId, uploadAreaId, inputId) {
-            document.getElementById(inputId).value = ''; // Kosongkan input file
-            hideEl(containerId);
-            showEl(uploadAreaId);
-        }
+        let response;
 
-        // ==========================================
-        // FUNGSI UTAMA: LEONARDO AI API
-        // ==========================================
-        
-        // 1. Fungsi Mengunggah Gambar ke Server S3 Leonardo
-        async function uploadGambarKeLeonardo(file, apiKey) {
-            // Tahap 1: Meminta akses/link upload ke Leonardo
-            const initRes = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
+        // 3. Menentukan tujuan API Leonardo berdasarkan parameter 'action' dari frontend
+        if (payload.action === 'init-image') {
+            response = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
                 method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${apiKey}`, 
-                    'Content-Type': 'application/json' 
-                },
-                body: JSON.stringify({ extension: file.name.split('.').pop() })
+                headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ extension: payload.extension })
             });
-            
-            const initData = await initRes.json();
-            
-            if(!initRes.ok || !initData.uploadInitImage) {
-                throw new Error("API Key tidak valid atau batas kuota upload habis.");
-            }
-            
-            // Tahap 2: Proses Upload file fisik ke link S3 yang diberikan
-            const fd = new FormData();
-            const fields = JSON.parse(initData.uploadInitImage.fields);
-            
-            for (let key in fields) {
-                fd.append(key, fields[key]);
-            }
-            fd.append('file', file);
-            
-            const uploadToS3 = await fetch(initData.uploadInitImage.url, { 
-                method: 'POST', 
-                body: fd 
+        } 
+        else if (payload.action === 'render-video') {
+            response = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations-motion-svd', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload.data)
             });
-            
-            if(!uploadToS3.ok) {
-                throw new Error("Gagal mengupload gambar fisik ke server.");
-            }
-
-            // Mengembalikan ID gambar yang berhasil diupload
-            return initData.uploadInitImage.id; 
+        }
+        else if (payload.action === 'check-status') {
+             response = await fetch(`https://cloud.leonardo.ai/api/rest/v1/generations/${payload.generationId}`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${apiKey}`, 'Accept': 'application/json' }
+            });
+        }
+        else {
+            return res.status(400).json({ error: 'Action tidak dikenal' });
         }
 
-        // 2. Fungsi Eksekusi Utama saat Tombol Ditekan
-        async function prosesVideo() {
-            const apiKey = document.getElementById('leonardoKey').value.trim();
-            const fileStart = document.getElementById('fileStart').files[0];
-            const prompt = document.getElementById('promptVideo').value.trim();
-            const resolusi = document.getElementById('resolusiPilihan').value;
-            
-            const btn = document.getElementById('btnBuatVideo');
-            const statusBox = document.getElementById('statusVideo');
-            const errorBox = document.getElementById('errorVideo');
+        // 4. Mengembalikan respon dari Leonardo ke frontend
+        const data = await response.json();
+        
+        // Tambahkan header CORS pada respon sukses
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.status(response.status).json(data);
 
-            // Reset UI State
-            hideEl('statusVideo');
-            hideEl('errorVideo');
-            hideEl('hasilVideoContainer');
-
-            // Validasi Input
-            if(!apiKey) { 
-                errorBox.innerText = "❌ Anda belum memasukkan API Key Leonardo AI."; 
-                showEl('errorVideo'); 
-                return; 
-            }
-            if(!fileStart) { 
-                errorBox.innerText = "❌ Start Frame (Gambar) wajib diupload!"; 
-                showEl('errorVideo'); 
-                return; 
-            }
-            if(!prompt) { 
-                errorBox.innerText = "❌ Prompt Video wajib diisi!"; 
-                showEl('errorVideo'); 
-                return; 
-            }
-
-            // Mematikan tombol agar tidak terjadi klik berulang
-            btn.disabled = true;
-            btn.classList.add('opacity-70', 'cursor-not-allowed');
-
-            try {
-                // TAHAP A: Upload Start Frame
-                statusBox.innerHTML = '<span class="loading-dots">1/3: Mengunggah Gambar ke Server AI</span>';
-                showEl('statusVideo');
-                
-                const startImageId = await uploadGambarKeLeonardo(fileStart, apiKey);
-
-                // TAHAP B: Minta Render Video (Motion SVD)
-                statusBox.innerHTML = '<span class="loading-dots">2/3: Mengirim Instruksi & Memulai Render</span>';
-                
-                // Menambahkan instruksi resolusi ke dalam prompt secara otomatis
-                const teksResolusi = (resolusi === '9:16') ? 'Vertical 9:16 aspect ratio' : 'Horizontal 16:9 aspect ratio';
-                const finalPrompt = `${prompt}. ${teksResolusi}`;
-                
-                const payloadVideo = { 
-                    imageId: startImageId, 
-                    prompt: finalPrompt, 
-                    isPublic: false 
-                };
-
-                const renderRes = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations-motion-svd', {
-                    method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${apiKey}`, 
-                        'Content-Type': 'application/json' 
-                    },
-                    body: JSON.stringify(payloadVideo)
-                });
-                
-                const renderData = await renderRes.json();
-                
-                if(!renderRes.ok || !renderData.motionSvdGenerationJob) {
-                    throw new Error(renderData.error || "Gagal memulai render. Pastikan koin/kredit Leonardo Anda mencukupi.");
-                }
-
-                // TAHAP C: Polling / Pengecekan Berulang
-                statusBox.innerHTML = '<span class="loading-dots">3/3: Video sedang dirender AI (Bisa memakan waktu 1-3 Menit)</span>';
-                
-                const generationId = renderData.motionSvdGenerationJob.generationId;
-                cekStatusVideo(generationId, apiKey);
-
-            } catch(error) {
-                // Tampilkan Error
-                errorBox.innerText = "❌ Kesalahan: " + error.message;
-                showEl('errorVideo');
-                hideEl('statusVideo');
-                
-                // Kembalikan tombol ke fungsi normal
-                btn.disabled = false;
-                btn.classList.remove('opacity-70', 'cursor-not-allowed');
-            }
-        }
-
-        // 3. Fungsi Cek Status Render Setiap 6 Detik
-        function cekStatusVideo(generationId, apiKey) {
-            const timerPolling = setInterval(async () => {
-                try {
-                    const res = await fetch(`https://cloud.leonardo.ai/api/rest/v1/generations/${generationId}`, {
-                        method: 'GET',
-                        headers: { 
-                            'Authorization': `Bearer ${apiKey}`, 
-                            'Accept': 'application/json' 
-                        }
-                    });
-                    
-                    const data = await res.json();
-                    
-                    if (data && data.generations_by_pk) {
-                        const statusVal = data.generations_by_pk.status;
-
-                        if (statusVal === "COMPLETE") {
-                            // Jika Video Selesai Dirender
-                            clearInterval(timerPolling);
-                            
-                            // Ambil URL Video (.mp4)
-                            const videoUrl = data.generations_by_pk.generated_images[0].motionMP4URL;
-                            
-                            // Tampilkan Video di Player
-                            document.getElementById('playerVideo').src = videoUrl;
-                            hideEl('statusVideo');
-                            showEl('hasilVideoContainer');
-                            
-                            // Aktifkan tombol kembali
-                            const btn = document.getElementById('btnBuatVideo');
-                            btn.disabled = false;
-                            btn.classList.remove('opacity-70', 'cursor-not-allowed');
-                            
-                            // Scroll otomatis ke hasil video
-                            document.getElementById('hasilVideoContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-                        } else if (statusVal === "FAILED") {
-                            // Jika Server Leonardo Gagal (Contoh: Gambar diblokir karena NSFW, atau error internal AI)
-                            clearInterval(timerPolling);
-                            throw new Error("Proses render digagalkan oleh server Leonardo. Silakan coba gunakan gambar atau prompt lain.");
-                        }
-                    }
-                } catch(error) {
-                    // Menangkap error saat polling (khususnya jika status FAILED)
-                    if(error.message.includes("digagalkan")) {
-                        clearInterval(timerPolling);
-                        document.getElementById('errorVideo').innerText = "❌ " + error.message;
-                        showEl('errorVideo');
-                        hideEl('statusVideo');
-                        
-                        const btn = document.getElementById('btnBuatVideo');
-                        btn.disabled = false;
-                        btn.classList.remove('opacity-70', 'cursor-not-allowed');
-                    }
-                    // Jika error jaringan (internet putus sesaat), biarkan timer terus berjalan
-                }
-            }, 6000); // 6000 milidetik = Cek setiap 6 detik
-        }
-    </script>
-</body>
-</html>
+    } catch (error) {
+        console.error("Backend Error:", error);
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.status(500).json({ error: error.message || 'Terjadi kesalahan pada server Vercel.' });
+    }
+}
