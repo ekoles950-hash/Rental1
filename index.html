@@ -1,465 +1,505 @@
-import React, { useState, useRef } from 'react';
-import { 
-  Upload, X, Copy, Check, Sparkles, Loader2, Zap, Clapperboard, 
-  Mic, Video, AlertTriangle, Layers, User, UserCheck, 
-  Settings, Key, Smartphone, MonitorPlay, Film, Image as ImageIcon
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UGC Master & Video AI</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Animasi titik-titik saat loading */
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+        /* Custom scrollbar untuk hasil script */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans p-4 md:p-8 pb-24">
 
-export default function App() {
-  // --- STATE API KEYS ---
-  const [geminiKey, setGeminiKey] = useState('');
-  const [leonardoKey, setLeonardoKey] = useState('');
-
-  // --- STATE GEMINI SCRIPT ---
-  const [image, setImage] = useState(null);
-  const [imageBase64, setImageBase64] = useState(null);
-  const [instruction, setInstruction] = useState('');
-  const [scenes, setScenes] = useState([]);
-  const [loadingScript, setLoadingScript] = useState(false);
-  const [errorScript, setErrorScript] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [voiceGender, setVoiceGender] = useState('woman'); 
-  const fileInputRef = useRef(null);
-
-  // --- STATE LEONARDO VIDEO ---
-  const [startFrame, setStartFrame] = useState(null);
-  const [startFrameUrl, setStartFrameUrl] = useState(null);
-  const [endFrame, setEndFrame] = useState(null);
-  const [endFrameUrl, setEndFrameUrl] = useState(null);
-  const [aspectRatio, setAspectRatio] = useState('9:16'); // '9:16' atau '16:9'
-  const [videoPrompt, setVideoPrompt] = useState('');
-  const [loadingVideo, setLoadingVideo] = useState(false);
-  const [videoStatus, setVideoStatus] = useState('');
-  const [errorVideo, setErrorVideo] = useState('');
-  const [videoResult, setVideoResult] = useState(null);
-  
-  const startFrameRef = useRef(null);
-  const endFrameRef = useRef(null);
-
-  // --- FUNGSI BANTUAN GEMINI SCRIPT ---
-  const technicalPrompt = "Negatif no blur no watermark. Diam di tempat. Fokus tajam. NEGATIF REVIEW: Dilarang keras membalik, memutar sembarangan, atau menunjukan bagian bawah/belakang. Produk harus konsisten.";
-
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const base64String = reader.result.split(',')[1];
-        const mimeType = reader.result.split(';')[0].split(':')[1];
-        resolve({ base64: base64String, mimeType });
-      };
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setImage(imageUrl);
-      fileToBase64(file).then((data) => setImageBase64(data)).catch(() => setErrorScript("Gagal membaca gambar."));
-      setErrorScript('');
-      setScenes([]);
-    }
-  };
-
-  const parseAIResponse = (text) => {
-    try {
-      let cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      const start = cleanText.indexOf('[');
-      const end = cleanText.lastIndexOf(']');
-      if (start !== -1 && end !== -1) {
-        return JSON.parse(cleanText.substring(start, end + 1));
-      }
-      throw new Error("Format JSON tidak ditemukan");
-    } catch (e) {
-      return [{ scene: "HASIL RAW", visual: "Format tidak standar.", audio: text.substring(0, 300) + "..." }];
-    }
-  };
-
-  const handleGenerateScript = async () => {
-    if (!geminiKey) return setErrorScript("Mohon isi API Key Gemini di bagian Pengaturan.");
-    if (!imageBase64) return setErrorScript("Mohon unggah gambar produk terlebih dahulu.");
-
-    setLoadingScript(true);
-    setErrorScript('');
-    setScenes([]);
-    setCopied(false);
-
-    try {
-      const systemPrompt = `
-        Anda adalah UGC Creator Expert.
-        TUGAS: Analisis gambar produk, lalu buat SKENARIO VIDEO UGC (3 SCENE).
-        TARGET TALENT: ${voiceGender === 'man' ? 'Pria' : 'Wanita (Gaya Nenek/Ibu yang hangat)'}.
+    <div class="max-w-3xl mx-auto space-y-6">
         
-        STRUKTUR SCENE:
-        1. SCENE 1 (HOOK): Visual: Talent duduk menghadap kamera. Frame awal KOSONG. Talent menoleh sedikit, ambil produk dari luar frame. Prompt Wajib: "The product must remain identical in shape, color, texture." Audio: Kalimat pembuka hangat (Max 146 huruf).
-        2. SCENE 2 (REVIEW): Visual: Kamera fokus produk. Jempol menekan/meraba. JANGAN DIPUTAR. Audio: Jelaskan detail.
-        3. SCENE 3 (CTA): Visual: Talent tunjuk ke bawah (keranjang). Audio: Ajakan checkout.
-
-        Output hanya JSON Array persis seperti ini:
-        [
-          { "scene": "1. HOOK (Opening Shot)", "visual": "...", "audio": "..." },
-          { "scene": "2. REVIEW (Detail)", "visual": "...", "audio": "..." },
-          { "scene": "3. CTA (Closing)", "visual": "...", "audio": "..." }
-        ]
-        Instruksi user: ${instruction}
-      `;
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: systemPrompt }, { inlineData: { mimeType: imageBase64.mimeType, data: imageBase64.base64 } }] }],
-            generationConfig: { responseMimeType: "application/json" }
-          })
-        }
-      );
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error?.message || "Gagal menghubungi server Gemini AI.");
-      
-      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (rawText) setScenes(parseAIResponse(rawText));
-      else throw new Error("AI tidak memberikan respon.");
-
-    } catch (err) {
-      setErrorScript(err.message || "Gagal memproses script. Coba lagi.");
-    } finally {
-      setLoadingScript(false);
-    }
-  };
-
-  const handleCopyScript = () => {
-    if (scenes.length > 0) {
-      let fullText = `[Konsep UGC]\n[Teknis: ${technicalPrompt}]\n\n`;
-      scenes.forEach((s) => {
-        fullText += `--- ${s.scene} ---\nVISUAL: ${s.visual}\nNARASI: "${s.audio}"\n\n`;
-      });
-      navigator.clipboard.writeText(fullText).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
-    }
-  };
-
-  // --- FUNGSI BANTUAN LEONARDO VIDEO ---
-  const handleStartFrame = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setStartFrame(file);
-      setStartFrameUrl(URL.createObjectURL(file));
-    }
-  };
-
-  const handleEndFrame = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setEndFrame(file);
-      setEndFrameUrl(URL.createObjectURL(file));
-    }
-  };
-
-  const uploadToLeonardo = async (file, apiKey) => {
-    const initRes = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ extension: file.name.split('.').pop() })
-    });
-    const initData = await initRes.json();
-    if (!initData.uploadInitImage) throw new Error("API Key Leonardo tidak valid atau error server.");
-    
-    const uploadInfo = initData.uploadInitImage;
-    const fields = JSON.parse(uploadInfo.fields);
-    const formData = new FormData();
-    for (const key in fields) formData.append(key, fields[key]);
-    formData.append('file', file);
-
-    await fetch(uploadInfo.url, { method: 'POST', body: formData });
-    return uploadInfo.id; 
-  };
-
-  const checkVideoStatus = async (generationId, apiKey) => {
-    const url = `https://cloud.leonardo.ai/api/rest/v1/generations/${generationId}`;
-    const timer = setInterval(async () => {
-      try {
-        const res = await fetch(url, {
-          method: 'GET',
-          headers: { 'Authorization': `Bearer ${apiKey}`, 'Accept': 'application/json' }
-        });
-        const data = await res.json();
-        const status = data.generations_by_pk?.status;
-
-        if (status === "COMPLETE") {
-          clearInterval(timer);
-          setVideoResult(data.generations_by_pk.generated_images[0].motionMP4URL);
-          setLoadingVideo(false);
-          setVideoStatus("");
-        } else if (status === "FAILED") {
-          clearInterval(timer);
-          throw new Error("Gagal merender video di server Leonardo.");
-        }
-      } catch (e) {
-        if(e.message === "Gagal merender video di server Leonardo.") {
-            setErrorVideo(e.message);
-            setLoadingVideo(false);
-            setVideoStatus("");
-        }
-      }
-    }, 5000);
-  };
-
-  const handleGenerateVideo = async () => {
-    if (!leonardoKey) return setErrorVideo("API Key Leonardo wajib diisi di Pengaturan!");
-    if (!startFrame) return setErrorVideo("Start Frame wajib diupload!");
-    if (!videoPrompt) return setErrorVideo("Prompt video wajib diisi!");
-
-    setLoadingVideo(true);
-    setVideoResult(null);
-    setErrorVideo('');
-    
-    try {
-      setVideoStatus("⏳ Mengunggah Start Frame ke Leonardo...");
-      const startId = await uploadToLeonardo(startFrame, leonardoKey);
-
-      let endId = null;
-      if (endFrame) {
-        setVideoStatus("⏳ Mengunggah End Frame...");
-        endId = await uploadToLeonardo(endFrame, leonardoKey);
-      }
-
-      setVideoStatus("🔄 Mengirim prompt & memulai render...");
-      // Menambahkan panduan resolusi ke dalam prompt
-      const finalPrompt = `${videoPrompt} [Format Requirements: Aspect Ratio ${aspectRatio === '9:16' ? 'Vertical 9:16 for TikTok/Reels' : 'Horizontal 16:9 for YouTube'}]`;
-
-      const payload = {
-        imageId: startId,
-        prompt: finalPrompt,
-        isPublic: false
-      };
-
-      const renderRes = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations-motion-svd', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${leonardoKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      
-      const renderData = await renderRes.json();
-      if (!renderData.motionSvdGenerationJob) throw new Error(renderData.error || "Gagal memulai render video.");
-      
-      const genId = renderData.motionSvdGenerationJob.generationId;
-      setVideoStatus("🎥 Video sedang diproses AI. Ini memakan waktu 1-3 menit...");
-      checkVideoStatus(genId, leonardoKey);
-
-    } catch (err) {
-      setErrorVideo(err.message || "Terjadi kesalahan saat memproses video.");
-      setLoadingVideo(false);
-      setVideoStatus("");
-    }
-  };
-
-
-  return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center py-8 px-4 font-sans text-slate-800 pb-20">
-      
-      {/* HEADER */}
-      <div className="w-full max-w-2xl mb-8 text-center">
-        <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-rose-600 mb-2 flex items-center justify-center gap-2">
-          <Clapperboard className="w-8 h-8 text-red-600 fill-current" />
-          UGC Master & Video AI
-        </h1>
-        <p className="text-slate-500 text-sm font-medium">
-          All-in-One: Script Generator (Gemini) & Video Creator (Leonardo)
-        </p>
-      </div>
-
-      <div className="w-full max-w-2xl space-y-6">
-
-        {/* ⚙️ PENGATURAN API KEY */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="bg-slate-100 px-6 py-3 border-b border-slate-200 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-slate-600" />
-            <h2 className="font-bold text-slate-700">Pengaturan API Key</h2>
-          </div>
-          <div className="p-6 grid sm:grid-cols-2 gap-4 bg-slate-50/50">
-            <div>
-              <label className="text-xs font-bold text-slate-600 mb-1 flex items-center gap-1"><Key className="w-3 h-3"/> API Key Gemini (Untuk Script)</label>
-              <input type="password" value={geminiKey} onChange={e => setGeminiKey(e.target.value)} placeholder="AIzaSy..." className="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-slate-600 mb-1 flex items-center gap-1"><Key className="w-3 h-3"/> API Key Leonardo (Untuk Video)</label>
-              <input type="password" value={leonardoKey} onChange={e => setLeonardoKey(e.target.value)} placeholder="Lakukan topup di Leonardo..." className="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-400 outline-none" />
-            </div>
-          </div>
+        <!-- HEADER -->
+        <div class="text-center mt-2 mb-8">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-rose-600 mb-2">
+                🎬 UGC Master & Video AI
+            </h1>
+            <p class="text-slate-500 text-sm md:text-base font-medium">Script Generator (Gemini) & Video Creator (Leonardo)</p>
         </div>
 
-        {/* 📝 STEP 1: SCRIPT CREATOR */}
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-rose-50 to-pink-50 px-6 py-4 border-b border-rose-100 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="bg-rose-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">1</span>
-              <h2 className="font-bold text-rose-800">Buat Script UGC (Gemini)</h2>
+        <!-- ⚙️ PENGATURAN API KEY -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="bg-slate-100 px-5 py-3 border-b border-slate-200 flex items-center gap-2">
+                <span class="text-lg">⚙️</span>
+                <h2 class="font-bold text-slate-700">Pengaturan API Key</h2>
             </div>
-          </div>
-
-          <div className="p-6 border-b border-slate-100">
-            <label className="block text-sm font-bold text-slate-700 mb-3">Foto Bahan (Produk)</label>
-            {!image ? (
-              <div onClick={() => fileInputRef.current.click()} className="border-2 border-dashed border-slate-300 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-rose-50 hover:border-rose-400 transition-all">
-                <Upload className="w-6 h-6 text-rose-500 mb-2" />
-                <p className="text-sm text-slate-500 font-medium">Upload foto produk</p>
-              </div>
-            ) : (
-              <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-100 w-full sm:w-1/2">
-                <img src={image} alt="Preview" className="w-full h-48 object-cover" />
-                <button onClick={() => setImage(null)} className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full shadow-sm hover:bg-red-50 text-red-600"><X className="w-4 h-4" /></button>
-              </div>
-            )}
-            <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
-          </div>
-
-          <div className="p-6 bg-slate-50/50 space-y-4">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Talent UGC</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={() => setVoiceGender('woman')} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold border transition-all ${voiceGender === 'woman' ? 'bg-pink-100 border-pink-400 text-pink-700' : 'bg-white border-slate-200 text-slate-500'}`}><UserCheck className="w-4 h-4" /> Wanita</button>
-                <button onClick={() => setVoiceGender('man')} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold border transition-all ${voiceGender === 'man' ? 'bg-blue-100 border-blue-400 text-blue-700' : 'bg-white border-slate-200 text-slate-500'}`}><User className="w-4 h-4" /> Pria</button>
-              </div>
+            <div class="p-5 grid sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-bold text-slate-600 mb-1 block">🔑 API Key Gemini (Untuk Script)</label>
+                    <input type="password" id="geminiKey" placeholder="Paste API Key Gemini di sini..." class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none bg-slate-50 transition-all">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600 mb-1 block">🔑 API Key Leonardo (Untuk Video)</label>
+                    <input type="password" id="leonardoKey" placeholder="Paste API Key Leonardo di sini..." class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-400 outline-none bg-slate-50 transition-all">
+                </div>
             </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Info Tambahan (Opsional)</label>
-              <div className="relative">
-                <input type="text" value={instruction} onChange={(e) => setInstruction(e.target.value)} placeholder="Contoh: Fokus ke sol yang empuk..." className="w-full p-3 pr-10 text-sm border border-slate-200 rounded-lg outline-none" />
-                <Sparkles className="absolute right-3 top-3 w-4 h-4 text-rose-400 opacity-50" />
-              </div>
-            </div>
-
-            {errorScript && <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {errorScript}</div>}
-            
-            <button onClick={handleGenerateScript} disabled={loadingScript || !image} className={`w-full py-3.5 rounded-xl font-bold text-white shadow-md transition-all flex items-center justify-center gap-2 ${loadingScript || !image ? 'bg-slate-300 cursor-not-allowed' : 'bg-gradient-to-r from-red-600 to-rose-600 hover:shadow-rose-500/30'}`}>
-              {loadingScript ? <><Loader2 className="w-5 h-5 animate-spin" /> Menganalisis...</> : <><Zap className="w-5 h-5" /> Buat Skenario Script</>}
-            </button>
-          </div>
-
-          {/* SCRIPT RESULT */}
-          {scenes.length > 0 && (
-            <div className="p-6 bg-gray-900 text-white relative border-t border-slate-200">
-              <div className="absolute top-0 left-6 -translate-y-1/2 bg-rose-500 text-[10px] font-black px-2 py-1 rounded uppercase flex items-center gap-1"><Layers className="w-3 h-3" /> Hasil Script</div>
-              <div className="space-y-4 mt-2 mb-4">
-                {scenes.map((scene, idx) => (
-                  <div key={idx} className="bg-gray-800/50 rounded-lg p-3 border-l-2 border-rose-500">
-                    <span className="text-[10px] font-bold bg-rose-900/50 text-rose-300 px-2 py-0.5 rounded mb-2 inline-block">{scene.scene}</span>
-                    <div className="mb-2"><p className="text-xs text-gray-300"><span className="text-blue-400 font-bold">VISUAL:</span> {scene.visual}</p></div>
-                    <div><p className="text-sm font-medium text-white italic"><span className="text-green-400 font-bold text-xs not-italic">NARASI:</span> "{scene.audio}"</p></div>
-                  </div>
-                ))}
-              </div>
-              <button onClick={handleCopyScript} className={`w-full flex justify-center items-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${copied ? 'bg-green-500 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'}`}>
-                {copied ? <><Check className="w-4 h-4" /> Tersalin!</> : <><Copy className="w-4 h-4" /> Salin Lengkap</>}
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* 🎥 STEP 2: VIDEO CREATOR */}
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-100 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">2</span>
-              <h2 className="font-bold text-blue-900">Render Video (Leonardo AI)</h2>
+        <!-- 📝 STEP 1: SCRIPT CREATOR -->
+        <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+            <div class="bg-red-50 px-5 py-4 border-b border-red-100 flex items-center gap-3">
+                <span class="bg-red-600 text-white w-6 h-6 rounded-full flex justify-center items-center text-xs font-bold shadow-sm">1</span>
+                <h2 class="font-bold text-red-800">Buat Script UGC (Gemini AI)</h2>
             </div>
-          </div>
 
-          <div className="p-6 space-y-5">
-            {/* Resolusi / Aspect Ratio */}
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Resolusi / Orientasi Video</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={() => setAspectRatio('9:16')} className={`flex flex-col items-center justify-center gap-1 py-3 rounded-xl border transition-all ${aspectRatio === '9:16' ? 'bg-blue-50 border-blue-400 text-blue-700 shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
-                  <Smartphone className="w-5 h-5" />
-                  <span className="text-xs font-bold">TikTok / Reels (9:16)</span>
+            <div class="p-5 space-y-5">
+                <!-- Upload Foto -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Foto Produk (Wajib)</label>
+                    <div id="uploadAreaProduk" class="border-2 border-dashed border-slate-300 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-red-50 hover:border-red-300 transition-all" onclick="document.getElementById('fileProduk').click()">
+                        <span class="text-3xl mb-2">📸</span>
+                        <p class="text-sm text-slate-500 font-medium">Klik untuk upload foto produk</p>
+                    </div>
+                    <input type="file" id="fileProduk" accept="image/*" class="hidden" onchange="previewFile(event, 'previewImgProduk', 'uploadAreaProduk')">
+                    
+                    <!-- Preview Foto -->
+                    <div id="previewContainerProduk" class="hidden relative rounded-xl overflow-hidden border border-slate-200 mt-2 sm:w-1/2 group">
+                        <img id="previewImgProduk" class="w-full h-48 object-cover">
+                        <button onclick="hapusPreview('previewContainerProduk', 'uploadAreaProduk', 'fileProduk')" class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-sm font-bold">
+                            ❌ Hapus Foto
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pilihan Talent & Info -->
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Talent UGC</label>
+                        <select id="talentPilihan" class="w-full p-3 text-sm border border-slate-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-red-400">
+                            <option value="woman">👩 Wanita (Ceria/Keibuan)</option>
+                            <option value="man">👨 Pria (Tegas/Maskulin)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Info Tambahan (Opsional)</label>
+                        <input type="text" id="infoProduk" placeholder="Contoh: Fokus ke sol empuk, anti licin..." class="w-full p-3 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-red-400">
+                    </div>
+                </div>
+
+                <!-- Tombol Action Script -->
+                <button id="btnBuatScript" onclick="prosesScript()" class="w-full py-3.5 rounded-xl font-bold text-white shadow-md bg-gradient-to-r from-red-600 to-rose-600 hover:opacity-90 transition-opacity flex justify-center items-center gap-2">
+                    ⚡ Generate Skenario Script
                 </button>
-                <button onClick={() => setAspectRatio('16:9')} className={`flex flex-col items-center justify-center gap-1 py-3 rounded-xl border transition-all ${aspectRatio === '16:9' ? 'bg-red-50 border-red-400 text-red-700 shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
-                  <MonitorPlay className="w-5 h-5" />
-                  <span className="text-xs font-bold">YouTube (16:9)</span>
-                </button>
-              </div>
+                <div id="statusScript" class="hidden text-center text-sm font-bold text-red-600 p-3 bg-red-50 rounded-lg border border-red-100"></div>
             </div>
 
-            {/* Frame Uploads */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Start Frame */}
-              <div>
-                 <label className="block text-xs font-bold text-slate-700 mb-2">Start Frame (Awal) <span className="text-red-500">*</span></label>
-                 {!startFrameUrl ? (
-                    <div onClick={() => startFrameRef.current.click()} className="border-2 border-dashed border-slate-300 rounded-lg h-28 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50">
-                      <ImageIcon className="w-5 h-5 text-slate-400 mb-1" />
-                      <span className="text-[10px] text-slate-500">Upload Start</span>
-                    </div>
-                 ) : (
-                    <div className="relative rounded-lg overflow-hidden border border-slate-200 h-28 group">
-                      <img src={startFrameUrl} className="w-full h-full object-cover" />
-                      <button onClick={() => {setStartFrame(null); setStartFrameUrl(null)}} className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold"><X className="w-4 h-4 mr-1"/> Hapus</button>
-                    </div>
-                 )}
-                 <input type="file" ref={startFrameRef} onChange={handleStartFrame} accept="image/*" className="hidden" />
-              </div>
-
-              {/* End Frame */}
-              <div>
-                 <label className="block text-xs font-bold text-slate-700 mb-2">End Frame (Akhir) <span className="text-slate-400 font-normal">Opsional</span></label>
-                 {!endFrameUrl ? (
-                    <div onClick={() => endFrameRef.current.click()} className="border-2 border-dashed border-slate-300 rounded-lg h-28 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50">
-                      <ImageIcon className="w-5 h-5 text-slate-400 mb-1" />
-                      <span className="text-[10px] text-slate-500">Upload End</span>
-                    </div>
-                 ) : (
-                    <div className="relative rounded-lg overflow-hidden border border-slate-200 h-28 group">
-                      <img src={endFrameUrl} className="w-full h-full object-cover" />
-                      <button onClick={() => {setEndFrame(null); setEndFrameUrl(null)}} className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold"><X className="w-4 h-4 mr-1"/> Hapus</button>
-                    </div>
-                 )}
-                 <input type="file" ref={endFrameRef} onChange={handleEndFrame} accept="image/*" className="hidden" />
-              </div>
+            <!-- Hasil Script -->
+            <div id="hasilScriptContainer" class="hidden bg-slate-900 p-5 border-t">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="bg-rose-500 text-white text-[10px] font-black px-2 py-1 rounded uppercase shadow-sm">📚 Hasil Script AI</span>
+                    <button onclick="salinSemuaScript()" class="text-xs bg-white text-slate-900 font-bold px-3 py-1.5 rounded hover:bg-slate-200 transition-colors">📋 Salin Teks</button>
+                </div>
+                <div id="wadahSceneScript" class="space-y-4 max-h-[400px] overflow-y-auto custom-scroll pr-2">
+                    <!-- Scene diload lewat JS -->
+                </div>
             </div>
-
-            {/* Prompt Input */}
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Prompt Animasi Video <span className="text-red-500">*</span></label>
-              <textarea 
-                rows="3" 
-                value={videoPrompt}
-                onChange={(e) => setVideoPrompt(e.target.value)}
-                placeholder="Paste panduan VISUAL dari hasil script di atas ke sini..." 
-                className="w-full p-3 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 outline-none resize-none"
-              ></textarea>
-            </div>
-
-            {/* Error / Status Messages */}
-            {errorVideo && <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {errorVideo}</div>}
-            {videoStatus && <div className="p-3 bg-blue-50 border border-blue-100 text-blue-700 text-sm font-medium rounded-lg text-center">{videoStatus}</div>}
-
-            {/* Generate Button */}
-            <button onClick={handleGenerateVideo} disabled={loadingVideo} className={`w-full py-3.5 rounded-xl font-bold text-white shadow-md transition-all flex items-center justify-center gap-2 ${loadingVideo ? 'bg-slate-300 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-indigo-500/30'}`}>
-              {loadingVideo ? <><Loader2 className="w-5 h-5 animate-spin" /> Merender Video...</> : <><Film className="w-5 h-5" /> Generate Video (Leonardo)</>}
-            </button>
-
-            {/* Video Result */}
-            {videoResult && (
-              <div className="mt-6 p-4 bg-green-50 border-2 border-green-400 rounded-xl text-center">
-                 <h3 className="font-bold text-green-700 mb-3 flex items-center justify-center gap-2"><Check className="w-5 h-5"/> Video Selesai!</h3>
-                 <video controls autoPlay loop className="w-full rounded-lg shadow-lg bg-black">
-                    <source src={videoResult} type="video/mp4" />
-                 </video>
-              </div>
-            )}
-
-          </div>
         </div>
 
-      </div>
+        <!-- 🎥 STEP 2: VIDEO CREATOR -->
+        <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden mt-6">
+            <div class="bg-blue-50 px-5 py-4 border-b border-blue-100 flex items-center gap-3">
+                <span class="bg-blue-600 text-white w-6 h-6 rounded-full flex justify-center items-center text-xs font-bold shadow-sm">2</span>
+                <h2 class="font-bold text-blue-900">Render Video (Leonardo AI)</h2>
+            </div>
+
+            <div class="p-5 space-y-5">
+                <!-- Resolusi -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Resolusi Video</label>
+                    <select id="resolusiPilihan" class="w-full p-3 text-sm border border-slate-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-400">
+                        <option value="9:16">📱 TikTok / Reels (9:16 Vertical)</option>
+                        <option value="16:9">💻 YouTube (16:9 Horizontal)</option>
+                    </select>
+                </div>
+
+                <!-- Upload Frame -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-2">Start Frame (Awal) *</label>
+                        <div id="uploadAreaStart" class="border-2 border-dashed border-slate-300 rounded-xl h-28 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all" onclick="document.getElementById('fileStart').click()">
+                            <span class="text-2xl mb-1">🖼️</span>
+                            <span class="text-[10px] text-slate-500 font-bold">Upload Start</span>
+                        </div>
+                        <input type="file" id="fileStart" accept="image/*" class="hidden" onchange="previewFile(event, 'previewImgStart', 'uploadAreaStart')">
+                        
+                        <div id="previewContainerStart" class="hidden relative rounded-xl overflow-hidden border border-slate-200 h-28 group">
+                            <img id="previewImgStart" class="w-full h-full object-cover">
+                            <button onclick="hapusPreview('previewContainerStart', 'uploadAreaStart', 'fileStart')" class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold">❌ Hapus</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-2">End Frame (Akhir) <span class="font-normal text-slate-400">(Opsional)</span></label>
+                        <div id="uploadAreaEnd" class="border-2 border-dashed border-slate-300 rounded-xl h-28 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all" onclick="document.getElementById('fileEnd').click()">
+                            <span class="text-2xl mb-1">🖼️</span>
+                            <span class="text-[10px] text-slate-500 font-bold">Upload End</span>
+                        </div>
+                        <input type="file" id="fileEnd" accept="image/*" class="hidden" onchange="previewFile(event, 'previewImgEnd', 'uploadAreaEnd')">
+                        
+                        <div id="previewContainerEnd" class="hidden relative rounded-xl overflow-hidden border border-slate-200 h-28 group">
+                            <img id="previewImgEnd" class="w-full h-full object-cover">
+                            <button onclick="hapusPreview('previewContainerEnd', 'uploadAreaEnd', 'fileEnd')" class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold">❌ Hapus</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prompt Video -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Prompt Animasi Video *</label>
+                    <textarea id="promptVideo" rows="4" placeholder="Paste panduan VISUAL dari Step 1 ke sini... (Atau ketik instruksi gerakan kamera)" class="w-full p-3 text-sm border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 resize-none"></textarea>
+                </div>
+
+                <!-- Tombol Action Video -->
+                <button id="btnBuatVideo" onclick="prosesVideo()" class="w-full py-3.5 rounded-xl font-bold text-white shadow-md bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90 transition-opacity flex justify-center items-center gap-2">
+                    🎥 Generate Video (Leonardo)
+                </button>
+                <div id="statusVideo" class="hidden text-center text-sm font-bold text-blue-700 p-3 bg-blue-50 border border-blue-100 rounded-lg"></div>
+
+                <!-- Hasil Video Selesai -->
+                <div id="hasilVideoContainer" class="hidden mt-6 p-4 bg-green-50 border border-green-200 rounded-xl text-center shadow-sm">
+                    <h3 class="font-bold text-green-700 mb-3 text-lg flex items-center justify-center gap-2">✅ Video Berhasil Dibuat!</h3>
+                    <video id="playerVideo" controls autoplay loop class="w-full rounded-lg shadow-lg bg-black"></video>
+                </div>
+            </div>
+        </div>
+
     </div>
-  );
-}
+
+    <!-- LOGIKA JAVASCRIPT -->
+    <script>
+        // Key bawaan environment (jika ada di dalam sistem preview)
+        const envApiKey = ""; 
+
+        // Variabel Global
+        let base64ImgProduk = null;
+        let mimeImgProduk = null;
+        let dataScriptRaw = [];
+
+        // Utilities
+        function showEl(id) { document.getElementById(id).classList.remove('hidden'); }
+        function hideEl(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // Preview & Hapus Gambar Umum
+        function previewFile(e, imgId, uploadAreaId) {
+            const file = e.target.files[0];
+            if(file) {
+                const url = URL.createObjectURL(file);
+                document.getElementById(imgId).src = url;
+                
+                // Sembunyikan area upload, tampilkan preview
+                if(uploadAreaId === 'uploadAreaProduk') {
+                    hideEl('uploadAreaProduk');
+                    showEl('previewContainerProduk');
+                    
+                    // Convert ke Base64 untuk produk (Gemini)
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        base64ImgProduk = reader.result.split(',')[1];
+                        mimeImgProduk = reader.result.split(';')[0].split(':')[1];
+                    };
+                    reader.readAsDataURL(file);
+                } else if (uploadAreaId === 'uploadAreaStart') {
+                    hideEl('uploadAreaStart');
+                    showEl('previewContainerStart');
+                } else if (uploadAreaId === 'uploadAreaEnd') {
+                    hideEl('uploadAreaEnd');
+                    showEl('previewContainerEnd');
+                }
+            }
+        }
+
+        function hapusPreview(containerId, uploadAreaId, inputId) {
+            document.getElementById(inputId).value = '';
+            hideEl(containerId);
+            showEl(uploadAreaId);
+            
+            if(inputId === 'fileProduk') {
+                base64ImgProduk = null;
+                mimeImgProduk = null;
+            }
+        }
+
+        // ==========================================
+        // LOGIKA STEP 1: SCRIPT GEMINI
+        // ==========================================
+        async function prosesScript() {
+            const userKey = document.getElementById('geminiKey').value.trim();
+            const finalApiKey = userKey || envApiKey; // Gunakan key user, jika kosong pakai key environment
+            
+            const talent = document.getElementById('talentPilihan').value;
+            const info = document.getElementById('infoProduk').value.trim();
+            const btn = document.getElementById('btnBuatScript');
+            const statusBox = document.getElementById('statusScript');
+
+            hideEl('statusScript');
+            hideEl('hasilScriptContainer');
+
+            if(!finalApiKey) { 
+                statusBox.innerText = "❌ Silakan masukkan API Key Gemini di Pengaturan!"; 
+                showEl('statusScript'); 
+                return; 
+            }
+            if(!base64ImgProduk) { 
+                statusBox.innerText = "❌ Upload Foto Produk terlebih dahulu!"; 
+                showEl('statusScript'); 
+                return; 
+            }
+
+            // State Loading
+            btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+            btn.innerHTML = '<span class="loading-dots">⏳ Menganalisis Gambar AI</span>';
+
+            try {
+                const promptTarget = talent === 'man' ? 'Pria (Maskulin/Tegas)' : 'Wanita (Ceria/Keibuan)';
+                const systemPromptText = `
+Anda adalah UGC Creator Expert. Analisis gambar produk, lalu buat SKENARIO VIDEO UGC (3 SCENE).
+Target Talent: ${promptTarget}. Info tambahan: ${info}.
+
+ATURAN WAJIB OUTPUT:
+- HARUS berformat JSON Array murni. Tidak boleh ada teks markdown seperti \`\`\`json.
+- Format JSON persis seperti ini:
+[
+  { "scene": "1. HOOK (Opening Shot)", "visual": "Talent mengambil produk. The product must remain identical...", "audio": "Kalimat hook menarik maksimal 146 huruf." },
+  { "scene": "2. REVIEW (Detail)", "visual": "Kamera fokus ke produk. Jempol menekan...", "audio": "Penjelasan fitur dan keunggulan." },
+  { "scene": "3. CTA (Closing)", "visual": "Talent menunjuk ke bawah (arah keranjang)...", "audio": "Ajakan checkout tegas." }
+]`;
+
+                // Request ke API Gemini
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${finalApiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ 
+                            role: "user", 
+                            parts: [
+                                { text: systemPromptText }, 
+                                { inlineData: { mimeType: mimeImgProduk, data: base64ImgProduk } }
+                            ] 
+                        }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+
+                const data = await response.json();
+                if(data.error) throw new Error(data.error.message);
+
+                let rawTeks = data.candidates[0].content.parts[0].text;
+                
+                // Bersihkan respon JSON dari markdown jika ada
+                rawTeks = rawTeks.replace(/```json/g, '').replace(/```/g, '').trim();
+                const startIdx = rawTeks.indexOf('[');
+                const endIdx = rawTeks.lastIndexOf(']');
+                
+                if (startIdx === -1 || endIdx === -1) throw new Error("Format respon AI tidak sesuai.");
+                
+                dataScriptRaw = JSON.parse(rawTeks.substring(startIdx, endIdx + 1));
+                
+                tampilkanScript(dataScriptRaw);
+
+            } catch(err) {
+                statusBox.innerText = "❌ Gagal: " + err.message;
+                showEl('statusScript');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-70', 'cursor-not-allowed');
+                btn.innerHTML = '⚡ Generate Skenario Script';
+            }
+        }
+
+        function tampilkanScript(scenes) {
+            const wadah = document.getElementById('wadahSceneScript');
+            wadah.innerHTML = ''; 
+            
+            scenes.forEach(s => {
+                wadah.innerHTML += `
+                    <div class="bg-slate-800 p-4 rounded-xl border-l-4 border-rose-500 shadow-md">
+                        <span class="text-[10px] font-bold bg-rose-900/60 text-rose-300 px-2.5 py-1 rounded tracking-widest">${s.scene}</span>
+                        <div class="mt-3">
+                            <span class="text-[10px] bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded font-bold uppercase">🎥 Visual</span>
+                            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">${s.visual}</p>
+                        </div>
+                        <div class="mt-3">
+                            <span class="text-[10px] bg-green-900/50 text-green-300 px-2 py-0.5 rounded font-bold uppercase">🎤 Narasi</span>
+                            <p class="text-sm font-medium text-white italic mt-1.5">"${s.audio}"</p>
+                        </div>
+                    </div>`;
+            });
+            
+            // Auto-fill prompt video
+            if(scenes.length > 0) {
+                document.getElementById('promptVideo').value = scenes[0].visual;
+            }
+            showEl('hasilScriptContainer');
+        }
+
+        function salinSemuaScript() {
+            if(dataScriptRaw.length === 0) return;
+            const talentTxt = document.getElementById('talentPilihan').value === 'man' ? 'Pria' : 'Wanita';
+            
+            let fullText = `[Konsep UGC - ${talentTxt}]\n[Teknis: Negatif no blur no watermark. Diam di tempat. Fokus tajam.]\n\n`;
+            dataScriptRaw.forEach(s => fullText += `--- ${s.scene} ---\nVISUAL: ${s.visual}\nNARASI: "${s.audio}"\n\n`);
+
+            const el = document.createElement('textarea');
+            el.value = fullText;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            
+            alert('Berhasil! Teks script telah disalin ke clipboard.');
+        }
+
+        // ==========================================
+        // LOGIKA STEP 2: VIDEO LEONARDO AI
+        // ==========================================
+        async function uploadGambarKeLeonardo(file, apiKey) {
+            // Init Image API
+            const initRes = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ extension: file.name.split('.').pop() })
+            });
+            const initData = await initRes.json();
+            if(!initData.uploadInitImage) throw new Error("API Key Leonardo tidak valid atau akses ditolak.");
+            
+            // Upload ke S3
+            const fd = new FormData();
+            const fields = JSON.parse(initData.uploadInitImage.fields);
+            for (let k in fields) fd.append(k, fields[k]);
+            fd.append('file', file);
+            
+            const upRes = await fetch(initData.uploadInitImage.url, { method: 'POST', body: fd });
+            if(!upRes.ok) throw new Error("Gagal mengupload gambar fisik ke server.");
+
+            return initData.uploadInitImage.id; 
+        }
+
+        async function prosesVideo() {
+            const apiKey = document.getElementById('leonardoKey').value.trim();
+            const fileStart = document.getElementById('fileStart').files[0];
+            const fileEnd = document.getElementById('fileEnd').files[0];
+            const prompt = document.getElementById('promptVideo').value.trim();
+            const resolusi = document.getElementById('resolusiPilihan').value;
+            
+            const btn = document.getElementById('btnBuatVideo');
+            const statusBox = document.getElementById('statusVideo');
+
+            hideEl('statusVideo');
+            hideEl('hasilVideoContainer');
+
+            // Validasi
+            if(!apiKey) { statusBox.innerText = "❌ Silakan masukkan API Key Leonardo di Pengaturan!"; showEl('statusVideo'); return; }
+            if(!fileStart) { statusBox.innerText = "❌ Start Frame wajib diupload!"; showEl('statusVideo'); return; }
+            if(!prompt) { statusBox.innerText = "❌ Prompt Video wajib diisi!"; showEl('statusVideo'); return; }
+
+            // State Loading
+            btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+
+            try {
+                // 1. Upload Start Frame
+                statusBox.innerHTML = '<span class="loading-dots">1/3: Mengunggah Start Frame ke AI</span>';
+                showEl('statusVideo');
+                const startId = await uploadGambarKeLeonardo(fileStart, apiKey);
+
+                // 2. Upload End Frame (Bila Ada)
+                let endId = null;
+                if(fileEnd) {
+                    statusBox.innerHTML = '<span class="loading-dots">1.5/3: Mengunggah End Frame</span>';
+                    endId = await uploadGambarKeLeonardo(fileEnd, apiKey);
+                }
+
+                // 3. Render
+                statusBox.innerHTML = '<span class="loading-dots">2/3: Mengirim Instruksi & Mulai Render</span>';
+                
+                const resolusiTeks = resolusi === '9:16' ? 'Vertical 9:16 aspect ratio' : 'Horizontal 16:9 aspect ratio';
+                const payloadVideo = { 
+                    imageId: startId, 
+                    prompt: `${prompt}. ${resolusiTeks}`, 
+                    isPublic: false 
+                };
+
+                const renderRes = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations-motion-svd', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payloadVideo)
+                });
+                
+                const renderData = await renderRes.json();
+                if(!renderData.motionSvdGenerationJob) throw new Error(renderData.error || "Gagal memulai render. Cek saldo koin/kredit Leonardo Anda.");
+
+                // 4. Polling Status
+                statusBox.innerHTML = '<span class="loading-dots">3/3: Video diproses AI (Tunggu 1-3 Menit)</span>';
+                cekStatusVideo(renderData.motionSvdGenerationJob.generationId, apiKey);
+
+            } catch(e) {
+                statusBox.innerText = "❌ Gagal: " + e.message;
+                btn.disabled = false;
+                btn.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+        }
+
+        // Cek API setiap 6 detik
+        function cekStatusVideo(generationId, apiKey) {
+            const timerPolling = setInterval(async () => {
+                try {
+                    const res = await fetch(`https://cloud.leonardo.ai/api/rest/v1/generations/${generationId}`, {
+                        headers: { 'Authorization': `Bearer ${apiKey}`, 'Accept': 'application/json' }
+                    });
+                    const data = await res.json();
+                    const statusVal = data.generations_by_pk?.status;
+
+                    if(statusVal === "COMPLETE") {
+                        // Selesai
+                        clearInterval(timerPolling);
+                        const videoUrl = data.generations_by_pk.generated_images[0].motionMP4URL;
+                        
+                        document.getElementById('playerVideo').src = videoUrl;
+                        hideEl('statusVideo');
+                        showEl('hasilVideoContainer');
+                        
+                        // Kembalikan tombol
+                        const btn = document.getElementById('btnBuatVideo');
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-70', 'cursor-not-allowed');
+                        
+                        // Scroll otomatis ke hasil
+                        document.getElementById('hasilVideoContainer').scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+                    } else if(statusVal === "FAILED") {
+                        // Gagal
+                        clearInterval(timerPolling);
+                        throw new Error("Proses render digagalkan oleh server Leonardo.");
+                    }
+                } catch(e) {
+                    if(e.message === "Proses render digagalkan oleh server Leonardo.") {
+                        document.getElementById('statusVideo').innerText = "❌ " + e.message;
+                        const btn = document.getElementById('btnBuatVideo');
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-70', 'cursor-not-allowed');
+                    }
+                }
+            }, 6000); 
+        }
+    </script>
+</body>
+</html>
