@@ -1,64 +1,433 @@
-// api/leonardo.js
-export default async function handler(req, res) {
-    // 1. Menangani preflight request CORS (agar browser mengizinkan)
-    if (req.method === 'OPTIONS') {
-        res.status(200).setHeader('Access-Control-Allow-Origin', '*').setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS').setHeader('Access-Control-Allow-Headers', 'Content-Type');
-        return res.end();
-    }
-
-    // Hanya menerima method POST
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    try {
-        const payload = req.body;
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leonardo AI Video Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
         
-        // 2. Ambil API Key dari Environment Variable Vercel (DIREKOMENDASIKAN)
-        // Atau, jika Mas ingin cepat, Mas BISA menaruh API Key langsung di sini (ganti process.env.LEONARDO_API_KEY)
-        const apiKey = process.env.LEONARDO_API_KEY || "TARUH_API_KEY_LEONARDO_MAS_DI_SINI";
-
-        if (!apiKey || apiKey === "TARUH_API_KEY_LEONARDO_MAS_DI_SINI") {
-             return res.status(500).json({ error: "API Key Leonardo belum disetting di backend Vercel." });
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #050506;
         }
 
-        let response;
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0c; }
+        ::-webkit-scrollbar-thumb { background: #1e1e24; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2e2e38; }
 
-        // 3. Menentukan tujuan API Leonardo berdasarkan parameter 'action' dari frontend
-        if (payload.action === 'init-image') {
-            response = await fetch('https://cloud.leonardo.ai/api/rest/v1/init-image', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ extension: payload.extension })
-            });
-        } 
-        else if (payload.action === 'render-video') {
-            response = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations-motion-svd', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload.data)
-            });
-        }
-        else if (payload.action === 'check-status') {
-             response = await fetch(`https://cloud.leonardo.ai/api/rest/v1/generations/${payload.generationId}`, {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${apiKey}`, 'Accept': 'application/json' }
-            });
-        }
-        else {
-            return res.status(400).json({ error: 'Action tidak dikenal' });
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            border: 2px solid white;
         }
 
-        // 4. Mengembalikan respon dari Leonardo ke frontend
-        const data = await response.json();
+        .glass-effect {
+            background: rgba(13, 13, 15, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .video-card:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 20px 40px -20px rgba(99, 102, 241, 0.2);
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen">
+
+    <!-- MODAL API KEY -->
+    <div id="apiKeyModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md">
+        <div class="bg-[#0d0d0f] border border-white/10 w-full max-w-md rounded-[2.5rem] p-10 text-center space-y-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-24 -left-24 w-48 h-48 bg-indigo-600/10 rounded-full blur-[80px]"></div>
+            <div class="relative space-y-6">
+                <div class="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-violet-700 rounded-2xl flex items-center justify-center mx-auto shadow-xl">
+                    <i data-lucide="key" class="text-white w-8 h-8"></i>
+                </div>
+                <div class="space-y-2">
+                    <h2 class="text-2xl font-bold">Akses Leonardo AI</h2>
+                    <p class="text-slate-500 text-sm">Masukkan API Key Anda untuk mulai merender video.</p>
+                </div>
+                <div class="space-y-4">
+                    <input type="password" id="apiKeyInput" placeholder="leonardo_api_..." 
+                        class="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-mono text-sm">
+                    <button onclick="saveApiKey()" 
+                        class="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-2xl font-bold text-white shadow-lg shadow-indigo-600/20 transition-all active:scale-[0.97]">
+                        Konfirmasi Akses
+                    </button>
+                    <p class="text-[10px] text-slate-600 italic">Kunci API disimpan secara lokal di browser Anda.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVIGATION -->
+    <nav class="border-b border-white/5 bg-[#0a0a0c]/80 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-tr from-indigo-600 to-violet-600 p-2 rounded-xl shadow-lg shadow-indigo-500/20">
+                <i data-lucide="video" class="text-white w-5 h-5"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-base leading-tight">Leonardo <span class="text-indigo-400">Studio</span></h1>
+                <p class="text-[10px] text-slate-500 font-medium uppercase tracking-widest">Video Generator</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div class="hidden md:flex items-center gap-3 px-3 py-1.5 bg-white/5 rounded-full border border-white/5">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Proxy Mode</span>
+                <label class="inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="proxyToggle" class="sr-only peer">
+                    <div class="relative w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+            </div>
+            <button onclick="toggleKeyModal()" class="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full text-xs font-semibold transition-all border border-white/10">
+                <i data-lucide="key" id="keyStatusIcon" class="w-4 h-4 text-slate-400"></i>
+                <span id="keyStatusText">Set API Key</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="flex flex-col lg:flex-row h-[calc(100vh-73px)]">
         
-        // Tambahkan header CORS pada respon sukses
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.status(response.status).json(data);
+        <!-- SIDEBAR -->
+        <aside class="w-full lg:w-80 bg-[#0a0a0c] border-r border-white/5 p-6 overflow-y-auto space-y-8 shrink-0">
+            <section class="space-y-4">
+                <h3 class="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <i data-lucide="settings" class="w-3.5 h-3.5"></i> Video Settings
+                </h3>
+                
+                <div class="space-y-2">
+                    <p class="text-xs font-bold text-slate-400">Resolusi Video</p>
+                    <div class="space-y-2" id="resolutionGrid">
+                        <button onclick="setResolution('v916')" data-res="v916" class="res-btn w-full flex items-center gap-3 p-3 rounded-xl border border-indigo-500 bg-indigo-600/10 text-white transition-all">
+                            <i data-lucide="smartphone" class="w-4 h-4 text-indigo-400"></i>
+                            <div class="text-left">
+                                <div class="text-xs font-bold">9:16 Vertical</div>
+                                <div class="text-[10px] opacity-60">TikTok / Reels / Shorts</div>
+                            </div>
+                        </button>
+                        <button onclick="setResolution('h169')" data-res="h169" class="res-btn w-full flex items-center gap-3 p-3 rounded-xl border border-transparent bg-white/5 text-slate-500 transition-all">
+                            <i data-lucide="monitor" class="w-4 h-4"></i>
+                            <div class="text-left">
+                                <div class="text-xs font-bold">16:9 Horizontal</div>
+                                <div class="text-[10px] opacity-60">YouTube / TV</div>
+                            </div>
+                        </button>
+                        <button onclick="setResolution('s11')" data-res="s11" class="res-btn w-full flex items-center gap-3 p-3 rounded-xl border border-transparent bg-white/5 text-slate-500 transition-all">
+                            <i data-lucide="square" class="w-4 h-4"></i>
+                            <div class="text-left">
+                                <div class="text-xs font-bold">1:1 Square</div>
+                                <div class="text-[10px] opacity-60">Instagram Post</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
 
-    } catch (error) {
-        console.error("Backend Error:", error);
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.status(500).json({ error: error.message || 'Terjadi kesalahan pada server Vercel.' });
-    }
-}
+                <div class="space-y-4 pt-4">
+                    <div class="flex justify-between items-center">
+                        <p class="text-xs font-bold text-slate-400">Motion Strength</p>
+                        <span id="motionValueDisplay" class="text-xs font-mono text-indigo-400">5</span>
+                    </div>
+                    <input type="range" id="motionSlider" min="1" max="10" value="5" oninput="updateMotionValue(this.value)"
+                        class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                    <p class="text-[10px] text-slate-600 italic">Gerakan lebih tinggi = lebih banyak dinamika.</p>
+                </div>
+            </section>
+
+            <section class="space-y-4 pt-4 border-t border-white/5">
+                <h3 class="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Model Engine</h3>
+                <select id="modelSelect" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-slate-300 outline-none focus:border-indigo-500">
+                    <option value="b24e16ff-06e3-43eb-8d33-4416c2d75876">Leonardo Lightning XL</option>
+                    <option value="e316348f-7773-490e-adcd-46757c738eb7">Leonardo Vision XL</option>
+                </select>
+            </section>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 overflow-y-auto flex flex-col">
+            
+            <!-- INPUT SECTION -->
+            <div class="p-8 border-b border-white/5 bg-gradient-to-b from-indigo-500/5 to-transparent">
+                <div class="max-w-4xl mx-auto space-y-6">
+                    
+                    <div id="errorAlert" class="hidden bg-red-500/10 border border-red-500/20 p-4 rounded-2xl flex items-start gap-3 text-red-400 text-xs">
+                        <i data-lucide="alert-circle" class="w-4 h-4 mt-0.5 shrink-0"></i>
+                        <div id="errorMessage">Terjadi kesalahan koneksi API.</div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Start Frame -->
+                        <div class="space-y-3">
+                            <label class="text-[11px] font-bold text-slate-500 uppercase ml-1">Start Frame (Awal) *</label>
+                            <div onclick="document.getElementById('startFileInput').click()" id="startPreview"
+                                class="aspect-video rounded-2xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden bg-black/40 hover:border-indigo-500/40 hover:bg-white/5">
+                                <i data-lucide="upload" class="text-slate-600 mb-2 w-6 h-6"></i>
+                                <span class="text-[10px] font-medium text-slate-500">Upload Start Image</span>
+                            </div>
+                            <input type="file" id="startFileInput" hidden accept="image/*" onchange="handleImagePreview(this, 'start')">
+                        </div>
+
+                        <!-- End Frame -->
+                        <div class="space-y-3">
+                            <label class="text-[11px] font-bold text-slate-500 uppercase ml-1">End Frame (Opsional)</label>
+                            <div onclick="document.getElementById('endFileInput').click()" id="endPreview"
+                                class="aspect-video rounded-2xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden bg-black/40 hover:border-indigo-500/40 hover:bg-white/5">
+                                <i data-lucide="upload" class="text-slate-600 mb-2 w-6 h-6"></i>
+                                <span class="text-[10px] font-medium text-slate-500">Upload End Image</span>
+                            </div>
+                            <input type="file" id="endFileInput" hidden accept="image/*" onchange="handleImagePreview(this, 'end')">
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <textarea id="promptInput" placeholder="Ketik panduan visual atau instruksi gerakan kamera..." 
+                            class="w-full bg-[#111114] border border-white/10 rounded-2xl p-5 pr-40 min-h-[120px] focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-600 text-sm"></textarea>
+                        <div class="absolute bottom-4 right-4 flex gap-2">
+                            <button id="generateBtn" onclick="handleGenerate()" 
+                                class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 shadow-xl shadow-indigo-600/30 transition-all active:scale-[0.98]">
+                                <i data-lucide="zap" id="btnIcon" class="w-4.5 h-4.5 fill-current"></i>
+                                <span id="btnText">Generate Video</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GALLERY SECTION -->
+            <div class="flex-1 p-8">
+                <div class="max-w-6xl mx-auto space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-bold flex items-center gap-2">
+                            <i data-lucide="film" class="text-indigo-400 w-5 h-5"></i> Hasil Render
+                        </h2>
+                    </div>
+
+                    <div id="historyGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                        <!-- Video Cards will appear here -->
+                        <div id="emptyState" class="col-span-full flex flex-col items-center justify-center py-32 text-slate-700 space-y-4 border-2 border-dashed border-white/5 rounded-[2.5rem]">
+                            <i data-lucide="play" class="w-12 h-12 opacity-20"></i>
+                            <p class="text-sm font-medium">Belum ada video. Mulai render karya pertama Anda!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // State Management
+        let apiKey = localStorage.getItem('leonardo_api_key') || '';
+        let currentResolution = 'v916';
+        let isProcessing = false;
+        let startImageBase64 = null;
+        let endImageBase64 = null;
+
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Check if API Key exists
+        if (apiKey) {
+            document.getElementById('apiKeyModal').classList.add('hidden');
+            updateKeyUI();
+        }
+
+        function toggleKeyModal() {
+            document.getElementById('apiKeyModal').classList.remove('hidden');
+        }
+
+        function saveApiKey() {
+            const val = document.getElementById('apiKeyInput').value;
+            if (val) {
+                apiKey = val;
+                localStorage.setItem('leonardo_api_key', val);
+                document.getElementById('apiKeyModal').classList.add('hidden');
+                updateKeyUI();
+            }
+        }
+
+        function updateKeyUI() {
+            document.getElementById('keyStatusIcon').classList.remove('text-slate-400');
+            document.getElementById('keyStatusIcon').classList.add('text-green-400');
+            document.getElementById('keyStatusText').innerText = 'API Active';
+        }
+
+        function updateMotionValue(val) {
+            document.getElementById('motionValueDisplay').innerText = val;
+        }
+
+        function setResolution(res) {
+            currentResolution = res;
+            document.querySelectorAll('.res-btn').forEach(btn => {
+                if (btn.getAttribute('data-res') === res) {
+                    btn.classList.add('border-indigo-500', 'bg-indigo-600/10', 'text-white');
+                    btn.classList.remove('border-transparent', 'bg-white/5', 'text-slate-500');
+                    btn.querySelector('i').classList.add('text-indigo-400');
+                } else {
+                    btn.classList.remove('border-indigo-500', 'bg-indigo-600/10', 'text-white');
+                    btn.classList.add('border-transparent', 'bg-white/5', 'text-slate-500');
+                    btn.querySelector('i').classList.remove('text-indigo-400');
+                }
+            });
+        }
+
+        function handleImagePreview(input, type) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const previewId = type === 'start' ? 'startPreview' : 'endPreview';
+                    const container = document.getElementById(previewId);
+                    container.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                    container.classList.add('border-indigo-500');
+                    if (type === 'start') startImageBase64 = e.target.result;
+                    else endImageBase64 = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function handleGenerate() {
+            if (!apiKey) { toggleKeyModal(); return; }
+            if (!startImageBase64) { showAlert("Start Frame wajib diunggah."); return; }
+            
+            const prompt = document.getElementById('promptInput').value;
+            if (!prompt) { showAlert("Prom animasi tidak boleh kosong."); return; }
+
+            setProcessingState(true);
+            document.getElementById('errorAlert').classList.add('hidden');
+
+            try {
+                // Step 1: Simulated Upload
+                updateBtnStatus('Mengunggah...');
+                await new Promise(r => setTimeout(r, 1500));
+
+                // Step 2: Request Motion Generation
+                updateBtnStatus('Merender...');
+                const useProxy = document.getElementById('proxyToggle').checked;
+                const baseUrl = "https://cloud.leonardo.ai/api/rest/v1/";
+                const finalUrl = useProxy ? `https://cors-anywhere.herokuapp.com/${baseUrl}generations-motion` : `${baseUrl}generations-motion`;
+
+                const response = await fetch(finalUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        imageId: "6bef9f1b-713f-4316-8c76-20d7abc0d54d", // Dummy ID (API Leonardo butuh ID dari /init-image)
+                        motionStrength: parseInt(document.getElementById('motionSlider').value),
+                        isPublic: false
+                    })
+                });
+
+                if (!response.ok) throw new Error("Gagal kirim ke Leonardo. Cek API Key atau nyalakan Proxy.");
+                const data = await response.json();
+                const motionId = data.motionGenerationJob.motionId;
+
+                // Step 3: Polling Status
+                pollStatus(motionId, prompt, currentResolution);
+
+            } catch (err) {
+                showAlert(err.message);
+                setProcessingState(false);
+            }
+        }
+
+        async function pollStatus(id, promptText, res) {
+            updateBtnStatus('Polling...');
+            let completed = false;
+            const useProxy = document.getElementById('proxyToggle').checked;
+
+            while (!completed) {
+                try {
+                    const baseUrl = `https://cloud.leonardo.ai/api/rest/v1/motions/${id}`;
+                    const finalUrl = useProxy ? `https://cors-anywhere.herokuapp.com/${baseUrl}` : baseUrl;
+
+                    const resStatus = await fetch(finalUrl, {
+                        headers: { 'Authorization': `Bearer ${apiKey}` }
+                    });
+                    const statusData = await resStatus.json();
+                    const job = statusData.motion_generations_by_pk;
+
+                    if (job.status === 'COMPLETE') {
+                        addVideoToGallery(job.motionUrl, promptText, res);
+                        completed = true;
+                        setProcessingState(false);
+                    } else if (job.status === 'FAILED') {
+                        throw new Error("Render gagal di sisi server Leonardo.");
+                    } else {
+                        await new Promise(r => setTimeout(r, 5000));
+                    }
+                } catch (e) {
+                    showAlert(e.message);
+                    setProcessingState(false);
+                    break;
+                }
+            }
+        }
+
+        function addVideoToGallery(url, prompt, res) {
+            document.getElementById('emptyState').classList.add('hidden');
+            const grid = document.getElementById('historyGrid');
+            const aspectClass = res === 'v916' ? 'aspect-[9/16]' : res === 'h169' ? 'aspect-video' : 'aspect-square';
+            
+            const card = document.createElement('div');
+            card.className = "video-card bg-[#0f0f12] rounded-[2rem] overflow-hidden border border-white/5 transition-all shadow-2xl";
+            card.innerHTML = `
+                <div class="relative bg-black ${aspectClass}">
+                    <video src="${url}" class="w-full h-full object-cover" controls loop autoplay muted></video>
+                    <div class="absolute top-4 right-4">
+                        <span class="bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[9px] font-black text-green-400 border border-green-400/20 uppercase">Complete</span>
+                    </div>
+                </div>
+                <div class="p-5 space-y-3">
+                    <p class="text-xs text-slate-400 italic line-clamp-2">"${prompt}"</p>
+                    <div class="flex items-center justify-between pt-3 border-t border-white/5">
+                        <span class="text-[9px] font-mono text-slate-600">${new Date().toLocaleTimeString()}</span>
+                        <a href="${url}" target="_blank" class="p-2 hover:bg-white/5 rounded-lg text-slate-400"><i data-lucide="download" class="w-4 h-4"></i></a>
+                    </div>
+                </div>
+            `;
+            grid.prepend(card);
+            lucide.createIcons();
+        }
+
+        function setProcessingState(state) {
+            isProcessing = state;
+            const btn = document.getElementById('generateBtn');
+            const icon = document.getElementById('btnIcon');
+            const text = document.getElementById('btnText');
+
+            btn.disabled = state;
+            if (state) {
+                icon.innerHTML = `<i data-lucide="loader-2" class="animate-spin"></i>`;
+                lucide.createIcons();
+            } else {
+                icon.innerHTML = `<i data-lucide="zap" class="fill-current"></i>`;
+                text.innerText = 'Generate Video';
+                lucide.createIcons();
+            }
+        }
+
+        function updateBtnStatus(msg) {
+            document.getElementById('btnText').innerText = msg;
+        }
+
+        function showAlert(msg) {
+            document.getElementById('errorAlert').classList.remove('hidden');
+            document.getElementById('errorMessage').innerText = msg;
+        }
+    </script>
+</body>
+</html>
