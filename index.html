@@ -3,344 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClipCutter - Potong Video Media Sosial</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>Preview Colab Otomatis</title>
     <style>
-        body { background-color: #020617; color: #f8fafc; }
-        .vertical-guide {
-            aspect-ratio: 9/16;
-            transition: transform 0.2s ease-out;
-        }
-        input[type="range"] {
-            accent-color: #4f46e5;
-        }
-        .loading-spinner {
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top: 3px solid white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding: 20px; }
+        .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 20px; }
+        iframe { border-radius: 12px; border: 2px solid #333; width: 315px; height: 560px; }
+        input { padding: 10px; width: 60%; border-radius: 5px; border: none; margin-bottom: 10px; }
+        button { padding: 10px 20px; background: #ff0000; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .label { margin-bottom: 5px; font-weight: bold; color: #aaa; }
     </style>
 </head>
-<body class="font-sans antialiased">
+<body>
 
-    <!-- Header -->
-    <nav class="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
-        <div class="flex items-center gap-2">
-            <div class="bg-indigo-600 p-2 rounded-lg">
-                <i data-lucide="zap" class="text-white w-6 h-6"></i>
-            </div>
-            <span class="text-2xl font-bold tracking-tight">Clip<span class="text-indigo-500">Cutter</span></span>
-        </div>
-        <div class="hidden md:block text-slate-500 text-sm font-medium">
-            Editor Video Vertikal Berbasis Browser
-        </div>
-    </nav>
+    <h2>Auto Preview Colab YouTube</h2>
+    <p>Tempel link Shorts orang lain untuk melihat tampilan bersandingan</p>
 
-    <main class="max-w-7xl mx-auto px-6 py-4 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        <!-- Kolom Kiri: Input & Player -->
-        <div class="lg:col-span-7 space-y-6">
-            
-            <!-- Area Seleksi Input (Awal) -->
-            <div id="input-section" class="space-y-6">
-                <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-800 w-fit mx-auto">
-                    <button onclick="toggleInput('file')" id="btn-file" class="px-6 py-2 rounded-lg text-sm font-bold bg-indigo-600 text-white transition-all">
-                        Unggah File
-                    </button>
-                    <button onclick="toggleInput('link')" id="btn-link" class="px-6 py-2 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition-all">
-                        Pakai Link
-                    </button>
-                </div>
+    <input type="text" id="shortLink" placeholder="Tempel Link YouTube Shorts di sini...">
+    <button onclick="updateColab()">Update Colab</button>
 
-                <div id="dropzone" class="border-2 border-dashed border-slate-800 rounded-3xl h-96 flex flex-col items-center justify-center bg-slate-900/30 hover:border-indigo-500/50 transition-all group">
-                    <!-- UI File -->
-                    <div id="ui-file" class="flex flex-col items-center">
-                        <div class="bg-indigo-500/10 p-6 rounded-full mb-4 text-indigo-500 group-hover:scale-110 transition-transform">
-                            <i data-lucide="upload-cloud" class="w-12 h-12"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2">Pilih Video Lokal</h3>
-                        <p class="text-slate-500 text-sm mb-6 text-center max-w-xs">Podcast, Stream, atau klip panjang (MP4/WebM)</p>
-                        <label class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-2xl font-bold cursor-pointer shadow-lg shadow-indigo-900/20">
-                            Cari File Video
-                            <input type="file" id="file-input" class="hidden" accept="video/*">
-                        </label>
-                    </div>
-
-                    <!-- UI Link -->
-                    <div id="ui-link" class="hidden w-full max-w-md px-10 flex flex-col items-center">
-                        <div class="bg-indigo-500/10 p-6 rounded-full mb-4 text-indigo-500">
-                            <i data-lucide="link-2" class="w-12 h-12"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2">Tempel URL Video</h3>
-                        <p class="text-slate-500 text-sm mb-6 text-center">Mendukung link video publik langsung</p>
-                        <div class="relative w-full">
-                            <input type="text" id="url-input" placeholder="https://site.com/video.mp4" 
-                                class="w-full bg-slate-950 border-2 border-slate-800 rounded-2xl px-5 py-4 focus:border-indigo-500 outline-none pr-14 text-sm">
-                            <button onclick="loadFromUrl()" class="absolute right-2 top-2 bottom-2 bg-indigo-600 hover:bg-indigo-500 px-3 rounded-xl">
-                                <i data-lucide="chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Area Editor (Hidden by default) -->
-            <div id="editor-section" class="hidden space-y-6">
-                <div class="relative bg-black rounded-3xl overflow-hidden aspect-video shadow-2xl border border-slate-800">
-                    <video id="main-video" class="w-full h-full object-contain"></video>
-                    
-                    <!-- 9:16 Overlay Guide -->
-                    <div class="absolute inset-0 pointer-events-none flex justify-center">
-                        <div id="crop-guide" class="h-full border-x-2 border-indigo-500/50 bg-indigo-500/5 vertical-guide relative">
-                            <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center opacity-30">
-                                <i data-lucide="maximize-2" class="w-8 h-8"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Video Controls Overlay -->
-                    <div class="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/80 to-transparent flex items-center gap-4">
-                        <button onclick="togglePlay()" class="bg-white text-black p-2.5 rounded-full hover:scale-110 transition-transform">
-                            <i data-lucide="play" id="play-icon" class="w-5 h-5 fill-current"></i>
-                        </button>
-                        <div class="text-xs font-mono tracking-tighter">
-                            <span id="time-current">0:00</span> / <span id="time-total">0:00</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Timeline Control -->
-                <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-6">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="scissors" class="text-indigo-400 w-4 h-4"></i>
-                            <span class="text-sm font-bold">Atur Durasi Klip</span>
-                        </div>
-                        <span id="clip-duration-label" class="text-xs font-bold text-indigo-400 bg-indigo-400/10 px-2 py-1 rounded">60s</span>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div class="flex flex-col gap-2">
-                            <label class="text-[10px] text-slate-500 font-bold uppercase">Mulai: <span id="start-label">0:00</span></label>
-                            <input type="range" id="start-range" min="0" max="100" value="0" step="0.1" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none">
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label class="text-[10px] text-slate-500 font-bold uppercase">Selesai: <span id="end-label">0:60</span></label>
-                            <input type="range" id="end-range" min="0" max="100" value="60" step="0.1" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none">
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="container">
+        <div>
+            <div class="label">Video Kamu (Master)</div>
+            <iframe id="myVideo" src="https://www.youtube.com/embed/VIDEO_ID_KAMU" frameborder="0" allowfullscreen></iframe>
         </div>
 
-        <!-- Kolom Kanan: Pengaturan -->
-        <div class="lg:col-span-5">
-            <div class="bg-slate-900/50 backdrop-blur-md p-8 rounded-3xl border border-slate-800 space-y-8 sticky top-8">
-                <div>
-                    <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
-                        <i data-lucide="settings-2" class="text-indigo-400 w-6 h-6"></i>
-                        Format & Ekspor
-                    </h2>
-
-                    <div class="space-y-8">
-                        <div>
-                            <div class="flex justify-between mb-4">
-                                <label class="text-sm font-semibold">Posisikan Fokus Subjek</label>
-                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">9:16 Active</span>
-                            </div>
-                            <input type="range" id="focus-range" min="0" max="100" value="50" class="w-full h-2 bg-slate-800 rounded-lg appearance-none">
-                            <div class="flex justify-between text-[10px] text-slate-500 mt-2 font-bold uppercase">
-                                <span>Kiri</span>
-                                <span>Tengah</span>
-                                <span>Kanan</span>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
-                                <i data-lucide="smartphone" class="text-indigo-400 w-4 h-4 mb-2"></i>
-                                <div class="text-[10px] text-slate-500 font-bold uppercase">Tujuan</div>
-                                <div class="text-sm font-bold">TikTok/Reels</div>
-                            </div>
-                            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
-                                <i data-lucide="video" class="text-indigo-400 w-4 h-4 mb-2"></i>
-                                <div class="text-[10px] text-slate-500 font-bold uppercase">Kualitas</div>
-                                <div class="text-sm font-bold">HD 1080p</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pt-6 border-t border-slate-800 space-y-4">
-                    <button id="export-btn" disabled onclick="simulateExport()" class="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black flex items-center justify-center gap-3 transition-all">
-                        <i data-lucide="download"></i>
-                        DOWNLOAD KLIP
-                    </button>
-                    
-                    <button onclick="location.reload()" class="w-full text-slate-500 text-xs font-bold uppercase tracking-widest hover:text-white transition-colors">
-                        Mulai Ulang
-                    </button>
-                </div>
-
-                <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800/50">
-                    <p class="text-[10px] text-slate-500 leading-relaxed italic">
-                        <b>Catatan:</b> Pemrosesan dilakukan langsung di browser Anda. Link YouTube tidak didukung secara langsung karena kebijakan CORS; gunakan link file MP4/WebM langsung.
-                    </p>
-                </div>
-            </div>
+        <div>
+            <div class="label">Video Target (Colab)</div>
+            <iframe id="targetVideo" src="https://www.youtube.com/embed/" frameborder="0" allowfullscreen></iframe>
         </div>
-    </main>
+    </div>
 
     <script>
-        // Inisialisasi Ikon
-        lucide.createIcons();
-
-        // State Management
-        const video = document.getElementById('main-video');
-        const inputSection = document.getElementById('input-section');
-        const editorSection = document.getElementById('editor-section');
-        const cropGuide = document.getElementById('crop-guide');
-        const exportBtn = document.getElementById('export-btn');
-        
-        let startTime = 0;
-        let endTime = 60;
-        let isFileMode = true;
-
-        // Toggle Input Mode
-        function toggleInput(type) {
-            isFileMode = type === 'file';
-            document.getElementById('ui-file').classList.toggle('hidden', !isFileMode);
-            document.getElementById('ui-link').classList.toggle('hidden', isFileMode);
+        function updateColab() {
+            const link = document.getElementById('shortLink').value;
+            const targetIframe = document.getElementById('targetVideo');
             
-            document.getElementById('btn-file').className = isFileMode ? 
-                'px-6 py-2 rounded-lg text-sm font-bold bg-indigo-600 text-white transition-all' : 
-                'px-6 py-2 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition-all';
-            
-            document.getElementById('btn-link').className = !isFileMode ? 
-                'px-6 py-2 rounded-lg text-sm font-bold bg-indigo-600 text-white transition-all' : 
-                'px-6 py-2 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition-all';
-        }
-
-        // File Handler
-        document.getElementById('file-input').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const url = URL.createObjectURL(file);
-                setupVideo(url);
+            // Logika ambil ID video dari link YouTube Shorts
+            let videoId = "";
+            if (link.includes("shorts/")) {
+                videoId = link.split("shorts/")[1].split("?")[0];
+            } else if (link.includes("v=")) {
+                videoId = link.split("v=")[1].split("&")[0];
             }
-        });
 
-        // Link Handler
-        function loadFromUrl() {
-            const url = document.getElementById('url-input').value;
-            if (url) setupVideo(url);
-        }
-
-        function setupVideo(url) {
-            video.src = url;
-            inputSection.classList.add('hidden');
-            editorSection.classList.remove('hidden');
-            exportBtn.disabled = false;
-            
-            video.onloadedmetadata = () => {
-                const duration = video.duration;
-                endTime = Math.min(60, duration);
-                
-                // Setup sliders
-                const startRange = document.getElementById('start-range');
-                const endRange = document.getElementById('end-range');
-                
-                startRange.max = duration;
-                endRange.max = duration;
-                endRange.value = endTime;
-                
-                updateLabels();
-            };
-        }
-
-        // Controls
-        function togglePlay() {
-            const icon = document.getElementById('play-icon');
-            if (video.paused) {
-                video.play();
-                icon.setAttribute('data-lucide', 'pause');
+            if (videoId) {
+                targetIframe.src = "https://www.youtube.com/embed/" + videoId;
             } else {
-                video.pause();
-                icon.setAttribute('data-lucide', 'play');
+                alert("Link tidak valid! Pastikan link YouTube Shorts benar.");
             }
-            lucide.createIcons();
-        }
-
-        // Video Syncing & Looping
-        video.addEventListener('timeupdate', () => {
-            document.getElementById('time-current').innerText = formatTime(video.currentTime);
-            document.getElementById('time-total').innerText = formatTime(video.duration);
-            
-            if (video.currentTime >= endTime) {
-                video.currentTime = startTime;
-            }
-        });
-
-        // Trimming Listeners
-        document.getElementById('start-range').addEventListener('input', (e) => {
-            startTime = parseFloat(e.target.value);
-            if (startTime >= endTime - 1) {
-                endTime = startTime + 1;
-                document.getElementById('end-range').value = endTime;
-            }
-            video.currentTime = startTime;
-            updateLabels();
-        });
-
-        document.getElementById('end-range').addEventListener('input', (e) => {
-            endTime = parseFloat(e.target.value);
-            if (endTime <= startTime + 1) {
-                startTime = Math.max(0, endTime - 1);
-                document.getElementById('start-range').value = startTime;
-            }
-            updateLabels();
-        });
-
-        // Focus / Crop Listener
-        document.getElementById('focus-range').addEventListener('input', (e) => {
-            const val = e.target.value;
-            const offset = (val - 50) * 1.5;
-            cropGuide.style.transform = `translateX(${offset}%)`;
-        });
-
-        function formatTime(sec) {
-            const m = Math.floor(sec / 60);
-            const s = Math.floor(sec % 60);
-            return `${m}:${s.toString().padStart(2, '0')}`;
-        }
-
-        function updateLabels() {
-            document.getElementById('start-label').innerText = formatTime(startTime);
-            document.getElementById('end-label').innerText = formatTime(endTime);
-            document.getElementById('clip-duration-label').innerText = Math.round(endTime - startTime) + 's';
-        }
-
-        function simulateExport() {
-            const btn = document.getElementById('export-btn');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = `<div class="loading-spinner"></div> Mengekspor Klip...`;
-            
-            setTimeout(() => {
-                btn.innerHTML = `<i data-lucide="check" class="text-green-400"></i> Berhasil! (Simulasi)`;
-                lucide.createIcons();
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    lucide.createIcons();
-                }, 3000);
-            }, 2500);
         }
     </script>
+
 </body>
 </html>
