@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Merger Bersuara - Mas Eko</title>
+    <title>Video Merger Joss - Mas Eko</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; }
         .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
         input { margin: 10px 0; width: 100%; color: white; }
         button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; }
-        #status { margin-top: 15px; color: #ffcc00; font-size: 14px; }
-        canvas { display: none; }
-        video { display: none; }
+        #status { margin-top: 15px; color: #ffcc00; font-size: 14px; font-weight: bold; }
+        #downloadArea { display: none; margin-top: 20px; padding: 20px; border-top: 2px solid #333; }
+        .btn-download { background: #00ff00; color: #000; text-decoration: none; padding: 20px; display: block; border-radius: 12px; font-weight: bold; font-size: 18px; }
+        canvas, video { display: none; }
     </style>
 </head>
 <body>
 
-    <h3>🎥 Auto Merge + Audio (Joss!)</h3>
-    <p style="font-size: 11px; color: #aaa;">Suara Video Utama & Mas Eko akan digabung</p>
+    <h3>🎥 Auto Merge + Audio (Anti Gagal)</h3>
+    <p style="font-size: 11px; color: #aaa;">Pilih video, tunggu 15 detik, lalu klik tombol download hijau.</p>
 
     <div class="card">
         <label>1. Video Utama (Target):</label>
@@ -26,12 +27,17 @@
         <label>2. Video Reaksi Mas Eko:</label>
         <input type="file" id="vid2" accept="video/*">
         
-        <button id="goBtn">GABUNG & DOWNLOAD (DENGAN SUARA)</button>
-        <div id="status">Pilih videonya dulu, Mas!</div>
+        <button id="goBtn">GABUNG & PROSES VIDEO</button>
+        <div id="status">Siap diproses, Mas Eko!</div>
     </div>
 
-    <video id="v1" loop></video>
-    <video id="v2" loop></video>
+    <div id="downloadArea">
+        <p>✅ BERHASIL! Klik tombol di bawah untuk simpan:</p>
+        <a id="linkDownload" class="btn-download">SIMPAN VIDEO KE GALERI</a>
+    </div>
+
+    <video id="v1" loop crossorigin="anonymous"></video>
+    <video id="v2" loop crossorigin="anonymous"></video>
     <canvas id="c" width="720" height="1280"></canvas>
 
     <script>
@@ -41,27 +47,27 @@
         const ctx = canvas.getContext('2d');
         const goBtn = document.getElementById('goBtn');
         const status = document.getElementById('status');
+        const dlArea = document.getElementById('downloadArea');
+        const dlLink = document.getElementById('linkDownload');
 
         document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
         goBtn.onclick = async () => {
-            if (!v1.src || !v2.src) return alert("File belum lengkap!");
+            if (!v1.src || !v2.src) return alert("Pilih videonya dulu!");
             
-            status.innerText = "🚀 Sedang memproses audio & video... (15 Detik)";
+            status.innerText = "🚀 PROSES JALAN... TUNGGU 15 DETIK";
             goBtn.disabled = true;
+            dlArea.style.display = "none";
 
-            // Jalankan video
             await v1.play();
             await v2.play();
 
-            // Gabungkan Audio dari kedua video
-            const audioCtx = new AudioContext();
+            // Campur Audio
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const dest = audioCtx.createMediaStreamDestination();
             audioCtx.createMediaElementSource(v1).connect(dest);
             audioCtx.createMediaElementSource(v2).connect(dest);
-            audioCtx.createMediaElementSource(v1).connect(audioCtx.destination);
-            audioCtx.createMediaElementSource(v2).connect(audioCtx.destination);
 
             const videoStream = canvas.captureStream(30);
             const combinedStream = new MediaStream([
@@ -76,11 +82,12 @@
             recorder.onstop = () => {
                 const blob = new Blob(chunks, { type: 'video/webm' });
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = "colab_bersuara_eko.webm";
-                a.click();
-                status.innerText = "✅ SELESAI! Suara sudah masuk.";
+                
+                dlLink.href = url;
+                dlLink.download = "colab_mas_eko_" + Date.now() + ".webm";
+                
+                status.innerText = "✨ PROSES SELESAI!";
+                dlArea.style.display = "block";
                 goBtn.disabled = false;
                 v1.pause(); v2.pause();
             };
@@ -88,7 +95,8 @@
             function draw() {
                 if (recorder.state === "recording") {
                     ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(v2, 50, canvas.height - 330, 200, 280);
+                    // Kotak reaksi Mas Eko di kiri bawah
+                    ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
                     requestAnimationFrame(draw);
                 }
             }
