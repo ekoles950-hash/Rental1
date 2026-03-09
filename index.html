@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Merger Joss - Mas Eko</title>
+    <title>Reaction Mute - Mas Eko</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; }
         .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
@@ -17,27 +17,27 @@
 </head>
 <body>
 
-    <h3>🎥 Auto Merge + Audio (Anti Gagal)</h3>
-    <p style="font-size: 11px; color: #aaa;">Pilih video, tunggu 15 detik, lalu klik tombol download hijau.</p>
+    <h3>🎥 Reaction Maker (Suara Utama)</h3>
+    <p style="font-size: 11px; color: #aaa;">Video reaksi akan dibisukan agar suara tidak kacau.</p>
 
     <div class="card">
-        <label>1. Video Utama (Target):</label>
+        <label>1. Video Utama (Ada Suara):</label>
         <input type="file" id="vid1" accept="video/*">
         
-        <label>2. Video Reaksi Mas Eko:</label>
+        <label>2. Video Reaksi Mas Eko (Mute):</label>
         <input type="file" id="vid2" accept="video/*">
         
-        <button id="goBtn">GABUNG & PROSES VIDEO</button>
-        <div id="status">Siap diproses, Mas Eko!</div>
+        <button id="goBtn">GABUNG & PROSES</button>
+        <div id="status">Siap, Mas Eko!</div>
     </div>
 
     <div id="downloadArea">
-        <p>✅ BERHASIL! Klik tombol di bawah untuk simpan:</p>
+        <p>✅ BERHASIL! Klik tombol di bawah:</p>
         <a id="linkDownload" class="btn-download">SIMPAN VIDEO KE GALERI</a>
     </div>
 
     <video id="v1" loop crossorigin="anonymous"></video>
-    <video id="v2" loop crossorigin="anonymous"></video>
+    <video id="v2" loop muted crossorigin="anonymous"></video>
     <canvas id="c" width="720" height="1280"></canvas>
 
     <script>
@@ -56,18 +56,20 @@
         goBtn.onclick = async () => {
             if (!v1.src || !v2.src) return alert("Pilih videonya dulu!");
             
-            status.innerText = "🚀 PROSES JALAN... TUNGGU 15 DETIK";
+            status.innerText = "🚀 SEDANG MEMPROSES... TUNGGU 15 DETIK";
             goBtn.disabled = true;
             dlArea.style.display = "none";
 
-            await v1.play();
-            await v2.play();
+            // Putar kedua video
+            v1.play();
+            v2.play();
 
-            // Campur Audio
+            // AMBIL SUARA HANYA DARI VIDEO UTAMA (v1)
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const dest = audioCtx.createMediaStreamDestination();
-            audioCtx.createMediaElementSource(v1).connect(dest);
-            audioCtx.createMediaElementSource(v2).connect(dest);
+            const source1 = audioCtx.createMediaElementSource(v1);
+            source1.connect(dest);
+            source1.connect(audioCtx.destination); 
 
             const videoStream = canvas.captureStream(30);
             const combinedStream = new MediaStream([
@@ -84,9 +86,9 @@
                 const url = URL.createObjectURL(blob);
                 
                 dlLink.href = url;
-                dlLink.download = "colab_mas_eko_" + Date.now() + ".webm";
+                dlLink.download = "reaksi_jernih_eko.webm";
                 
-                status.innerText = "✨ PROSES SELESAI!";
+                status.innerText = "✨ SELESAI! SUARA JOSS";
                 dlArea.style.display = "block";
                 goBtn.disabled = false;
                 v1.pause(); v2.pause();
@@ -95,7 +97,7 @@
             function draw() {
                 if (recorder.state === "recording") {
                     ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
-                    // Kotak reaksi Mas Eko di kiri bawah
+                    // Overlay video reaksi Mas Eko di kiri bawah
                     ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
                     requestAnimationFrame(draw);
                 }
