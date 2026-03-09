@@ -3,36 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Merge Instan - Mas Eko</title>
+    <title>Video Merger Bersuara - Mas Eko</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; }
         .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
         input { margin: 10px 0; width: 100%; color: white; }
         button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; }
         #status { margin-top: 15px; color: #ffcc00; font-size: 14px; }
-        canvas { display: none; } /* Proses di balik layar */
-        .preview-box { width: 200px; height: 350px; border: 1px solid #333; margin: 10px auto; display: flex; align-items: center; justify-content: center; background: #111; border-radius: 10px; overflow: hidden; }
-        video { width: 100%; height: 100%; object-fit: cover; display: none; }
+        canvas { display: none; }
+        video { display: none; }
     </style>
 </head>
 <body>
 
-    <h3>🎥 Auto Merge Reaction (Anti Macet)</h3>
-    <p style="font-size: 11px; color: #aaa;">Hasil: Video Utama + Kotak Kecil Mas Eko</p>
+    <h3>🎥 Auto Merge + Audio (Joss!)</h3>
+    <p style="font-size: 11px; color: #aaa;">Suara Video Utama & Mas Eko akan digabung</p>
 
     <div class="card">
-        <label>1. Video Utama:</label>
+        <label>1. Video Utama (Target):</label>
         <input type="file" id="vid1" accept="video/*">
         
         <label>2. Video Reaksi Mas Eko:</label>
         <input type="file" id="vid2" accept="video/*">
         
-        <button id="goBtn">GABUNG & DOWNLOAD SEKARANG</button>
-        <div id="status">Pilih file dulu, Mas Eko!</div>
+        <button id="goBtn">GABUNG & DOWNLOAD (DENGAN SUARA)</button>
+        <div id="status">Pilih videonya dulu, Mas!</div>
     </div>
 
-    <video id="v1" muted loop></video>
-    <video id="v2" muted loop></video>
+    <video id="v1" loop></video>
+    <video id="v2" loop></video>
     <canvas id="c" width="720" height="1280"></canvas>
 
     <script>
@@ -43,17 +42,34 @@
         const goBtn = document.getElementById('goBtn');
         const status = document.getElementById('status');
 
-        document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); v1.play(); };
-        document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); v2.play(); };
+        document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
+        document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
-        goBtn.onclick = () => {
-            if (!v1.src || !v2.src) return alert("Pilih dua videonya dulu!");
+        goBtn.onclick = async () => {
+            if (!v1.src || !v2.src) return alert("File belum lengkap!");
             
-            status.innerText = "🚀 Sedang memproses... (Hanya 15 detik)";
+            status.innerText = "🚀 Sedang memproses audio & video... (15 Detik)";
             goBtn.disabled = true;
 
-            const stream = canvas.captureStream(30);
-            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            // Jalankan video
+            await v1.play();
+            await v2.play();
+
+            // Gabungkan Audio dari kedua video
+            const audioCtx = new AudioContext();
+            const dest = audioCtx.createMediaStreamDestination();
+            audioCtx.createMediaElementSource(v1).connect(dest);
+            audioCtx.createMediaElementSource(v2).connect(dest);
+            audioCtx.createMediaElementSource(v1).connect(audioCtx.destination);
+            audioCtx.createMediaElementSource(v2).connect(audioCtx.destination);
+
+            const videoStream = canvas.captureStream(30);
+            const combinedStream = new MediaStream([
+                ...videoStream.getVideoTracks(),
+                ...dest.stream.getAudioTracks()
+            ]);
+
+            const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
             let chunks = [];
 
             recorder.ondataavailable = (e) => chunks.push(e.data);
@@ -62,29 +78,25 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = "hasil_colab_eko.webm";
+                a.download = "colab_bersuara_eko.webm";
                 a.click();
-                status.innerText = "✅ SELESAI! Video sudah terdownload.";
+                status.innerText = "✅ SELESAI! Suara sudah masuk.";
                 goBtn.disabled = false;
+                v1.pause(); v2.pause();
             };
 
-            // Gambar ke canvas secara real-time
             function draw() {
                 if (recorder.state === "recording") {
-                    ctx.drawImage(v1, 0, 0, canvas.width, canvas.height); // Video Utama Full
-                    ctx.strokeStyle = "red";
-                    ctx.lineWidth = 5;
-                    ctx.strokeRect(40, canvas.height - 340, 220, 300); // Bingkai kotak reaksi
-                    ctx.drawImage(v2, 50, canvas.height - 330, 200, 280); // Video Mas Eko (Kiri Bawah)
+                    ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(v2, 50, canvas.height - 330, 200, 280);
                     requestAnimationFrame(draw);
                 }
             }
 
             recorder.start();
             draw();
-            setTimeout(() => recorder.stop(), 15000); // Otomatis berhenti 15 detik
+            setTimeout(() => recorder.stop(), 15000);
         };
     </script>
-
 </body>
 </html>
