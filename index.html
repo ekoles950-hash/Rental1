@@ -3,28 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Auto Log - Mas Eko</title>
+    <title>Konten Maker - Mas Eko</title>
     <style>
-        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; }
+        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 20px; }
         .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; }
-        input { margin: 10px 0; width: 100%; color: white; display: block; }
-        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; }
-        #status { margin-top: 15px; color: #ffcc00; font-weight: bold; }
+        input { margin: 15px 0; width: 100%; color: white; display: block; }
+        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; font-size: 16px; }
+        #status { margin-top: 20px; color: #ffcc00; font-weight: bold; }
         canvas, video { display: none; }
     </style>
 </head>
 <body>
 
-    <h3>🎥 Auto Merge & Auto Sheet</h3>
+    <h3>🎬 Auto Sheet Log</h3>
     <div class="card">
-        <label style="display:block; text-align:left; font-size:12px;">Video Utama:</label>
+        <label style="display:block; text-align:left;">1. Pilih Video Utama:</label>
         <input type="file" id="vid1" accept="video/*">
         
-        <label style="display:block; text-align:left; font-size:12px; margin-top:10px;">Video Reaksi:</label>
+        <label style="display:block; text-align:left;">2. Pilih Video Reaksi:</label>
         <input type="file" id="vid2" accept="video/*">
         
-        <button id="goBtn" style="margin-top:15px;">PROSES & SIMPAN KE SHEET</button>
-        <div id="status">Pilih video untuk mulai, Mas Eko.</div>
+        <button id="goBtn">PROSES & KIRIM KE SHEET</button>
+        <div id="status">Siap memproses, Mas Eko.</div>
     </div>
 
     <video id="v1" loop crossorigin="anonymous"></video>
@@ -39,16 +39,16 @@
         const status = document.getElementById('status');
         const goBtn = document.getElementById('goBtn');
 
-        // MASUKKAN URL WEB APP MAS EKO DISINI
+        // MASUKKAN LINK WEB APP MAS EKO DI SINI:
         const scriptURL = "https://script.google.com/macros/s/AKfycbzx_zyOBw05J8XVcjCBMpuNtF6tcyN1XpJhfNFHcoZZ5n945EOfYOEwwV8fp2lt4mY/exec";
 
         document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
         goBtn.onclick = async () => {
-            if (!v1.src || !v2.src) return alert("Pilih file dulu!");
+            if (!v1.src || !v2.src) return alert("Pilih kedua video dulu!");
             
-            status.innerText = "⏳ SEDANG PROSES (15 DETIK)...";
+            status.innerText = "⏳ SEDANG MEMPROSES (15 DETIK)...";
             goBtn.disabled = true;
             v1.play(); v2.play();
 
@@ -56,15 +56,15 @@
             const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
             
             recorder.onstop = () => {
-                const fileName = "Konten_Eko_" + new Date().toLocaleString();
+                const fileName = "konten_eko_" + Date.now() + ".webm";
                 
-                // OTOMATIS KIRIM KE SPREADSHEET
+                // OTOMATIS KIRIM DATA KE SHEET
                 fetch(scriptURL, {
                     method: 'POST',
                     mode: 'no-cors',
                     body: JSON.stringify({ fileName: fileName })
                 }).then(() => {
-                    status.innerText = "✅ BERHASIL MASUK SHEET!";
+                    status.innerText = "✅ BERHASIL MASUK KE SPREADSHEET!";
                     goBtn.disabled = false;
                     v1.pause(); v2.pause();
                     alert("Data Video sudah tercatat di Spreadsheet 'konten'!");
@@ -73,15 +73,15 @@
 
             function draw() {
                 if (recorder.state === "recording") {
-                    ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
+                    ctx.drawImage(v1, 0, 0, canvas.width, canvas.height); // Utama
+                    ctx.drawImage(v2, 40, canvas.height - 350, 220, 300); // Reaksi
                     requestAnimationFrame(draw);
                 }
             }
 
             recorder.start();
             draw();
-            setTimeout(() => recorder.stop(), 15000); // Stop & lapor setelah 15 detik
+            setTimeout(() => recorder.stop(), 15000); // Durasi 15 detik
         };
     </script>
 </body>
