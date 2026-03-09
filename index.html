@@ -3,77 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Merger 2-in-1 - Mas Eko</title>
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+    <title>Video Merger Instan - Mas Eko</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding: 20px; }
-        .box { background: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
-        input { margin: 10px 0; display: block; width: 100%; }
-        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; }
-        #status { margin-top: 15px; color: #ffcc00; font-size: 14px; }
-        video { width: 100%; max-width: 400px; margin-top: 20px; border-radius: 10px; border: 2px solid #444; }
+        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 10px; }
+        .box { background: #1a1a1a; padding: 15px; border-radius: 12px; border: 1px solid #333; margin-bottom: 10px; }
+        input { margin: 10px 0; width: 90%; }
+        .preview-area { 
+            display: flex; 
+            justify-content: center; 
+            background: #000; 
+            width: 360px; /* Standar Shorts */
+            height: 640px; 
+            margin: 0 auto; 
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #ff0000;
+        }
+        video { width: 50%; height: 100%; object-fit: cover; }
+        button { background: #ff0000; color: #fff; border: none; padding: 12px; border-radius: 8px; width: 90%; font-weight: bold; cursor: pointer; }
+        #downloadBtn { background: #00ff00; color: #000; display: none; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <h2>🚀 Video Merger 2-in-1</h2>
-    <p>Pilih 2 file video dari galeri untuk digabung kiri-kanan</p>
-
+    <h3>🚀 Auto Merge 2-in-1</h3>
+    
     <div class="box">
-        <label>Video Kiri (Mas Eko):</label>
-        <input type="file" id="video1" accept="video/*">
-        
-        <label>Video Kanan (Target):</label>
-        <input type="file" id="video2" accept="video/*">
-        
-        <button id="mergeBtn">GABUNGKAN SEKARANG</button>
-        <div id="status">Siap memproses...</div>
+        <label>1. Video Mas Eko:</label><br>
+        <input type="file" id="vid1" accept="video/*"><br>
+        <label>2. Video Target:</label><br>
+        <input type="file" id="vid2" accept="video/*">
     </div>
 
-    <div id="resultArea" style="display:none;">
-        <h3>Hasil Gabungan:</h3>
-        <video id="outputVideo" controls></video>
-        <br>
-        <a id="downloadLink" style="color: #00ff00; text-decoration: none; font-weight: bold;">[ KLIK DISINI UNTUK DOWNLOAD ]</a>
+    <div class="preview-area" id="captureArea">
+        <video id="v1" autoplay loop muted></video>
+        <video id="v2" autoplay loop muted></video>
+    </div>
+
+    <div style="margin-top: 15px;">
+        <button id="startBtn">MULAI GABUNGKAN & REKAM</button>
+        <button id="downloadBtn">DOWNLOAD HASIL VIDEO</button>
     </div>
 
     <script>
-        const { createFFmpeg, fetchFile } = FFmpeg;
-        const ffmpeg = createFFmpeg({ log: true });
+        const v1 = document.getElementById('v1');
+        const v2 = document.getElementById('v2');
+        const vid1Input = document.getElementById('vid1');
+        const vid2Input = document.getElementById('vid2');
+        const captureArea = document.getElementById('captureArea');
+        const downloadBtn = document.getElementById('downloadBtn');
 
-        const mergeBtn = document.getElementById('mergeBtn');
-        const status = document.getElementById('status');
+        // Preview Video saat dipilih
+        vid1Input.onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
+        vid2Input.onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
-        mergeBtn.addEventListener('click', async () => {
-            const file1 = document.getElementById('video1').files[0];
-            const file2 = document.getElementById('video2').files[0];
+        let mediaRecorder;
+        let recordedChunks = [];
 
-            if (!file1 || !file2) {
-                alert("Pilih kedua videonya dulu ya Mas Eko!");
-                return;
-            }
-
-            status.innerText = "Sedang memuat sistem (tunggu sebentar)...";
-            if (!ffmpeg.isLoaded()) await ffmpeg.load();
-
-            status.innerText = "Sedang menggabungkan video... (Jangan tutup web ini)";
+        document.getElementById('startBtn').onclick = async function() {
+            this.innerText = "SEDANG MEREKAM... (Tunggu 15 Detik)";
+            this.style.background = "#555";
             
-            ffmpeg.FS('writeFile', 'input1.mp4', await fetchFile(file1));
-            ffmpeg.FS('writeFile', 'input2.mp4', await fetchFile(file2));
+            const stream = captureArea.captureStream(30); // Ambil gambar dari tampilan web
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8' });
+            
+            mediaRecorder.ondataavailable = (e) => recordedChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                downloadBtn.href = url;
+                downloadBtn.download = "colab_mas_eko.webm";
+                downloadBtn.style.display = "inline-block";
+                this.innerText = "SELESAI! KLIK DOWNLOAD";
+                this.style.background = "#ff0000";
+            };
 
-            // Perintah untuk menggabungkan video secara side-by-side
-            await ffmpeg.run('-i', 'input1.mp4', '-i', 'input2.mp4', '-filter_complex', 'hstack', 'output.mp4');
-
-            const data = ffmpeg.FS('readFile', 'output.mp4');
-            const videoBlob = new Blob([data.buffer], { type: 'video/mp4' });
-            const url = URL.createObjectURL(videoBlob);
-
-            document.getElementById('outputVideo').src = url;
-            document.getElementById('downloadLink').href = url;
-            document.getElementById('downloadLink').download = 'colab_mas_eko.mp4';
-            document.getElementById('resultArea').style.display = 'block';
-            status.innerText = "Selesai! Video sudah jadi 1 file.";
-        });
+            mediaRecorder.start();
+            setTimeout(() => mediaRecorder.stop(), 15000); // Otomatis rekam 15 detik buat Shorts
+        };
     </script>
 
 </body>
