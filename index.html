@@ -3,69 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Colab Mas Eko - Sengkuni Net</title>
+    <title>Auto Colab Preview - Mas Eko</title>
     <style>
-        body { font-family: sans-serif; background-color: #000; color: #fff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
-        .header { margin-bottom: 15px; text-align: center; }
-        .header h2 { font-size: 18px; color: #ff0000; margin: 5px 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; margin: 0; }
+        .header { margin-bottom: 15px; }
+        .header h3 { color: #ff0000; margin-bottom: 5px; }
         
-        /* Wadah Utama Colab */
-        .colab-wrapper { 
-            display: flex; 
-            justify-content: center; 
-            gap: 4px; 
-            width: 100%; 
-            max-width: 400px; 
-            background: #1a1a1a; 
-            padding: 5px; 
-            border-radius: 15px; 
-            border: 2px solid #333;
-        }
-
-        .video-container { flex: 1; position: relative; }
+        .input-group { background: #1a1a1a; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #333; }
+        input { padding: 10px; width: 90%; max-width: 400px; border-radius: 8px; border: 1px solid #444; background: #000; color: #fff; margin-bottom: 10px; font-size: 14px; }
+        button { padding: 12px; width: 95%; max-width: 420px; background: #ff0000; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; }
         
-        /* Pengaturan Frame agar pas */
-        iframe { 
-            width: 100%; 
-            height: 450px; /* Tinggi disesuaikan untuk layar HP */
-            border-radius: 10px; 
-            border: none;
-        }
-
-        .label-tag {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.6);
-            padding: 2px 8px;
-            border-radius: 5px;
-            font-size: 10px;
-            font-weight: bold;
-        }
+        .colab-frame { display: flex; justify-content: center; align-items: center; gap: 5px; max-width: 380px; margin: 0 auto; }
+        .video-box { flex: 1; }
+        iframe { width: 100%; height: 320px; border-radius: 10px; border: 1px solid #333; background: #111; }
+        .label { font-size: 11px; margin-bottom: 5px; color: #ffcc00; font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h2>🚀 Preview Colab Otomatis</h2>
-        <p style="font-size: 12px; color: #ccc;">Video Mas Eko & Target</p>
+        <h3>🚀 Auto Colab Simulator</h3>
+        <p style="font-size: 12px; color: #aaa;">Simulasi Colab untuk Basecamp Coffee & Sengkuni Net</p>
     </div>
 
-    <div class="colab-wrapper">
-        <div class="video-container">
-            <span class="label-tag">Mas Eko</span>
-            <iframe src="https://www.youtube.com/embed/BzjCPKswlGo?autoplay=1&mute=1&loop=1&playlist=BzjCPKswlGo" allowfullscreen></iframe>
+    <div class="input-group">
+        <input type="text" id="myLink" placeholder="Tempel link video rekaman Mas Eko...">
+        
+        <input type="text" id="targetLink" placeholder="Tempel link video orang lain...">
+        
+        <button onclick="prosesColab()">TAMPILKAN BERSANDINGAN</button>
+    </div>
+
+    <div class="colab-frame">
+        <div class="video-box">
+            <div class="label">Video Mas Eko</div>
+            <iframe id="myVideo" src="https://www.youtube.com/embed/BzjCPKswlGo" frameborder="0" allowfullscreen></iframe>
         </div>
 
-        <div class="video-container">
-            <span class="label-tag">Target</span>
-            <iframe src="https://www.youtube.com/embed/xR998gKpYaw?autoplay=1&mute=1&loop=1&playlist=xR998gKpYaw" allowfullscreen></iframe>
+        <div class="video-box">
+            <div class="label">Video Target</div>
+            <iframe id="targetVideo" src="" frameborder="0" allowfullscreen></iframe>
         </div>
     </div>
 
-    <div style="margin-top: 20px; font-size: 11px; color: #555;">
-        Vercel Project: rental1-five
-    </div>
+    <script>
+        function getID(url) {
+            let id = "";
+            if (url.includes("shorts/")) {
+                id = url.split("shorts/")[1].split(/[?&]/)[0];
+            } else if (url.includes("v=")) {
+                id = url.split("v=")[1].split(/[?&]/)[0];
+            } else if (url.includes("youtu.be/")) {
+                id = url.split("youtu.be/")[1].split(/[?&]/)[0];
+            }
+            return id;
+        }
+
+        function prosesColab() {
+            const linkSaya = document.getElementById('myLink').value;
+            const linkTarget = document.getElementById('targetLink').value;
+            
+            // Update video Mas Eko kalau diisi
+            if (linkSaya) {
+                const myId = getID(linkSaya);
+                if (myId) document.getElementById('myVideo').src = "https://www.youtube.com/embed/" + myId;
+            }
+
+            // Update video Target
+            if (linkTarget) {
+                const targetId = getID(linkTarget);
+                if (targetId) document.getElementById('targetVideo').src = "https://www.youtube.com/embed/" + targetId;
+            } else {
+                alert("Masukkan link video orang lain juga ya!");
+            }
+        }
+    </script>
 
 </body>
 </html>
