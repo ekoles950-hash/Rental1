@@ -3,37 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reaction Mute - Mas Eko</title>
+    <title>Konten Log - Mas Eko</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; }
-        .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
-        input { margin: 10px 0; width: 100%; color: white; }
-        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; }
+        .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; }
+        input { margin: 10px 0; width: 100%; color: white; display: block; }
+        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; }
         #status { margin-top: 15px; color: #ffcc00; font-size: 14px; font-weight: bold; }
-        #downloadArea { display: none; margin-top: 20px; padding: 20px; border-top: 2px solid #333; }
-        .btn-download { background: #00ff00; color: #000; text-decoration: none; padding: 20px; display: block; border-radius: 12px; font-weight: bold; font-size: 18px; }
+        #dlArea { display: none; margin-top: 20px; border-top: 2px solid #444; padding-top: 20px; }
+        .btn-dl { background: #00ff00; color: #000; text-decoration: none; padding: 20px; display: block; border-radius: 12px; font-weight: bold; font-size: 18px; }
         canvas, video { display: none; }
     </style>
 </head>
 <body>
 
-    <h3>🎥 Reaction Maker (Suara Utama)</h3>
-    <p style="font-size: 11px; color: #aaa;">Video reaksi akan dibisukan agar suara tidak kacau.</p>
-
+    <h3>🚀 Auto Merge & Log Spreadsheet</h3>
     <div class="card">
-        <label>1. Video Utama (Ada Suara):</label>
+        <label>1. Video Utama (Target):</label>
         <input type="file" id="vid1" accept="video/*">
         
-        <label>2. Video Reaksi Mas Eko (Mute):</label>
+        <label style="margin-top:10px; display:block;">2. Video Reaksi Mas Eko (Mute):</label>
         <input type="file" id="vid2" accept="video/*">
         
-        <button id="goBtn">GABUNG & PROSES</button>
-        <div id="status">Siap, Mas Eko!</div>
+        <button id="goBtn">PROSES VIDEO & LAPOR</button>
+        <div id="status">Data akan masuk ke Spreadsheet "Konten"</div>
     </div>
 
-    <div id="downloadArea">
-        <p>✅ BERHASIL! Klik tombol di bawah:</p>
-        <a id="linkDownload" class="btn-download">SIMPAN VIDEO KE GALERI</a>
+    <div id="dlArea">
+        <p>✅ VIDEO JADI! Klik tombol di bawah:</p>
+        <a id="linkDl" class="btn-dl">DOWNLOAD KE GALERI</a>
     </div>
 
     <video id="v1" loop crossorigin="anonymous"></video>
@@ -45,67 +43,62 @@
         const v2 = document.getElementById('v2');
         const canvas = document.getElementById('c');
         const ctx = canvas.getContext('2d');
-        const goBtn = document.getElementById('goBtn');
+        const dlArea = document.getElementById('dlArea');
         const status = document.getElementById('status');
-        const dlArea = document.getElementById('downloadArea');
-        const dlLink = document.getElementById('linkDownload');
+        const goBtn = document.getElementById('goBtn');
+
+        // Ganti ID Script Mas Eko di sini
+        const scriptID = "AKfycbzx_zyOBw05J8XVcjCBMpuNtF6tcyN1XpJhfNFHcoZZ5n945EOfYOEwwV8fp2lt4mY";
+        const scriptURL = `https://script.google.com/macros/s/${scriptID}/exec`;
 
         document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
         goBtn.onclick = async () => {
-            if (!v1.src || !v2.src) return alert("Pilih videonya dulu!");
+            if (!v1.src || !v2.src) return alert("Pilih file dulu, Mas!");
             
-            status.innerText = "🚀 SEDANG MEMPROSES... TUNGGU 15 DETIK";
+            status.innerText = "⏳ SEDANG MENJAHIT VIDEO (15 DETIK)...";
             goBtn.disabled = true;
-            dlArea.style.display = "none";
+            v1.play(); v2.play();
 
-            // Putar kedua video
-            v1.play();
-            v2.play();
-
-            // AMBIL SUARA HANYA DARI VIDEO UTAMA (v1)
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const dest = audioCtx.createMediaStreamDestination();
-            const source1 = audioCtx.createMediaElementSource(v1);
-            source1.connect(dest);
-            source1.connect(audioCtx.destination); 
-
-            const videoStream = canvas.captureStream(30);
-            const combinedStream = new MediaStream([
-                ...videoStream.getVideoTracks(),
-                ...dest.stream.getAudioTracks()
-            ]);
-
-            const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
+            const stream = canvas.captureStream(30);
+            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
             let chunks = [];
 
             recorder.ondataavailable = (e) => chunks.push(e.data);
             recorder.onstop = () => {
                 const blob = new Blob(chunks, { type: 'video/webm' });
                 const url = URL.createObjectURL(blob);
+                const dlLink = document.getElementById('linkDl');
+                const fileName = "konten_eko_" + Date.now() + ".webm";
                 
                 dlLink.href = url;
-                dlLink.download = "reaksi_jernih_eko.webm";
+                dlLink.download = fileName;
                 
-                status.innerText = "✨ SELESAI! SUARA JOSS";
+                // OTOMATIS LAPOR KE SHEETS SAAT DOWNLOAD DIKLIK
+                dlLink.onclick = () => {
+                    fetch(scriptURL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fileName: fileName })
+                    });
+                };
+
+                status.innerText = "✅ SELESAI! SILAKAN DOWNLOAD";
                 dlArea.style.display = "block";
                 goBtn.disabled = false;
-                v1.pause(); v2.pause();
             };
 
             function draw() {
                 if (recorder.state === "recording") {
-                    ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
-                    // Overlay video reaksi Mas Eko di kiri bawah
-                    ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
+                    ctx.drawImage(v1, 0, 0, canvas.width, canvas.height); // Main video
+                    ctx.drawImage(v2, 40, canvas.height - 350, 220, 300); // Reaction video (Kecil)
                     requestAnimationFrame(draw);
                 }
             }
-
-            recorder.start();
-            draw();
-            setTimeout(() => recorder.stop(), 15000);
+            recorder.start(); draw();
+            setTimeout(() => recorder.stop(), 15000); // Durasi Shorts
         };
     </script>
 </body>
