@@ -8,24 +8,24 @@
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; }
         .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-top: 20px; }
         input { margin: 15px 0; width: 100%; color: white; display: block; border: 1px solid #444; padding: 10px; border-radius: 8px; }
-        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
-        button:disabled { background: #555; cursor: not-allowed; }
-        #status { margin-top: 20px; color: #ffcc00; font-weight: bold; font-size: 14px; }
+        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; font-size: 16px; }
+        button:disabled { background: #555; }
+        #status { margin-top: 20px; color: #ffcc00; font-weight: bold; }
         canvas, video { display: none; }
     </style>
 </head>
 <body>
 
-    <h3>🎬 Sengkuni Auto Sheet Log</h3>
+    <h3>🎬 Sengkuni Auto Sheet</h3>
     <div class="card">
-        <label style="display:block; text-align:left; font-size: 12px; margin-bottom: 5px;">1. Video Utama:</label>
+        <label style="display:block; text-align:left; font-size: 12px;">1. Video Utama:</label>
         <input type="file" id="vid1" accept="video/*">
         
-        <label style="display:block; text-align:left; font-size: 12px; margin-bottom: 5px; margin-top: 10px;">2. Video Reaksi:</label>
+        <label style="display:block; text-align:left; font-size: 12px; margin-top: 10px;">2. Video Reaksi:</label>
         <input type="file" id="vid2" accept="video/*">
         
         <button id="goBtn">PROSES GABUNG & SIMPAN</button>
-        <div id="status">Pilih video untuk memulai...</div>
+        <div id="status">Pilih video dulu ya Mas Eko...</div>
     </div>
 
     <video id="v1" loop crossorigin="anonymous"></video>
@@ -40,14 +40,14 @@
         const status = document.getElementById('status');
         const goBtn = document.getElementById('goBtn');
 
-        // MASUKKAN LINK EXEC BARU MAS EKO DI SINI:
-        const scriptURL = "https://script.google.com/macros/s/AKfycbzx_zyOBw05J8XVcjCBMpuNtF6tcyN1XpJhfNFHcoZZ5n945EOfYOEwwV8fp2lt4mY/exec";
+        // GANTI LINK INI DENGAN LINK /EXEC MAS EKO YANG TERBARU:
+        const scriptURL = "https://script.google.com/macros/s/AKfycbwUY7cHCaQOQJfweHJyBqm3hRkXwCqW5UNTFfXvyIAlLQCE-8pazrKO2MPHGhOrgIs/exec";
 
         document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
         goBtn.onclick = async () => {
-            if (!v1.src || !v2.src) return alert("Pilih kedua video dulu ya Mas Eko!");
+            if (!v1.src || !v2.src) return alert("Pilih kedua video dulu!");
             
             status.innerText = "⏳ SEDANG MEMPROSES (15 DETIK)...";
             goBtn.disabled = true;
@@ -59,20 +59,15 @@
             recorder.onstop = () => {
                 const fileName = "konten_eko_" + Date.now() + ".webm";
                 
-                // MENGIRIM DATA KE SHEET SECARA OTOMATIS
-                const finalLink = scriptURL + "?fileName=" + encodeURIComponent(fileName);
-                
-                // Gunakan fetch (latar belakang) agar tidak perlu pindah halaman
-                fetch(finalLink, { method: 'GET', mode: 'no-cors' })
-                .then(() => {
-                    status.innerText = "✅ BERHASIL MASUK SPREADSHEET!";
+                // MENGIRIM DATA KE SHEET
+                fetch(scriptURL + "?fileName=" + encodeURIComponent(fileName), {
+                    method: 'GET',
+                    mode: 'no-cors'
+                }).then(() => {
+                    status.innerText = "✅ SUKSES MASUK SHEET!";
                     goBtn.disabled = false;
                     v1.pause(); v2.pause();
-                    alert("Mantap Mas Eko! Data '" + fileName + "' sudah tersimpan di Spreadsheet.");
-                })
-                .catch(err => {
-                    status.innerText = "❌ GAGAL KIRIM DATA!";
-                    console.error(err);
+                    alert("Mantap Mas Eko! Data sudah tersimpan di baris baru.");
                 });
             };
 
@@ -86,7 +81,7 @@
 
             recorder.start();
             draw();
-            setTimeout(() => recorder.stop(), 15000); // Durasi 15 detik
+            setTimeout(() => recorder.stop(), 15000); // 15 detik
         };
     </script>
 </body>
