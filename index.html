@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Konten Log - Mas Eko</title>
+    <title>Sengkuni Konten Maker - Mas Eko</title>
     <style>
-        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; }
-        .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; }
-        input { margin: 10px 0; width: 100%; color: white; display: block; }
-        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        #status { margin-top: 15px; color: #ffcc00; font-size: 14px; font-weight: bold; }
+        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; margin: 0; }
+        .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
+        label { display: block; margin-top: 10px; font-size: 14px; color: #aaa; text-align: left; }
+        input { margin: 10px 0; width: 100%; color: white; display: block; background: #333; border: 1px solid #444; padding: 8px; border-radius: 5px; }
+        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        button:disabled { background: #555; }
+        #status { margin-top: 15px; color: #ffcc00; font-weight: bold; font-size: 14px; }
         #dlArea { display: none; margin-top: 20px; border-top: 2px solid #444; padding-top: 20px; }
         .btn-dl { background: #00ff00; color: #000; text-decoration: none; padding: 20px; display: block; border-radius: 12px; font-weight: bold; font-size: 18px; }
         canvas, video { display: none; }
@@ -19,19 +21,19 @@
 
     <h3>🚀 Auto Merge & Log Spreadsheet</h3>
     <div class="card">
-        <label>1. Video Utama (Target):</label>
+        <label>1. Video Utama (Ada Suara):</label>
         <input type="file" id="vid1" accept="video/*">
         
-        <label style="margin-top:10px; display:block;">2. Video Reaksi Mas Eko (Mute):</label>
+        <label>2. Video Reaksi Mas Eko (Diam/Mute):</label>
         <input type="file" id="vid2" accept="video/*">
         
         <button id="goBtn">PROSES VIDEO & LAPOR</button>
-        <div id="status">Data akan masuk ke Spreadsheet "Konten"</div>
+        <div id="status">Siap memproses konten...</div>
     </div>
 
     <div id="dlArea">
-        <p>✅ VIDEO JADI! Klik tombol di bawah:</p>
-        <a id="linkDl" class="btn-dl">DOWNLOAD KE GALERI</a>
+        <p>✅ VIDEO SIAP! Klik tombol di bawah:</p>
+        <a id="linkDl" class="btn-dl">DOWNLOAD & SIMPAN KE SHEETS</a>
     </div>
 
     <video id="v1" loop crossorigin="anonymous"></video>
@@ -47,22 +49,35 @@
         const status = document.getElementById('status');
         const goBtn = document.getElementById('goBtn');
 
-        // Ganti ID Script Mas Eko di sini
-        const scriptID = "AKfycbzx_zyOBw05J8XVcjCBMpuNtF6tcyN1XpJhfNFHcoZZ5n945EOfYOEwwV8fp2lt4mY";
-        const scriptURL = `https://script.google.com/macros/s/${scriptID}/exec`;
+        // URL Web App Mas Eko yang sudah aktif
+        const scriptURL = "https://script.google.com/macros/s/AKfycbzx_zyOBw05J8XVcjCBMpuNtF6tcyN1XpJhfNFHcoZZ5n945EOfYOEwwV8fp2lt4mY/exec";
 
         document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
         goBtn.onclick = async () => {
-            if (!v1.src || !v2.src) return alert("Pilih file dulu, Mas!");
+            if (!v1.src || !v2.src) return alert("Pilih kedua video dulu, Mas!");
             
-            status.innerText = "⏳ SEDANG MENJAHIT VIDEO (15 DETIK)...";
+            status.innerText = "⏳ SEDANG MENGGABUNGKAN (15 DETIK)...";
             goBtn.disabled = true;
+            dlArea.style.display = "none";
+            
             v1.play(); v2.play();
 
-            const stream = canvas.captureStream(30);
-            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            // Setup Audio: Hanya ambil dari Video Utama (v1)
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const dest = audioCtx.createMediaStreamDestination();
+            const source1 = audioCtx.createMediaElementSource(v1);
+            source1.connect(dest);
+            source1.connect(audioCtx.destination);
+
+            const videoStream = canvas.captureStream(30);
+            const combinedStream = new MediaStream([
+                ...videoStream.getVideoTracks(),
+                ...dest.stream.getAudioTracks()
+            ]);
+
+            const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
             let chunks = [];
 
             recorder.ondataavailable = (e) => chunks.push(e.data);
@@ -75,30 +90,36 @@
                 dlLink.href = url;
                 dlLink.download = fileName;
                 
-                // OTOMATIS LAPOR KE SHEETS SAAT DOWNLOAD DIKLIK
+                // Kirim data ke Spreadsheet saat tombol download diklik
                 dlLink.onclick = () => {
                     fetch(scriptURL, {
                         method: 'POST',
                         mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ fileName: fileName })
                     });
+                    alert("Data tercatat di Spreadsheet Konten!");
                 };
 
-                status.innerText = "✅ SELESAI! SILAKAN DOWNLOAD";
+                status.innerText = "✨ SELESAI! SILAKAN DOWNLOAD";
                 dlArea.style.display = "block";
                 goBtn.disabled = false;
+                v1.pause(); v2.pause();
             };
 
             function draw() {
                 if (recorder.state === "recording") {
-                    ctx.drawImage(v1, 0, 0, canvas.width, canvas.height); // Main video
-                    ctx.drawImage(v2, 40, canvas.height - 350, 220, 300); // Reaction video (Kecil)
+                    // Gambar Video Utama (Layar Penuh)
+                    ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
+                    // Gambar Video Reaksi (Kotak Kecil Kiri Bawah)
+                    ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
                     requestAnimationFrame(draw);
                 }
             }
-            recorder.start(); draw();
-            setTimeout(() => recorder.stop(), 15000); // Durasi Shorts
+
+            recorder.start();
+            draw();
+            // Rekam otomatis 15 detik untuk Shorts
+            setTimeout(() => recorder.stop(), 15000);
         };
     </script>
 </body>
