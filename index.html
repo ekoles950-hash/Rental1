@@ -3,48 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Merge Download - Mas Eko</title>
+    <title>Video Merger 2-in-1 - Mas Eko</title>
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 20px; }
         .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
-        input { margin: 10px 0; width: 100%; color: white; }
-        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; }
-        #status { margin-top: 15px; color: #ffcc00; font-weight: bold; }
-        #downloadArea { display: none; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px; }
-        .dl-btn { background: #00ff00; color: #000; text-decoration: none; padding: 15px; display: inline-block; border-radius: 10px; font-weight: bold; width: 90%; }
+        input { margin: 10px 0; width: 100%; color: white; display: block; }
+        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        #status { margin-top: 15px; color: #ffcc00; font-weight: bold; font-size: 14px; }
+        #downloadArea { display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #333; }
+        .dl-link { background: #00ff00; color: #000; text-decoration: none; padding: 15px; display: block; border-radius: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h2>🎥 Auto Merge & Download</h2>
-    <p style="font-size: 13px; color: #aaa;">Gabungkan video reaksi tanpa rekam layar</p>
+    <h3>🎥 Auto Merge Reaction</h3>
+    <p style="font-size: 12px; color: #aaa;">Gabungkan video tanpa rekam layar (Hasil: Kotak Kecil Kiri Bawah)</p>
 
     <div class="card">
-        <label>1. Video Utama (Target):</label>
-        <input type="file" id="videoTarget" accept="video/*">
+        <label>1. Video Utama (Full Screen):</label>
+        <input type="file" id="vidMain" accept="video/*">
         
-        <label>2. Video Reaksi (Mas Eko):</label>
-        <input type="file" id="videoEko" accept="video/*">
+        <label style="margin-top:10px; display:block;">2. Video Reaksi Mas Eko (Kotak Kecil):</label>
+        <input type="file" id="vidEko" accept="video/*">
         
-        <button id="processBtn">GABUNG & SIAPKAN DOWNLOAD</button>
-        <div id="status">Siap diproses...</div>
+        <button id="btnProcess">PROSES & DOWNLOAD</button>
+        <div id="status">Siap memproses file...</div>
     </div>
 
     <div id="downloadArea">
-        <p>✅ Berhasil! Klik tombol di bawah:</p>
-        <a id="linkDownload" class="dl-btn">DOWNLOAD VIDEO 2-IN-1</a>
+        <p>✅ Video Berhasil Dibuat!</p>
+        <a id="finalDownload" class="dl-link">KLIK DISINI UNTUK DOWNLOAD MP4</a>
     </div>
 
     <script>
         const { createFFmpeg, fetchFile } = FFmpeg;
         const ffmpeg = createFFmpeg({ log: true });
 
-        document.getElementById('processBtn').onclick = async () => {
-            const file1 = document.getElementById('videoTarget').files[0];
-            const file2 = document.getElementById('videoEko').files[0];
+        document.getElementById('btnProcess').onclick = async () => {
+            const f1 = document.getElementById('vidMain').files[0];
+            const f2 = document.getElementById('vidEko').files[0];
 
-            if (!file1 || !file2) {
+            if (!f1 || !f2) {
                 alert("Pilih kedua videonya dulu ya Mas Eko!");
                 return;
             }
@@ -52,31 +52,31 @@
             const status = document.getElementById('status');
             const dlArea = document.getElementById('downloadArea');
             
-            status.innerText = "Memuat Sistem... (Tunggu 5-10 detik)";
+            status.innerText = "⏳ Memuat sistem... Mohon tunggu sebentar.";
             if (!ffmpeg.isLoaded()) await ffmpeg.load();
 
-            status.innerText = "Sedang Menjahit Video... Mohon Tunggu";
+            status.innerText = "⚙️ Sedang menjahit video (Overlay Kiri Bawah)...";
             
-            ffmpeg.FS('writeFile', 'main.mp4', await fetchFile(file1));
-            ffmpeg.FS('writeFile', 'eko.mp4', await fetchFile(file2));
+            ffmpeg.FS('writeFile', 'main.mp4', await fetchFile(f1));
+            ffmpeg.FS('writeFile', 'eko.mp4', await fetchFile(f2));
 
-            // Kode sakti: Overlay video Mas Eko di kiri bawah kotak kecil
+            // Perintah untuk menaruh video Eko di kiri bawah dengan ukuran kecil
             await ffmpeg.run(
                 '-i', 'main.mp4', 
                 '-i', 'eko.mp4', 
                 '-filter_complex', 
-                '[1:v]scale=150:-1[eko_small];[0:v][eko_small]overlay=10:main_h-overlay_h-10', 
-                'output.mp4'
+                '[1:v]scale=120:-1[eko_kecil];[0:v][eko_kecil]overlay=15:main_h-overlay_h-15', 
+                'hasil.mp4'
             );
 
-            const data = ffmpeg.FS('readFile', 'output.mp4');
+            const data = ffmpeg.FS('readFile', 'hasil.mp4');
             const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
 
-            const link = document.getElementById('linkDownload');
-            link.href = url;
-            link.download = "hasil_colab_eko.mp4";
+            const dlLink = document.getElementById('finalDownload');
+            dlLink.href = url;
+            dlLink.download = "colab_reaction_eko.mp4";
             
-            status.innerText = "Selesai!";
+            status.innerText = "✨ SELESAI!";
             dlArea.style.display = 'block';
         };
     </script>
