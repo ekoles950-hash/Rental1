@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker Manual - Mas Eko</title>
+    <title>Sengkuni Link Maker - Mas Eko</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; margin: 0; }
+        h3 { color: #ff0000; text-shadow: 2px 2px #333; }
         .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-top: 15px; }
         input { margin: 10px 0; width: 100%; color: white; display: block; background: #333; padding: 10px; border-radius: 8px; border: none; }
-        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 16px; }
-        #result { display: none; margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 1px dashed #ff0000; }
-        .copy-box { background: #000; padding: 10px; margin: 10px 0; font-family: monospace; color: #00ff00; word-break: break-all; border-radius: 5px; }
-        #status { margin-top: 20px; color: #ffcc00; font-weight: bold; }
+        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 16px; transition: 0.3s; }
+        button:disabled { background: #444; cursor: not-allowed; }
+        
+        /* Kotak Hasil Salin */
+        #resultBox { display: none; margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 1px dashed #ff0000; }
+        .copy-text { background: #000; padding: 10px; margin: 10px 0; font-family: monospace; color: #00ff00; word-break: break-all; border-radius: 5px; font-size: 14px; }
+        #status { margin-top: 20px; color: #ffcc00; font-weight: bold; font-size: 14px; }
         canvas, video { display: none; }
     </style>
 </head>
@@ -19,17 +23,21 @@
 
     <h3>🎬 Sengkuni Link Maker</h3>
     <div class="card">
+        <label style="display:block; text-align:left; font-size:12px; margin-bottom:5px;">Video Utama:</label>
         <input type="file" id="vid1" accept="video/*">
+        
+        <label style="display:block; text-align:left; font-size:12px; margin-bottom:5px; margin-top:10px;">Video Reaksi:</label>
         <input type="file" id="vid2" accept="video/*">
+        
         <button id="goBtn">GABUNG VIDEO SEKARANG</button>
-        <div id="status">Pilih video, nanti link muncul di sini.</div>
+        <div id="status">Pilih video untuk memulai...</div>
     </div>
 
-    <div id="result" class="card">
-        <p style="margin:0; font-size:12px; color:#aaa;">SALIN INI KE SHEET (TAB KONTEN):</p>
-        <div class="copy-box" id="fileNameLink">Sengkuni_123.webm</div>
-        <button style="background:#444; font-size:12px; padding:8px;" onclick="copyToClipboard()">SALIN TEKS</button>
-        <p style="font-size:11px; color:#00ff00; margin-top:10px;">Video otomatis ter-download ke HP.</p>
+    <div id="resultBox">
+        <p style="margin:0; font-size:12px; color:#aaa;">SALIN INI KE KOLOM "Link Video" DI SHEET:</p>
+        <div class="copy-text" id="textToCopy">Sengkuni_123.webm</div>
+        <button style="background:#008000; font-size:14px; padding:10px;" onclick="copyResult()">KLIK UNTUK SALIN TEKS</button>
+        <p style="font-size:11px; color:#00ff00; margin-top:10px;">✅ Video otomatis ter-download ke galeri HP.</p>
     </div>
 
     <video id="v1" loop crossorigin="anonymous"></video>
@@ -43,19 +51,19 @@
         const ctx = canvas.getContext('2d');
         const status = document.getElementById('status');
         const goBtn = document.getElementById('goBtn');
-        const resultDiv = document.getElementById('result');
-        const fileNameLink = document.getElementById('fileNameLink');
+        const resultBox = document.getElementById('resultBox');
+        const textToCopy = document.getElementById('textToCopy');
         let chunks = [];
 
         document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
         goBtn.onclick = async () => {
-            if (!v1.src || !v2.src) return alert("Pilih video dulu Mas Eko!");
+            if (!v1.src || !v2.src) return alert("Pilih kedua video dulu Mas Eko!");
             
             chunks = [];
             status.innerText = "⏳ SEDANG MENGGABUNG (15 DETIK)...";
-            resultDiv.style.display = "none";
+            resultBox.style.display = "none";
             goBtn.disabled = true;
             v1.play(); v2.play();
 
@@ -67,18 +75,18 @@
             recorder.onstop = () => {
                 const blob = new Blob(chunks, { type: 'video/webm' });
                 const url = URL.createObjectURL(blob);
-                const name = "Sengkuni_" + new Date().getTime() + ".webm";
+                const name = "Sengkuni_" + Date.now() + ".webm";
 
-                // 1. Download Video otomatis
+                // 1. Download Video Otomatis ke HP
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = name;
                 a.click();
 
-                // 2. Tampilkan Nama File untuk disalin
-                fileNameLink.innerText = name;
-                resultDiv.style.display = "block";
-                status.innerText = "✅ BERHASIL DIGABUNG!";
+                // 2. Tampilkan Nama File untuk disalin ke Sheet
+                textToCopy.innerText = name;
+                resultBox.style.display = "block";
+                status.innerText = "✅ PROSES SELESAI!";
                 goBtn.disabled = false;
             };
 
@@ -92,13 +100,13 @@
 
             recorder.start();
             draw();
-            setTimeout(() => recorder.stop(), 15000); 
+            setTimeout(() => recorder.stop(), 15000); // Gabung 15 detik
         };
 
-        function copyToClipboard() {
-            const text = fileNameLink.innerText;
+        function copyResult() {
+            const text = textToCopy.innerText;
             navigator.clipboard.writeText(text).then(() => {
-                alert("Teks berhasil disalin! Silakan tempel ke Google Sheets Mas Eko.");
+                alert("Teks '" + text + "' berhasil disalin! Silakan tempel ke Google Sheets.");
             });
         }
     </script>
