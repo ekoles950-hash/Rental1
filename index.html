@@ -3,29 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Auto-Post YT</title>
+    <title>Sengkuni Maker - Simpan Galeri</title>
     <style>
-        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; margin: 0; }
-        .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-top: 15px; }
-        input { margin: 10px 0; width: 100%; color: white; display: block; background: #333; padding: 10px; border-radius: 8px; border: none; }
-        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 16px; }
-        button:disabled { background: #444; }
-        #status { margin-top: 20px; color: #ffcc00; font-weight: bold; }
+        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 20px; }
+        .box { background: #1a1a1a; padding: 25px; border-radius: 15px; border: 2px solid #333; }
+        button { background: #008000; color: #fff; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        #status { margin-top: 15px; color: #00ff00; }
         canvas, video { display: none; }
     </style>
 </head>
 <body>
-
-    <h3>🎬 Sengkuni Maker to YouTube</h3>
-    <div class="card">
-        <label style="display:block; text-align:left; font-size:11px;">Video Utama (Suara):</label>
-        <input type="file" id="vid1" accept="video/*">
-        <label style="display:block; text-align:left; font-size:11px; margin-top:10px;">Video Reaksi (Mute):</label>
-        <input type="file" id="vid2" accept="video/*">
-        <button id="goBtn">GABUNG & POST KE YT</button>
-        <div id="status">Pilih video untuk mulai...</div>
+    <div class="box">
+        <h3>🎬 SENGKUNI MAKER</h3>
+        <input type="file" id="v1_in" accept="video/*" style="width:100%; margin-bottom:10px;">
+        <input type="file" id="v2_in" accept="video/*" style="width:100%;">
+        <button id="gas">GABUNG & SIMPAN KE HP</button>
+        <div id="status">Tinggal download, upload manual ke YT Mas.</div>
     </div>
-
     <video id="v1" loop crossorigin="anonymous"></video>
     <video id="v2" loop muted crossorigin="anonymous"></video>
     <canvas id="c" width="720" height="1280"></canvas>
@@ -35,79 +29,46 @@
         const v2 = document.getElementById('v2');
         const canvas = document.getElementById('c');
         const ctx = canvas.getContext('2d');
-        const status = document.getElementById('status');
-        const goBtn = document.getElementById('goBtn');
-        let chunks = [];
-        let audioCtx, source, destination;
+        const gas = document.getElementById('gas');
 
-        // LINK EXEC MAS EKO
-        const scriptURL = "https://script.google.com/macros/s/AKfycbxDK8IPTStfvLkDbR71edYqz4DcIxeA0jSqQxyD6UEUHPJ9X-Q5KQJKfKMNLFDThds/exec";
+        document.getElementById('v1_in').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
+        document.getElementById('v2_in').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
-        document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
-        document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
-
-        goBtn.onclick = async () => {
+        gas.onclick = () => {
             if (!v1.src || !v2.src) return alert("Pilih video dulu!");
-            
-            chunks = [];
-            status.innerText = "⏳ SEDANG MENGGABUNG (15 DETIK)...";
-            goBtn.disabled = true;
+            gas.disabled = true;
+            document.getElementById('status').innerText = "⏳ Sedang Proses 15 Detik...";
 
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                source = audioCtx.createMediaElementSource(v1);
-                destination = audioCtx.createMediaStreamDestination();
-                source.connect(destination);
-                source.connect(audioCtx.destination);
-            }
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioCtx.createMediaElementSource(v1);
+            const dest = audioCtx.createMediaStreamDestination();
+            source.connect(dest); source.connect(audioCtx.destination);
 
             v1.play(); v2.play();
-            const videoStream = canvas.captureStream(30);
-            const combinedStream = new MediaStream([
-                ...videoStream.getVideoTracks(),
-                ...destination.stream.getAudioTracks()
-            ]);
+            const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+            const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            let chunks = [];
 
-            const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
-            recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-            
-            recorder.onstop = () => {
-                status.innerText = "📤 SEDANG PROSES UPLOAD KE YOUTUBE...";
+            rec.ondataavailable = (e) => chunks.push(e.data);
+            rec.onstop = () => {
                 const blob = new Blob(chunks, { type: 'video/webm' });
-                const reader = new FileReader();
-
-                reader.onloadend = () => {
-                    const base64data = reader.result.split(',')[1];
-                    const name = "Sengkuni_" + Date.now() + ".webm";
-
-                    fetch(scriptURL, {
-                        method: 'POST',
-                        body: JSON.stringify({ file: base64data, fileName: name })
-                    })
-                    .then(res => res.text())
-                    .then(data => {
-                        status.innerText = data;
-                        alert("Berhasil Mas Eko! Silakan cek YouTube.");
-                        goBtn.disabled = false;
-                    })
-                    .catch(err => {
-                        status.innerText = "❌ Gagal: " + err;
-                        goBtn.disabled = false;
-                    });
-                };
-                reader.readAsDataURL(blob);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = "Sengkuni_" + Date.now() + ".webm";
+                a.click();
+                document.getElementById('status').innerText = "✅ Berhasil Disimpan di Galeri!";
+                gas.disabled = false;
             };
 
             function draw() {
-                if (recorder.state === "recording") {
+                if (rec.state === "recording") {
                     ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
                     ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
                     requestAnimationFrame(draw);
                 }
             }
-            recorder.start();
-            draw();
-            setTimeout(() => { recorder.stop(); v1.pause(); v2.pause(); }, 15000); 
+            rec.start(); draw();
+            setTimeout(() => { rec.stop(); v1.pause(); v2.pause(); }, 15000);
         };
     </script>
 </body>
