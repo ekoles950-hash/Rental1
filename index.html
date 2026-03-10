@@ -73,4 +73,43 @@
 
             rec.onstop = async () => {
                 status.innerText = "🚀 TERBANG KE YOUTUBE...\nTunggu balasan dari Google";
-                const blob = new Blob(
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    const base64 = reader.result.split(',')[1];
+                    const formData = new URLSearchParams();
+                    formData.append('file', base64);
+                    formData.append('title', document.getElementById('v_title').value);
+
+                    try {
+                        const res = await fetch(URL_GAS, {
+                            method: 'POST',
+                            body: formData,
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                        });
+                        const text = await res.text();
+                        status.innerText = text;
+                        if(text.includes("BERHASIL")) {
+                            alert("MANTAP MAS EKO! Video beneran sudah masuk.");
+                        }
+                    } catch (e) {
+                        status.innerText = "❌ Gagal: " + e.message;
+                    }
+                    gasBtn.disabled = false;
+                };
+                reader.readAsDataURL(blob);
+            };
+
+            rec.start();
+            function draw() {
+                if (rec.state === "recording") {
+                    ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
+                    requestAnimationFrame(draw);
+                }
+            }
+            draw();
+        };
+    </script>
+</body>
+</html>
