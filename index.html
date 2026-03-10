@@ -3,24 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker Pro - Console Mode</title>
+    <title>Sengkuni Maker - Anti Blokir</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; }
-        .box { background: #111; padding: 20px; border-radius: 20px; border: 3px solid #00ff00; }
-        input, button { width: 100%; margin: 10px 0; padding: 12px; border-radius: 8px; border: none; }
-        button { background: #00ff00; font-weight: bold; cursor: pointer; }
-        #log { background: #222; color: #00ff00; text-align: left; font-size: 10px; height: 100px; overflow-y: scroll; padding: 10px; border: 1px solid #444; margin-top: 10px; }
+        .box { background: #111; padding: 20px; border-radius: 20px; border: 2px solid #00ff00; box-shadow: 0 0 15px #00ff00; }
+        input, button { width: 100%; margin: 10px 0; padding: 12px; border-radius: 8px; border: none; box-sizing: border-box; }
+        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; }
+        #log { background: #000; color: #00ff00; text-align: left; font-size: 10px; height: 120px; overflow-y: scroll; padding: 10px; border: 1px solid #444; margin-top: 10px; font-family: monospace; }
         canvas, video { display: none; }
     </style>
 </head>
 <body>
 
     <div class="box">
-        <h3>🎬 SENGKUNI CONSOLE</h3>
+        <h3>🎬 SENGKUNI ANTI-BLOKIR</h3>
         <input type="text" id="v_title" placeholder="Judul Youtube...">
         <input type="file" id="v1_in" accept="video/*">
+        <p style="font-size: 10px; color: #888;">Video Utama (Durasi Patokan)</p>
         <input type="file" id="v2_in" accept="video/*">
-        <button id="gasBtn">GABUNG & KIRIM</button>
+        <p style="font-size: 10px; color: #888;">Video Reaksi (Mute)</p>
+        <button id="gasBtn">GABUNG & KIRIM YT</button>
         <div id="log">Console: Menunggu perintah Mas Eko...</div>
     </div>
 
@@ -33,11 +35,14 @@
         function cetakLog(msg) { 
             logBox.innerHTML += "<br>> " + msg; 
             logBox.scrollTop = logBox.scrollHeight;
-            console.log(msg);
         }
 
-        const URL_REPLIZ = "https://api.repliz.com/public/upload";
-        const TOKEN_REPLIZ = "ivylpP0kYeI20ooP9PJJ8H6iUumQJS7g";
+        // KUNCI SAKTI MAS EKO
+        const ACCESS_KEY = "4876222122";
+        const SECRET_KEY = "ivylpP0kYeI20ooP9PJJ8H6iUumQJS7g";
+        const TARGET_URL = "https://api.repliz.com/public/upload";
+        // PIPA TEMBUS (PROXY)
+        const PROXY_URL = "https://corsproxy.io/?";
 
         const v1 = document.getElementById('v1');
         const v2 = document.getElementById('v2');
@@ -48,10 +53,13 @@
         document.getElementById('v2_in').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); cetakLog("Video 2 Ready"); };
 
         document.getElementById('gasBtn').onclick = async () => {
-            cetakLog("Memulai Proses...");
-            v1.play(); v2.play();
+            if (!v1.src || !v2.src) return alert("Pilih video dulu!");
+            cetakLog("Memulai Rekaman Durasi...");
             
-            const audioCtx = new AudioContext();
+            v1.currentTime = 0; v2.currentTime = 0;
+            await v1.play(); v2.play();
+
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const source = audioCtx.createMediaElementSource(v1);
             const dest = audioCtx.createMediaStreamDestination();
             source.connect(dest); source.connect(audioCtx.destination);
@@ -61,30 +69,33 @@
             let chunks = [];
 
             rec.ondataavailable = (e) => chunks.push(e.data);
-            v1.onended = () => rec.stop();
+            v1.onended = () => { cetakLog("Video Utama Habis. Berhenti."); rec.stop(); };
 
             rec.onstop = async () => {
-                cetakLog("Rekaman Selesai. Durasi OK.");
+                cetakLog("Proses Pengiriman via Pipa Proxy...");
                 const blob = new Blob(chunks, { type: 'video/webm' });
                 const formData = new FormData();
-                formData.append('file', blob, 'video.webm');
-                formData.append('title', document.getElementById('v_title').value);
+                formData.append('file', blob, 'video_horeg.webm');
+                formData.append('title', document.getElementById('v_title').value || "Sengkuni Horeg");
 
-                cetakLog("Mengirim ke Repliz...");
                 try {
-                    const res = await fetch(URL_REPLIZ, {
+                    // MENGGUNAKAN PROXY UNTUK MENEMBUS BLOKIR
+                    const res = await fetch(PROXY_URL + encodeURIComponent(TARGET_URL), {
                         method: 'POST',
-                        headers: { 'x-token': TOKEN_REPLIZ },
+                        headers: {
+                            'Authorization': 'Basic ' + btoa(ACCESS_KEY + ':' + SECRET_KEY)
+                        },
                         body: formData
                     });
+
                     if (res.ok) {
-                        cetakLog("BERHASIL KIRIM KE YOUTUBE!");
-                        alert("MANTAP MAS EKO!");
+                        cetakLog("✅ BERHASIL TEMBUS KE REPLIZ!");
+                        alert("MANTAP MAS EKO! Cek Channel Pantelo.");
                     } else {
-                        cetakLog("GAGAL: Error " + res.status);
+                        cetakLog("❌ GAGAL: Kode " + res.status);
                     }
                 } catch (e) {
-                    cetakLog("ERROR: " + e.message);
+                    cetakLog("❌ ERROR PROXY: " + e.message);
                 }
             };
 
