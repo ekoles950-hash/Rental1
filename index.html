@@ -3,35 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker Pro - Mas Eko</title>
+    <title>Sengkuni Auto-YT - Mas Eko</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; margin: 0; }
         .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-top: 15px; }
         input { margin: 10px 0; width: 100%; color: white; display: block; background: #333; padding: 10px; border-radius: 8px; border: none; }
         button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 16px; }
-        button:disabled { background: #444; cursor: not-allowed; }
-        #result { display: none; margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 2px dashed #ff0000; }
-        .copy-box { background: #000; padding: 12px; margin: 10px 0; font-family: monospace; color: #00ff00; word-break: break-all; border-radius: 5px; font-size: 14px; }
-        #status { margin-top: 20px; color: #ffcc00; font-weight: bold; }
+        button:disabled { background: #444; }
+        #status { margin-top: 20px; color: #ffcc00; font-weight: bold; font-size: 14px; }
         canvas, video { display: none; }
     </style>
 </head>
 <body>
 
-    <h3>🎬 Sengkuni Hybrid (Audio Guard)</h3>
+    <h3>🎬 Sengkuni Auto-YouTube</h3>
     <div class="card">
-        <label style="display:block; text-align:left; font-size:11px; color:#aaa;">Video Utama (Suara Aktif):</label>
+        <label style="display:block; text-align:left; font-size:11px;">Video Utama (Suara):</label>
         <input type="file" id="vid1" accept="video/*">
-        <label style="display:block; text-align:left; font-size:11px; color:#aaa; margin-top:10px;">Video Reaksi (Mute):</label>
+        <label style="display:block; text-align:left; font-size:11px; margin-top:10px;">Video Reaksi (Mute):</label>
         <input type="file" id="vid2" accept="video/*">
-        <button id="goBtn">GABUNG & KIRIM</button>
-        <div id="status">Pilih video, Mas Eko.</div>
-    </div>
-
-    <div id="result" class="card">
-        <p style="margin:0; font-size:12px; color:#aaa;">Nama File Konten:</p>
-        <div class="copy-box" id="fileNameLink">Menunggu...</div>
-        <button style="background:#008000; font-size:14px;" onclick="copyToClipboard()">SALIN TEKS (MANUAL)</button>
+        <button id="goBtn">GABUNG & UPLOAD KE YT</button>
+        <div id="status">Siap tayang, Mas Eko?</div>
     </div>
 
     <video id="v1" loop crossorigin="anonymous"></video>
@@ -45,99 +37,80 @@
         const ctx = canvas.getContext('2d');
         const status = document.getElementById('status');
         const goBtn = document.getElementById('goBtn');
-        const resultDiv = document.getElementById('result');
-        const fileNameLink = document.getElementById('fileNameLink');
         let chunks = [];
         let audioCtx, source, destination;
 
+        // LINK EXEC MAS EKO
         const scriptURL = "https://script.google.com/macros/s/AKfycbxSKKkjNBF2ItT5pvQ_dzxzPrn1XfkTLDb4LVaeexC6iboDxxHFFHqPZUjJOmv3rvs/exec";
 
         document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
         goBtn.onclick = async () => {
-            if (!v1.src || !v2.src) return alert("Pili video dulu Mas!");
+            if (!v1.src || !v2.src) return alert("Pilih video dulu!");
             
-            try {
-                chunks = [];
-                status.innerText = "⏳ PROSES GABUNG + AUDIO (15 DETIK)...";
-                resultDiv.style.display = "none";
-                goBtn.disabled = true;
+            chunks = [];
+            status.innerText = "⏳ SEDANG MENGGABUNG (15 DETIK)...";
+            goBtn.disabled = true;
 
-                // RESET AUDIO CONTEXT AGAR FRESH
-                if (audioCtx) audioCtx.close();
+            if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
                 source = audioCtx.createMediaElementSource(v1);
                 destination = audioCtx.createMediaStreamDestination();
-                
                 source.connect(destination);
-                source.connect(audioCtx.destination); // Tetap bunyi di HP Mas Eko saat rekam
+                source.connect(audioCtx.destination);
+            }
 
-                v1.play(); v2.play();
+            v1.play(); v2.play();
 
-                const videoStream = canvas.captureStream(30);
-                
-                // GABUNGKAN TRACK VIDEO DARI CANVAS DAN TRACK AUDIO DARI VIDEO UTAMA
-                const combinedStream = new MediaStream([
-                    ...videoStream.getVideoTracks(),
-                    ...destination.stream.getAudioTracks()
-                ]);
+            const videoStream = canvas.captureStream(30);
+            const combinedStream = new MediaStream([
+                ...videoStream.getVideoTracks(),
+                ...destination.stream.getAudioTracks()
+            ]);
 
-                const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
-                
-                recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-                
-                recorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: 'video/webm' });
-                    const url = URL.createObjectURL(blob);
+            const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
+            recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+            
+            recorder.onstop = () => {
+                status.innerText = "📤 MENGIRIM KE YOUTUBE (JANGAN DITUTUP)...";
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const reader = new FileReader();
+
+                reader.onloadend = () => {
+                    const base64data = reader.result.split(',')[1];
                     const name = "Sengkuni_" + Date.now() + ".webm";
 
-                    const a = document.createElement('a');
-                    a.href = url; a.download = name; a.click();
-
-                    fileNameLink.innerText = name;
-                    resultDiv.style.display = "block";
-                    status.innerText = "📤 MENGIRIM KE SHEET...";
-
-                    const finalUrl = scriptURL + "?fileName=" + encodeURIComponent(name) + "&callback=callbackFunc";
-                    const script = document.createElement('script');
-                    script.src = finalUrl;
-                    document.body.appendChild(script);
+                    fetch(scriptURL, {
+                        method: 'POST',
+                        body: JSON.stringify({ file: base64data, fileName: name })
+                    })
+                    .then(res => res.text())
+                    .then(data => {
+                        status.innerText = "✅ " + data;
+                        alert("Berhasil Mas Eko! Cek YouTube.");
+                        goBtn.disabled = false;
+                    })
+                    .catch(err => {
+                        status.innerText = "❌ Gagal Kirim: " + err;
+                        goBtn.disabled = false;
+                    });
                 };
+                reader.readAsDataURL(blob);
+            };
 
-                function draw() {
-                    if (recorder.state === "recording") {
-                        ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
-                        requestAnimationFrame(draw);
-                    }
+            function draw() {
+                if (recorder.state === "recording") {
+                    ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
+                    requestAnimationFrame(draw);
                 }
-
-                recorder.start();
-                draw();
-                setTimeout(() => {
-                    recorder.stop();
-                    v1.pause(); v2.pause();
-                }, 15000); 
-
-            } catch (err) {
-                console.error(err);
-                alert("Klik layar dulu ya Mas biar audionya aktif!");
-                goBtn.disabled = false;
             }
+
+            recorder.start();
+            draw();
+            setTimeout(() => { recorder.stop(); v1.pause(); v2.pause(); }, 15000); 
         };
-
-        function callbackFunc(e) {
-            status.innerText = "✅ AUDIO OK & DATA MASUK SHEET!";
-            goBtn.disabled = false;
-        }
-
-        function copyToClipboard() {
-            navigator.clipboard.writeText(fileNameLink.innerText).then(() => {
-                alert("Nama file disalin!");
-            });
-        }
     </script>
 </body>
 </html>
