@@ -5,23 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sengkuni Maker Pro - Mas Eko</title>
     <style>
-        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; }
+        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; margin: 0; }
+        h3 { color: #ff0000; text-shadow: 2px 2px #333; }
         .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-top: 15px; }
         input { margin: 10px 0; width: 100%; color: white; display: block; background: #333; padding: 10px; border-radius: 8px; border: none; }
-        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        button:disabled { background: #444; }
-        #status { margin-top: 20px; color: #ffcc00; font-weight: bold; font-size: 14px; }
+        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 16px; transition: 0.3s; }
+        button:disabled { background: #444; cursor: not-allowed; }
+        #status { margin-top: 20px; color: #ffcc00; font-weight: bold; font-size: 14px; min-height: 20px; }
         canvas, video { display: none; }
     </style>
 </head>
 <body>
 
-    <h3>🎬 Sengkuni Maker (Auto Drive)</h3>
+    <h3>🎬 Sengkuni Auto Drive & Sheet</h3>
     <div class="card">
-        <label style="display:block; text-align:left; font-size:12px;">Video Utama:</label>
+        <label style="display:block; text-align:left; font-size:12px; margin-bottom:5px;">Video Utama:</label>
         <input type="file" id="vid1" accept="video/*">
-        <label style="display:block; text-align:left; font-size:12px;">Video Reaksi:</label>
+        
+        <label style="display:block; text-align:left; font-size:12px; margin-bottom:5px; margin-top:10px;">Video Reaksi:</label>
         <input type="file" id="vid2" accept="video/*">
+        
         <button id="goBtn">GABUNG & KIRIM KE DRIVE</button>
         <div id="status">Siap beraksi, Mas Eko?</div>
     </div>
@@ -39,14 +42,14 @@
         const goBtn = document.getElementById('goBtn');
         let chunks = [];
 
-        // PASTE LINK EXEC MAS EKO TERBARU DI SINI:
-        const scriptURL = https://script.google.com/macros/s/AKfycbyGuxCUvR2xOTBy6zLutYZ06Ryuf51eLiWbVbvbBmFLmw2gz012SWk6TDKqCFtqKFc/exec";
+        // LINK EXEC BARU MAS EKO:
+        const scriptURL = "https://script.google.com/macros/s/AKfycbyGuxCUvR2xOTBy6zLutYZ06Ryuf51eLiWbVbvbBmFLmw2gz012SWk6TDKqCFtqKFc/exec";
 
         document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
         goBtn.onclick = async () => {
-            if (!v1.src || !v2.src) return alert("Pilih video dulu ya Mas!");
+            if (!v1.src || !v2.src) return alert("Pilih video dulu Mas Eko!");
             
             chunks = [];
             status.innerText = "⏳ SEDANG MENGGABUNG (15 DETIK)...";
@@ -59,7 +62,7 @@
             recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
             
             recorder.onstop = () => {
-                status.innerText = "📤 MENGIRIM KE DRIVE (SABAR)...";
+                status.innerText = "📤 MENGIRIM KE DRIVE & SHEET...";
                 const blob = new Blob(chunks, { type: 'video/webm' });
                 const reader = new FileReader();
 
@@ -69,16 +72,17 @@
 
                     fetch(scriptURL, {
                         method: 'POST',
-                        mode: 'no-cors', // Biar tidak kena blokir satpam Browser
                         body: JSON.stringify({ file: base64data, fileName: fileName })
                     })
                     .then(() => {
-                        status.innerText = "✅ SUKSES! CEK DRIVE & SHEET.";
+                        status.innerText = "✅ SUKSES! CEK DRIVE & SPREADSHEET.";
                         goBtn.disabled = false;
-                        alert("Mantap Mas Eko! Cek baris baru di Spreadsheet.");
+                        chunks = [];
+                        alert("Mantap Mas Eko! Cek tab KONTEN di Sheet.");
                     })
                     .catch(err => {
-                        alert("Gagal kirim: " + err);
+                        console.error(err);
+                        status.innerText = "❌ GAGAL KIRIM!";
                         goBtn.disabled = false;
                     });
                 };
@@ -95,7 +99,7 @@
 
             recorder.start();
             draw();
-            setTimeout(() => recorder.stop(), 15000); // Durasi 15 detik
+            setTimeout(() => recorder.stop(), 15000); 
         };
     </script>
 </body>
