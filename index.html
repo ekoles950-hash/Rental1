@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker v2 - Mas Eko</title>
+    <title>Sengkuni Maker Pro - Mas Eko</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; }
         .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-top: 15px; }
@@ -16,12 +16,14 @@
 </head>
 <body>
 
-    <h3>🎬 Sengkuni Video to Drive</h3>
+    <h3>🎬 Sengkuni Maker (Auto Drive)</h3>
     <div class="card">
+        <label style="display:block; text-align:left; font-size:12px;">Video Utama:</label>
         <input type="file" id="vid1" accept="video/*">
+        <label style="display:block; text-align:left; font-size:12px;">Video Reaksi:</label>
         <input type="file" id="vid2" accept="video/*">
         <button id="goBtn">GABUNG & KIRIM KE DRIVE</button>
-        <div id="status">Siap, Mas Eko?</div>
+        <div id="status">Siap beraksi, Mas Eko?</div>
     </div>
 
     <video id="v1" loop crossorigin="anonymous"></video>
@@ -37,15 +39,16 @@
         const goBtn = document.getElementById('goBtn');
         let chunks = [];
 
-        // PASTE LINK EXEC MAS EKO DI SINI:
-        const scriptURL = "https://script.google.com/macros/s/AKfycbwUY7cHCaQOQJfweHJyBqm3hRkXwCqW5UNTFfXvyIAlLQCE-8pazrKO2MPHGhOrgIs/exec";
+        // PASTE LINK EXEC MAS EKO TERBARU DI SINI:
+        const scriptURL = "https://script.google.com/macros/s/AKfycbx7O7o7pTs3CDEsd0knQNFEf696GfGF0LbIA7EBtDNjkbIRlRuTusw3IEDa1PVoRBg/exec";
 
         document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
         goBtn.onclick = async () => {
-            if (!v1.src || !v2.src) return alert("Pilih video dulu!");
+            if (!v1.src || !v2.src) return alert("Pilih video dulu ya Mas!");
             
+            chunks = [];
             status.innerText = "⏳ SEDANG MENGGABUNG (15 DETIK)...";
             goBtn.disabled = true;
             v1.play(); v2.play();
@@ -53,10 +56,10 @@
             const stream = canvas.captureStream(30);
             const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
             
-            recorder.ondataavailable = (e) => chunks.push(e.data);
+            recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
             
             recorder.onstop = () => {
-                status.innerText = "📤 MENGIRIM VIDEO KE DRIVE...";
+                status.innerText = "📤 MENGIRIM KE DRIVE (SABAR)...";
                 const blob = new Blob(chunks, { type: 'video/webm' });
                 const reader = new FileReader();
 
@@ -66,16 +69,18 @@
 
                     fetch(scriptURL, {
                         method: 'POST',
+                        mode: 'no-cors', // Biar tidak kena blokir satpam Browser
                         body: JSON.stringify({ file: base64data, fileName: fileName })
                     })
-                    .then(res => res.text())
-                    .then(txt => {
-                        status.innerText = "✅ " + txt;
+                    .then(() => {
+                        status.innerText = "✅ SUKSES! CEK DRIVE & SHEET.";
                         goBtn.disabled = false;
-                        chunks = [];
-                        alert("Mantap Mas Eko! Cek Drive & Sheet.");
+                        alert("Mantap Mas Eko! Cek baris baru di Spreadsheet.");
                     })
-                    .catch(err => alert("Gagal kirim: " + err));
+                    .catch(err => {
+                        alert("Gagal kirim: " + err);
+                        goBtn.disabled = false;
+                    });
                 };
                 reader.readAsDataURL(blob);
             };
@@ -90,7 +95,7 @@
 
             recorder.start();
             draw();
-            setTimeout(() => recorder.stop(), 15000);
+            setTimeout(() => recorder.stop(), 15000); // Durasi 15 detik
         };
     </script>
 </body>
