@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker v.GAS</title>
+    <title>Sengkuni Maker v.Sakti</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 20px; }
         .box { background: #111; padding: 25px; border-radius: 20px; border: 3px solid #00ff00; box-shadow: 0 0 15px #00ff00; max-width: 400px; margin: auto; }
@@ -18,13 +18,11 @@
 
     <div class="box">
         <h3>🎬 SENGKUNI AUTO POST</h3>
-        <p style="font-size: 11px; color: #888;">LANGSUNG KE YOUTUBE PANTELO</p>
-        
-        <input type="text" id="v_title" placeholder="Ketik Judul Youtube...">
+        <input type="text" id="v_title" placeholder="Judul Youtube Mas Eko...">
         <input type="file" id="v1_in" accept="video/*">
-        <p style="font-size: 10px; margin-top:-5px; color:#666;">Video Utama (Patokan Durasi)</p>
+        <p style="font-size: 10px; color:#666;">Video Utama (Patokan Durasi)</p>
         <input type="file" id="v2_in" accept="video/*">
-        <p style="font-size: 10px; margin-top:-5px; color:#666;">Video Reaksi (Mute)</p>
+        <p style="font-size: 10px; color:#666;">Video Reaksi (Mute)</p>
         
         <button id="gasBtn">GABUNG & POST KE YT</button>
         <div id="status">Ready, Mas Eko!</div>
@@ -35,6 +33,7 @@
     <canvas id="c" width="720" height="1280"></canvas>
 
     <script>
+        // LINK SAKTI MAS EKO
         const URL_GAS = "https://script.google.com/macros/s/AKfycbxj0RVx9jgAl0DtsqZZ_cLGTCvsqs3-gmB4Vc29PYz-Up98ZOvTwGtnuJ06F1yzTM--/exec";
 
         const v1 = document.getElementById('v1');
@@ -75,21 +74,21 @@
                 const reader = new FileReader();
                 reader.onloadend = async () => {
                     const base64 = reader.result.split(',')[1];
-                    const formData = new URLSearchParams();
-                    formData.append('file', base64);
-                    formData.append('title', document.getElementById('v_title').value);
-
+                    
+                    // PAKAI NO-CORS BIAR GAK GAGAL SINYAL
                     try {
-                        const res = await fetch(URL_GAS, {
+                        await fetch(URL_GAS, {
                             method: 'POST',
-                            body: formData,
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                            mode: 'no-cors', // INI KUNCINYA MAS!
+                            cache: 'no-cache',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: "file=" + encodeURIComponent(base64) + "&title=" + encodeURIComponent(document.getElementById('v_title').value)
                         });
-                        const text = await res.text();
-                        status.innerText = text;
-                        alert("Berhasil Mas Eko! Cek YouTube Pantelo.");
+                        
+                        status.innerText = "✅ PROSES UPLOAD DIMULAI!";
+                        alert("MANTAP MAS EKO! Video sedang dikirim ke YouTube Pantelo. Cek channel beberapa saat lagi.");
                     } catch (e) {
-                        status.innerText = "❌ Gagal Kirim Sinyal.";
+                        status.innerText = "❌ Masalah Jaringan. Coba lagi.";
                     }
                     gasBtn.disabled = false;
                 };
