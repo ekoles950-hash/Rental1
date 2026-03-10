@@ -3,30 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker Pro - Mas Eko</title>
+    <title>Sengkuni Maker Manual - Mas Eko</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; margin: 0; }
-        h3 { color: #ff0000; text-shadow: 2px 2px #333; }
         .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-top: 15px; }
         input { margin: 10px 0; width: 100%; color: white; display: block; background: #333; padding: 10px; border-radius: 8px; border: none; }
-        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 16px; transition: 0.3s; }
-        button:disabled { background: #444; cursor: not-allowed; }
-        #status { margin-top: 20px; color: #ffcc00; font-weight: bold; font-size: 14px; min-height: 20px; }
+        button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 16px; }
+        #result { display: none; margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 1px dashed #ff0000; }
+        .copy-box { background: #000; padding: 10px; margin: 10px 0; font-family: monospace; color: #00ff00; word-break: break-all; border-radius: 5px; }
+        #status { margin-top: 20px; color: #ffcc00; font-weight: bold; }
         canvas, video { display: none; }
     </style>
 </head>
 <body>
 
-    <h3>🎬 Sengkuni Auto Drive & Sheet</h3>
+    <h3>🎬 Sengkuni Link Maker</h3>
     <div class="card">
-        <label style="display:block; text-align:left; font-size:12px; margin-bottom:5px;">Video Utama:</label>
         <input type="file" id="vid1" accept="video/*">
-        
-        <label style="display:block; text-align:left; font-size:12px; margin-bottom:5px; margin-top:10px;">Video Reaksi:</label>
         <input type="file" id="vid2" accept="video/*">
-        
-        <button id="goBtn">GABUNG & KIRIM KE DRIVE</button>
-        <div id="status">Siap beraksi, Mas Eko?</div>
+        <button id="goBtn">GABUNG VIDEO SEKARANG</button>
+        <div id="status">Pilih video, nanti link muncul di sini.</div>
+    </div>
+
+    <div id="result" class="card">
+        <p style="margin:0; font-size:12px; color:#aaa;">SALIN INI KE SHEET (TAB KONTEN):</p>
+        <div class="copy-box" id="fileNameLink">Sengkuni_123.webm</div>
+        <button style="background:#444; font-size:12px; padding:8px;" onclick="copyToClipboard()">SALIN TEKS</button>
+        <p style="font-size:11px; color:#00ff00; margin-top:10px;">Video otomatis ter-download ke HP.</p>
     </div>
 
     <video id="v1" loop crossorigin="anonymous"></video>
@@ -40,10 +43,9 @@
         const ctx = canvas.getContext('2d');
         const status = document.getElementById('status');
         const goBtn = document.getElementById('goBtn');
+        const resultDiv = document.getElementById('result');
+        const fileNameLink = document.getElementById('fileNameLink');
         let chunks = [];
-
-        // LINK EXEC BARU MAS EKO:
-        const scriptURL = "https://script.google.com/macros/s/AKfycbyGuxCUvR2xOTBy6zLutYZ06Ryuf51eLiWbVbvbBmFLmw2gz012SWk6TDKqCFtqKFc/exec";
 
         document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
@@ -53,6 +55,7 @@
             
             chunks = [];
             status.innerText = "⏳ SEDANG MENGGABUNG (15 DETIK)...";
+            resultDiv.style.display = "none";
             goBtn.disabled = true;
             v1.play(); v2.play();
 
@@ -62,31 +65,21 @@
             recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
             
             recorder.onstop = () => {
-                status.innerText = "📤 MENGIRIM KE DRIVE & SHEET...";
                 const blob = new Blob(chunks, { type: 'video/webm' });
-                const reader = new FileReader();
+                const url = URL.createObjectURL(blob);
+                const name = "Sengkuni_" + new Date().getTime() + ".webm";
 
-                reader.onloadend = () => {
-                    const base64data = reader.result.split(',')[1];
-                    const fileName = "Sengkuni_" + Date.now() + ".webm";
+                // 1. Download Video otomatis
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = name;
+                a.click();
 
-                    fetch(scriptURL, {
-                        method: 'POST',
-                        body: JSON.stringify({ file: base64data, fileName: fileName })
-                    })
-                    .then(() => {
-                        status.innerText = "✅ SUKSES! CEK DRIVE & SPREADSHEET.";
-                        goBtn.disabled = false;
-                        chunks = [];
-                        alert("Mantap Mas Eko! Cek tab KONTEN di Sheet.");
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        status.innerText = "❌ GAGAL KIRIM!";
-                        goBtn.disabled = false;
-                    });
-                };
-                reader.readAsDataURL(blob);
+                // 2. Tampilkan Nama File untuk disalin
+                fileNameLink.innerText = name;
+                resultDiv.style.display = "block";
+                status.innerText = "✅ BERHASIL DIGABUNG!";
+                goBtn.disabled = false;
             };
 
             function draw() {
@@ -101,6 +94,13 @@
             draw();
             setTimeout(() => recorder.stop(), 15000); 
         };
+
+        function copyToClipboard() {
+            const text = fileNameLink.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Teks berhasil disalin! Silakan tempel ke Google Sheets Mas Eko.");
+            });
+        }
     </script>
 </body>
 </html>
