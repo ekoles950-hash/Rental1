@@ -47,7 +47,7 @@
         document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
         goBtn.onclick = async () => {
-            if (!v1.src || !v2.src) return alert("Pili video dulu!");
+            if (!v1.src || !v2.src) return alert("Pilih video dulu!");
             
             chunks = [];
             status.innerText = "⏳ SEDANG MENGGABUNG (15 DETIK)...";
