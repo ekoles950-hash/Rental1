@@ -3,27 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Auto-YT - Mas Eko</title>
+    <title>Sengkuni Auto-Post YT</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; margin: 0; }
         .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-top: 15px; }
         input { margin: 10px 0; width: 100%; color: white; display: block; background: #333; padding: 10px; border-radius: 8px; border: none; }
         button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 16px; }
         button:disabled { background: #444; }
-        #status { margin-top: 20px; color: #ffcc00; font-weight: bold; font-size: 14px; }
+        #status { margin-top: 20px; color: #ffcc00; font-weight: bold; }
         canvas, video { display: none; }
     </style>
 </head>
 <body>
 
-    <h3>🎬 Sengkuni Auto-YouTube</h3>
+    <h3>🎬 Sengkuni Maker to YouTube</h3>
     <div class="card">
         <label style="display:block; text-align:left; font-size:11px;">Video Utama (Suara):</label>
         <input type="file" id="vid1" accept="video/*">
         <label style="display:block; text-align:left; font-size:11px; margin-top:10px;">Video Reaksi (Mute):</label>
         <input type="file" id="vid2" accept="video/*">
-        <button id="goBtn">GABUNG & UPLOAD KE YT</button>
-        <div id="status">Siap tayang, Mas Eko?</div>
+        <button id="goBtn">GABUNG & POST KE YT</button>
+        <div id="status">Pilih video untuk mulai...</div>
     </div>
 
     <video id="v1" loop crossorigin="anonymous"></video>
@@ -41,13 +41,13 @@
         let audioCtx, source, destination;
 
         // LINK EXEC MAS EKO
-        const scriptURL = "https://script.google.com/macros/s/AKfycbwgqUvd8XQVbmQoOyNI_V_JM3tFUblpYA-1fSOEI3w4od6Cruzseh7Vf3l3quOsQjM/exec";
+        const scriptURL = "https://script.google.com/macros/s/AKfycbxDK8IPTStfvLkDbR71edYqz4DcIxeA0jSqQxyD6UEUHPJ9X-Q5KQJKfKMNLFDThds/exec";
 
         document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
         goBtn.onclick = async () => {
-            if (!v1.src || !v2.src) return alert("Pili video dulu!");
+            if (!v1.src || !v2.src) return alert("Pilih video dulu!");
             
             chunks = [];
             status.innerText = "⏳ SEDANG MENGGABUNG (15 DETIK)...";
@@ -62,7 +62,6 @@
             }
 
             v1.play(); v2.play();
-
             const videoStream = canvas.captureStream(30);
             const combinedStream = new MediaStream([
                 ...videoStream.getVideoTracks(),
@@ -73,7 +72,7 @@
             recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
             
             recorder.onstop = () => {
-                status.innerText = "📤 MENGIRIM KE YOUTUBE (JANGAN DITUTUP)...";
+                status.innerText = "📤 SEDANG PROSES UPLOAD KE YOUTUBE...";
                 const blob = new Blob(chunks, { type: 'video/webm' });
                 const reader = new FileReader();
 
@@ -87,12 +86,12 @@
                     })
                     .then(res => res.text())
                     .then(data => {
-                        status.innerText = "✅ " + data;
-                        alert("Berhasil Mas Eko! Cek YouTube.");
+                        status.innerText = data;
+                        alert("Berhasil Mas Eko! Silakan cek YouTube.");
                         goBtn.disabled = false;
                     })
                     .catch(err => {
-                        status.innerText = "❌ Gagal Kirim: " + err;
+                        status.innerText = "❌ Gagal: " + err;
                         goBtn.disabled = false;
                     });
                 };
@@ -106,7 +105,6 @@
                     requestAnimationFrame(draw);
                 }
             }
-
             recorder.start();
             draw();
             setTimeout(() => { recorder.stop(); v1.pause(); v2.pause(); }, 15000); 
