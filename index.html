@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker - Repliz Pro</title>
+    <title>Sengkuni Maker x Repliz</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 20px; }
-        .box { background: #111; padding: 25px; border-radius: 20px; border: 2px solid #00ff00; box-shadow: 0 0 15px #00ff00; }
+        .box { background: #111; padding: 25px; border-radius: 20px; border: 2px solid #00ff00; box-shadow: 0 0 15px #00ff00; max-width: 400px; margin: auto; }
         input { width: 100%; margin: 10px 0; background: #222; color: #fff; border: none; padding: 12px; border-radius: 8px; }
         button { background: #00ff00; color: #000; border: none; padding: 18px; width: 100%; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; }
         button:disabled { background: #444; color: #888; }
@@ -17,8 +17,8 @@
 <body>
 
     <div class="box">
-        <h3>🎬 SENGKUNI TO REPLIZ API</h3>
-        <p style="font-size: 11px; color: #888;">UPLOAD OTOMATIS VIA PUBLIC API REPLIZ</p>
+        <h3>🎬 SENGKUNI AUTO POST</h3>
+        <p style="font-size: 11px; color: #888;">DURASI OTOMATIS & UPLOAD VIA REPLIZ</p>
         
         <input type="file" id="v1_in" accept="video/*">
         <p style="font-size: 10px; margin-top:-5px;">Video Utama (Patokan Durasi)</p>
@@ -26,8 +26,8 @@
         <input type="file" id="v2_in" accept="video/*">
         <p style="font-size: 10px; margin-top:-5px;">Video Reaksi (Mute)</p>
         
-        <button id="gasBtn">GABUNG & UPLOAD OTOMATIS</button>
-        <div id="status">Ready, Mas Eko!</div>
+        <button id="gasBtn">GABUNG & KIRIM KE REPLIZ</button>
+        <div id="status">Siap Mas Eko!</div>
     </div>
 
     <video id="v1" crossorigin="anonymous"></video>
@@ -35,7 +35,7 @@
     <canvas id="c" width="720" height="1280"></canvas>
 
     <script>
-        // DATA DARI SCREENSHOT MAS EKO
+        // KUNCI SAKTI MAS EKO
         const ACCESS_KEY = "4876222122";
         const SECRET_KEY = "ivylpP0kYeI20ooP9PJJ8H6iUumQJS7g";
 
@@ -53,29 +53,32 @@
             if (!v1.src || !v2.src) return alert("Pilih video dulu!");
             
             gasBtn.disabled = true;
-            status.innerText = "⏳ SEDANG MEREKAM SESUAI DURASI...";
+            status.innerText = "⏳ MENGGABUNG VIDEO...";
 
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const source = audioCtx.createMediaElementSource(v1);
             const dest = audioCtx.createMediaStreamDestination();
             source.connect(dest); source.connect(audioCtx.destination);
 
+            v1.currentTime = 0; v2.currentTime = 0;
             v1.play(); v2.play();
+            
             const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
             const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
             let chunks = [];
 
             rec.ondataavailable = (e) => chunks.push(e.data);
+            
+            // BERHENTI OTOMATIS SAAT VIDEO UTAMA SELESAI
             v1.onended = () => { if(rec.state === "recording") rec.stop(); };
 
             rec.onstop = async () => {
-                status.innerText = "🚀 MENGIRIM KE REPLIZ API...";
+                status.innerText = "🚀 MENGIRIM KE REPLIZ (AKUN PANTELO)...";
                 const blob = new Blob(chunks, { type: 'video/webm' });
                 
-                // Form Data untuk Upload ke Repliz
                 const formData = new FormData();
-                formData.append('file', blob, 'sengkuni_video.webm');
-                formData.append('title', 'Sengkuni Horeg ' + Date.now());
+                formData.append('file', blob, 'sengkuni_horeg.webm');
+                formData.append('title', 'Sengkuni Horeg #' + Date.now());
 
                 try {
                     const response = await fetch('https://api.repliz.com/public/upload', {
@@ -87,10 +90,10 @@
                     });
 
                     if (response.ok) {
-                        status.innerText = "✅ BERHASIL! Repliz sedang proses ke YouTube.";
-                        alert("Sukses Mas Eko! Cek dashboard Repliz.");
+                        status.innerText = "✅ BERHASIL! Repliz sedang upload ke YouTube.";
+                        alert("Sukses Mas Eko! Cek YouTube Pantelo beberapa saat lagi.");
                     } else {
-                        status.innerText = "❌ Gagal API: " + response.statusText;
+                        status.innerText = "❌ Gagal: Akun YouTube belum konek di Repliz.";
                     }
                 } catch (err) {
                     status.innerText = "❌ Error: " + err;
