@@ -6,9 +6,9 @@
     <title>Sengkuni Maker Pro</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 20px; }
-        .box { background: #111; padding: 25px; border-radius: 20px; border: 2px solid #00ff00; box-shadow: 0 0 15px #00ff00; max-width: 400px; margin: auto; }
-        input { width: 100%; margin: 10px 0; background: #222; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 8px; box-sizing: border-box; }
-        button { background: #00ff00; color: #000; border: none; padding: 18px; width: 100%; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .box { background: #111; padding: 25px; border-radius: 20px; border: 3px solid #ff0000; box-shadow: 0 0 15px #ff0000; max-width: 400px; margin: auto; }
+        input { width: 100%; margin: 10px 0; background: #222; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 8px; }
+        button { background: #ff0000; color: #fff; border: none; padding: 20px; width: 100%; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; }
         #status { margin-top: 20px; color: #00ff00; font-weight: bold; }
         canvas, video { display: none; }
     </style>
@@ -16,13 +16,16 @@
 <body>
 
     <div class="box">
-        <h3>🎬 SENGKUNI TO REPLIZ</h3>
-        <input type="text" id="v_title" placeholder="Ketik Judul Youtube...">
+        <h2>🎬 SENGKUNI HOREG</h2>
+        <p style="font-size: 12px; color: #888;">GABUNG & SIMPAN LANGSUNG KE HP</p>
+        
         <input type="file" id="v1_in" accept="video/*">
-        <p style="font-size: 10px; color:#888;">Video Utama (Durasi Patokan)</p>
+        <p style="font-size: 10px;">Video Utama (Suara Horeg)</p>
+        
         <input type="file" id="v2_in" accept="video/*">
-        <p style="font-size: 10px; color:#888;">Video Reaksi (Mute)</p>
-        <button id="gasBtn">GABUNG & KIRIM KE REPLIZ</button>
+        <p style="font-size: 10px;">Video Reaksi (Mute)</p>
+        
+        <button id="gasBtn">GABUNG & DOWNLOAD</button>
         <div id="status">Ready Mas Eko!</div>
     </div>
 
@@ -31,12 +34,6 @@
     <canvas id="c" width="720" height="1280"></canvas>
 
     <script>
-        const ACCESS_KEY = "4876222122";
-        const SECRET_KEY = "ivylpP0kYeI20ooP9PJJ8H6iUumQJS7g";
-        // PAKAI PROXY BIAR GAK "FAILED TO FETCH"
-        const proxyURL = "https://corsproxy.io/?"; 
-        const targetURL = "https://api.repliz.com/public/upload";
-
         const v1 = document.getElementById('v1');
         const v2 = document.getElementById('v2');
         const canvas = document.getElementById('c');
@@ -47,11 +44,9 @@
         document.getElementById('v1_in').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('v2_in').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
-        gasBtn.onclick = async () => {
+        gasBtn.onclick = () => {
             if (!v1.src || !v2.src) return alert("Pilih video dulu!");
-            const judul = document.getElementById('v_title').value;
-            if (!judul) return alert("Isi judul dulu!");
-
+            
             gasBtn.disabled = true;
             status.innerText = "⏳ SEDANG MEREKAM...";
 
@@ -60,40 +55,31 @@
             const dest = audioCtx.createMediaStreamDestination();
             source.connect(dest); source.connect(audioCtx.destination);
 
+            v1.currentTime = 0; v2.currentTime = 0;
             v1.play(); v2.play();
+            
             const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
             const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
             let chunks = [];
 
             rec.ondataavailable = (e) => chunks.push(e.data);
+            
+            // BERHENTI PAS VIDEO UTAMA HABIS
             v1.onended = () => { if(rec.state === "recording") rec.stop(); };
 
-            rec.onstop = async () => {
-                status.innerText = "🚀 MENEMBUS BLOKIR & KIRIM...";
+            rec.onstop = () => {
                 const blob = new Blob(chunks, { type: 'video/webm' });
-                const formData = new FormData();
-                formData.append('file', blob, 'video.webm');
-                formData.append('title', judul);
-
-                try {
-                    const response = await fetch(proxyURL + encodeURIComponent(targetURL), {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': 'Basic ' + btoa(ACCESS_KEY + ':' + SECRET_KEY)
-                        },
-                        body: formData
-                    });
-
-                    if (response.ok) {
-                        status.innerText = "✅ SUKSES! Repliz sedang upload ke YT.";
-                        alert("Berhasil Mas Eko! Cek YouTube Pantelo.");
-                    } else {
-                        status.innerText = "❌ Ditolak Repliz. Cek Akun.";
-                    }
-                } catch (err) {
-                    status.innerText = "❌ Masih Gagal Sinyal/Blokir.";
-                }
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "Sengkuni_Horeg_" + Date.now() + ".webm";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                status.innerText = "✅ SUKSES! CEK GALERI/DOWNLOAD.";
                 gasBtn.disabled = false;
+                alert("Berhasil Mas! Tinggal upload manual ke YouTube.");
             };
 
             function draw() {
