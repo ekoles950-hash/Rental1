@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker Hybrid - Mas Eko</title>
+    <title>Sengkuni Maker Pro - Mas Eko</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; margin: 0; }
         .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-top: 15px; }
@@ -24,8 +24,8 @@
         <input type="file" id="vid1" accept="video/*">
         <label style="display:block; text-align:left; font-size:11px; color:#aaa; margin-top:10px;">Video Reaksi (Mute):</label>
         <input type="file" id="vid2" accept="video/*">
-        <button id="goBtn">GABUNG & KIRIM</button>
-        <div id="status">Pilih video, Mas Eko.</div>
+        <button id="goBtn">GABUNG & KIRIM KE SHEET</button>
+        <div id="status">Siap beraksi, Mas Eko?</div>
     </div>
 
     <div id="result" class="card">
@@ -50,22 +50,22 @@
         const fileNameLink = document.getElementById('fileNameLink');
         let chunks = [];
 
-        // LINK EXEC BARU MAS EKO
+        // LINK EXEC MAS EKO (TOKEN/ID SUDAH MASUK)
         const scriptURL = "https://script.google.com/macros/s/AKfycbwoIBYKp7z4PdMn1ziv_5AygDgqgHUTYFPA2U6ey1n88cEbTU1-c_PNf90gSF6Jmls/exec";
 
         document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('vid2').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
         goBtn.onclick = async () => {
-            if (!v1.src || !v2.src) return alert("Video belum dipilih!");
+            if (!v1.src || !v2.src) return alert("Pilih video dulu Mas!");
             
             chunks = [];
             status.innerText = "⏳ PROSES GABUNG (15 DETIK)...";
             resultDiv.style.display = "none";
             goBtn.disabled = true;
             
-            v1.muted = false; // Video 1 BERSUARA
-            v2.muted = true;  // Video 2 MUTE
+            v1.muted = false; 
+            v2.muted = true;
             
             v1.play(); v2.play();
 
@@ -79,28 +79,29 @@
                 const url = URL.createObjectURL(blob);
                 const name = "Sengkuni_" + Date.now() + ".webm";
 
-                // 1. Download ke Galeri
+                // 1. Download Otomatis
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = name;
                 a.click();
 
-                // 2. Munculkan box manual
                 fileNameLink.innerText = name;
                 resultDiv.style.display = "block";
-                status.innerText = "📤 MENCOBA KIRIM KE SHEET...";
+                status.innerText = "📤 MENGIRIM KE SHEET...";
 
-                // 3. Tembak ke Apps Script
-                fetch(scriptURL + "?fileName=" + encodeURIComponent(name), {
-                    method: 'GET',
-                    mode: 'no-cors'
-                }).then(() => {
-                    status.innerText = "✅ SELESAI! CEK SHEET / SALIN MANUAL.";
-                    goBtn.disabled = false;
-                }).catch(() => {
-                    status.innerText = "⚠️ Gagal kirim otomatis. Silakan salin manual.";
-                    goBtn.disabled = false;
-                });
+                // 2. MANGGIL LINK DENGAN TEKNIK JSONP (BIAR PASTI MASUK)
+                const finalUrl = scriptURL + "?fileName=" + encodeURIComponent(name) + "&callback=callbackFunc";
+                const script = document.createElement('script');
+                script.src = finalUrl;
+                document.body.appendChild(script);
+
+                // Timeout jika Google tidak merespon
+                setTimeout(() => {
+                    if(goBtn.disabled) {
+                        status.innerText = "⚠️ Cek Sheet Manual / Salin Teks.";
+                        goBtn.disabled = false;
+                    }
+                }, 5000);
             };
 
             function draw() {
@@ -116,10 +117,16 @@
             setTimeout(() => recorder.stop(), 15000); 
         };
 
+        // Fungsi Callback agar tidak error di Web
+        function callbackFunc(e) {
+            status.innerText = "✅ DATA BERHASIL MASUK SHEET!";
+            goBtn.disabled = false;
+        }
+
         function copyToClipboard() {
             const text = fileNameLink.innerText;
             navigator.clipboard.writeText(text).then(() => {
-                alert("Berhasil disalin! Tinggal tempel di Sheet.");
+                alert("Berhasil disalin! Tempel di tab KONTEN.");
             });
         }
     </script>
