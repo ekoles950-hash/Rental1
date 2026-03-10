@@ -9,7 +9,7 @@
         .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-top: 15px; }
         input { margin: 10px 0; width: 100%; color: white; display: block; background: #333; padding: 10px; border-radius: 8px; border: none; }
         button { background: #ff0000; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 16px; }
-        button:disabled { background: #444; }
+        button:disabled { background: #444; cursor: not-allowed; }
         #result { display: none; margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 2px dashed #ff0000; }
         .copy-box { background: #000; padding: 12px; margin: 10px 0; font-family: monospace; color: #00ff00; word-break: break-all; border-radius: 5px; font-size: 14px; }
         #status { margin-top: 20px; color: #ffcc00; font-weight: bold; }
@@ -18,21 +18,20 @@
 </head>
 <body>
 
-    <h3>🎬 Sengkuni Hybrid Maker</h3>
+    <h3>🎬 Sengkuni Hybrid (Audio Guard)</h3>
     <div class="card">
         <label style="display:block; text-align:left; font-size:11px; color:#aaa;">Video Utama (Suara Aktif):</label>
         <input type="file" id="vid1" accept="video/*">
         <label style="display:block; text-align:left; font-size:11px; color:#aaa; margin-top:10px;">Video Reaksi (Mute):</label>
         <input type="file" id="vid2" accept="video/*">
-        <button id="goBtn">GABUNG & KIRIM KE SHEET</button>
-        <div id="status">Siap beraksi, Mas Eko?</div>
+        <button id="goBtn">GABUNG & KIRIM</button>
+        <div id="status">Pilih video, Mas Eko.</div>
     </div>
 
     <div id="result" class="card">
         <p style="margin:0; font-size:12px; color:#aaa;">Nama File Konten:</p>
         <div class="copy-box" id="fileNameLink">Menunggu...</div>
         <button style="background:#008000; font-size:14px;" onclick="copyToClipboard()">SALIN TEKS (MANUAL)</button>
-        <p style="font-size:11px; color:#00ff00; margin-top:10px;">✅ Video otomatis ter-download ke HP.</p>
     </div>
 
     <video id="v1" loop crossorigin="anonymous"></video>
@@ -49,8 +48,8 @@
         const resultDiv = document.getElementById('result');
         const fileNameLink = document.getElementById('fileNameLink');
         let chunks = [];
+        let audioCtx, source, destination;
 
-        // LINK EXEC MAS EKO (TOKEN/ID SUDAH MASUK)
         const scriptURL = "https://script.google.com/macros/s/AKfycbwoIBYKp7z4PdMn1ziv_5AygDgqgHUTYFPA2U6ey1n88cEbTU1-c_PNf90gSF6Jmls/exec";
 
         document.getElementById('vid1').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
@@ -59,74 +58,84 @@
         goBtn.onclick = async () => {
             if (!v1.src || !v2.src) return alert("Pilih video dulu Mas!");
             
-            chunks = [];
-            status.innerText = "⏳ PROSES GABUNG (15 DETIK)...";
-            resultDiv.style.display = "none";
-            goBtn.disabled = true;
-            
-            v1.muted = false; 
-            v2.muted = true;
-            
-            v1.play(); v2.play();
+            try {
+                chunks = [];
+                status.innerText = "⏳ PROSES GABUNG + AUDIO (15 DETIK)...";
+                resultDiv.style.display = "none";
+                goBtn.disabled = true;
 
-            const stream = canvas.captureStream(30);
-            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-            
-            recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-            
-            recorder.onstop = () => {
-                const blob = new Blob(chunks, { type: 'video/webm' });
-                const url = URL.createObjectURL(blob);
-                const name = "Sengkuni_" + Date.now() + ".webm";
+                // RESET AUDIO CONTEXT AGAR FRESH
+                if (audioCtx) audioCtx.close();
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                source = audioCtx.createMediaElementSource(v1);
+                destination = audioCtx.createMediaStreamDestination();
+                
+                source.connect(destination);
+                source.connect(audioCtx.destination); // Tetap bunyi di HP Mas Eko saat rekam
 
-                // 1. Download Otomatis
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = name;
-                a.click();
+                v1.play(); v2.play();
 
-                fileNameLink.innerText = name;
-                resultDiv.style.display = "block";
-                status.innerText = "📤 MENGIRIM KE SHEET...";
+                const videoStream = canvas.captureStream(30);
+                
+                // GABUNGKAN TRACK VIDEO DARI CANVAS DAN TRACK AUDIO DARI VIDEO UTAMA
+                const combinedStream = new MediaStream([
+                    ...videoStream.getVideoTracks(),
+                    ...destination.stream.getAudioTracks()
+                ]);
 
-                // 2. MANGGIL LINK DENGAN TEKNIK JSONP (BIAR PASTI MASUK)
-                const finalUrl = scriptURL + "?fileName=" + encodeURIComponent(name) + "&callback=callbackFunc";
-                const script = document.createElement('script');
-                script.src = finalUrl;
-                document.body.appendChild(script);
+                const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
+                
+                recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+                
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const name = "Sengkuni_" + Date.now() + ".webm";
 
-                // Timeout jika Google tidak merespon
-                setTimeout(() => {
-                    if(goBtn.disabled) {
-                        status.innerText = "⚠️ Cek Sheet Manual / Salin Teks.";
-                        goBtn.disabled = false;
+                    const a = document.createElement('a');
+                    a.href = url; a.download = name; a.click();
+
+                    fileNameLink.innerText = name;
+                    resultDiv.style.display = "block";
+                    status.innerText = "📤 MENGIRIM KE SHEET...";
+
+                    const finalUrl = scriptURL + "?fileName=" + encodeURIComponent(name) + "&callback=callbackFunc";
+                    const script = document.createElement('script');
+                    script.src = finalUrl;
+                    document.body.appendChild(script);
+                };
+
+                function draw() {
+                    if (recorder.state === "recording") {
+                        ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
+                        requestAnimationFrame(draw);
                     }
-                }, 5000);
-            };
-
-            function draw() {
-                if (recorder.state === "recording") {
-                    ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
-                    requestAnimationFrame(draw);
                 }
-            }
 
-            recorder.start();
-            draw();
-            setTimeout(() => recorder.stop(), 15000); 
+                recorder.start();
+                draw();
+                setTimeout(() => {
+                    recorder.stop();
+                    v1.pause(); v2.pause();
+                }, 15000); 
+
+            } catch (err) {
+                console.error(err);
+                alert("Klik layar dulu ya Mas biar audionya aktif!");
+                goBtn.disabled = false;
+            }
         };
 
-        // Fungsi Callback agar tidak error di Web
         function callbackFunc(e) {
-            status.innerText = "✅ DATA BERHASIL MASUK SHEET!";
+            status.innerText = "✅ AUDIO OK & DATA MASUK SHEET!";
             goBtn.disabled = false;
         }
 
         function copyToClipboard() {
-            const text = fileNameLink.innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert("Berhasil disalin! Tempel di tab KONTEN.");
+            navigator.clipboard.writeText(fileNameLink.innerText).then(() => {
+                alert("Nama file disalin!");
             });
         }
     </script>
