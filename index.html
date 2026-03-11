@@ -3,31 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker v.Final</title>
+    <title>Sengkuni Maker Pro - Full Durasi</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 20px; }
         .box { background: #111; padding: 25px; border-radius: 20px; border: 3px solid #00ff00; box-shadow: 0 0 15px #00ff00; max-width: 400px; margin: auto; }
-        input, button { width: 100%; margin: 10px 0; padding: 15px; border-radius: 10px; border: none; box-sizing: border-box; }
-        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; font-size: 16px; }
-        #status { margin-top: 20px; color: #00ff00; font-weight: bold; font-size: 13px; white-space: pre-wrap; }
+        input { width: 100%; margin: 10px 0; background: #222; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 8px; }
+        button { background: #00ff00; color: #000; border: none; padding: 20px; width: 100%; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; }
+        #status { margin-top: 20px; color: #00ff00; font-weight: bold; }
         canvas, video { display: none; }
     </style>
 </head>
 <body>
 
     <div class="box">
-        <h3>🎬 SENGKUNI AUTO POST</h3>
-        <p style="font-size: 11px; color: #888;">DIRECT TO YOUTUBE PANTELO</p>
-        
-        <input type="text" id="v_title" placeholder="Judul Youtube Mas Eko...">
+        <h2>🎬 SENGKUNI HOREG</h2>
+        <p style="font-size: 12px; color: #888;">DURASI OTOMATIS SESUAI VIDEO UTAMA</p>
         
         <input type="file" id="v1_in" accept="video/*">
-        <p style="font-size: 10px; margin-top:-5px; color:#666;">Video Utama (Suara Horeg)</p>
+        <p style="font-size: 10px;">Video Utama (Patokan Durasi)</p>
         
         <input type="file" id="v2_in" accept="video/*">
-        <p style="font-size: 10px; margin-top:-5px; color:#666;">Video Reaksi (Mute)</p>
+        <p style="font-size: 10px;">Video Reaksi (Mute)</p>
         
-        <button id="gasBtn">GABUNG & POST KE YT</button>
+        <button id="gasBtn">GABUNG & DOWNLOAD</button>
         <div id="status">Ready Mas Eko!</div>
     </div>
 
@@ -36,9 +34,6 @@
     <canvas id="c" width="720" height="1280"></canvas>
 
     <script>
-        // LINK BARU MAS EKO
-        const URL_GAS = "https://script.google.com/macros/s/AKfycbyC_JLl-wwjrnT0xPdKrAW9xXyuCbLo4IcNxQWgy77xnBOpI-54qpOJ-J0w5pSUB4dL/exec";
-
         const v1 = document.getElementById('v1');
         const v2 = document.getElementById('v2');
         const canvas = document.getElementById('c');
@@ -50,60 +45,61 @@
         document.getElementById('v2_in').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
         gasBtn.onclick = async () => {
-            if (!v1.src || !v2.src) return alert("Pilih video dulu Mas!");
-            if (!document.getElementById('v_title').value) return alert("Isi judul dulu!");
-
+            if (!v1.src || !v2.src) return alert("Pilih kedua videonya dulu!");
+            
             gasBtn.disabled = true;
-            status.innerText = "⏳ SEDANG MEREKAM FULL DURASI...\nJangan pindah aplikasi!";
+            status.innerText = "⏳ SEDANG MEREKAM... JANGAN TUTUP TAB INI!";
 
-            v1.currentTime = 0; v2.currentTime = 0;
-            await v1.play(); v2.play();
-
+            // Tunggu video siap
+            await v1.play();
+            await v2.play();
+            
+            // Audio Setup
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const source = audioCtx.createMediaElementSource(v1);
             const dest = audioCtx.createMediaStreamDestination();
-            source.connect(dest); source.connect(audioCtx.destination);
+            source.connect(dest);
+            source.connect(audioCtx.destination);
 
-            const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
-            const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            const stream = new MediaStream([
+                ...canvas.captureStream(30).getVideoTracks(), 
+                ...dest.stream.getAudioTracks()
+            ]);
+
+            const rec = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus' });
             let chunks = [];
 
-            rec.ondataavailable = (e) => chunks.push(e.data);
-            v1.onended = () => { if(rec.state === "recording") rec.stop(); };
+            rec.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+            
+            // INI KUNCINYA: Recorder HANYA berhenti kalau v1 (video utama) selesai
+            v1.onended = () => {
+                if (rec.state === "recording") {
+                    rec.stop();
+                }
+            };
 
-            rec.onstop = async () => {
-                status.innerText = "🚀 TERBANG KE YOUTUBE...\nTunggu balasan dari Google";
+            rec.onstop = () => {
                 const blob = new Blob(chunks, { type: 'video/webm' });
-                const reader = new FileReader();
-                reader.onloadend = async () => {
-                    const base64 = reader.result.split(',')[1];
-                    const formData = new URLSearchParams();
-                    formData.append('file', base64);
-                    formData.append('title', document.getElementById('v_title').value);
-
-                    try {
-                        const res = await fetch(URL_GAS, {
-                            method: 'POST',
-                            body: formData,
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-                        });
-                        const text = await res.text();
-                        status.innerText = text;
-                        if(text.includes("BERHASIL")) {
-                            alert("MANTAP MAS EKO! Video beneran sudah masuk.");
-                        }
-                    } catch (e) {
-                        status.innerText = "❌ Gagal: " + e.message;
-                    }
-                    gasBtn.disabled = false;
-                };
-                reader.readAsDataURL(blob);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "Sengkuni_Horeg_" + Date.now() + ".webm";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                status.innerText = "✅ SELESAI! SUDAH MASUK DOWNLOAD.";
+                gasBtn.disabled = false;
+                v1.pause(); v2.pause();
             };
 
             rec.start();
+
             function draw() {
                 if (rec.state === "recording") {
+                    // Gambar background (Video Utama)
                     ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
+                    // Gambar overlay (Video Reaksi)
                     ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
                     requestAnimationFrame(draw);
                 }
