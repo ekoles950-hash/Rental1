@@ -3,58 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker v.Final Pro</title>
+    <title>Sengkuni Maker Pro x Repliz</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 20px; }
-        .box { background: #111; padding: 25px; border-radius: 20px; border: 3px solid #00ff00; box-shadow: 0 0 15px #00ff00; max-width: 450px; margin: auto; }
+        .box { background: #111; padding: 20px; border-radius: 20px; border: 3px solid #00ff00; max-width: 450px; margin: auto; }
         select, input, button { width: 100%; margin: 10px 0; padding: 12px; border-radius: 8px; border: none; box-sizing: border-box; }
         button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; font-size: 16px; }
-        #status { margin-top: 15px; color: #00ff00; font-weight: bold; font-size: 13px; white-space: pre-wrap; }
-        .label { font-size: 11px; color: #888; text-align: left; margin: 5px 0 0 5px; }
+        #status { margin-top: 15px; color: #00ff00; font-weight: bold; font-size: 13px; }
         canvas, video { display: none; }
     </style>
 </head>
 <body>
-
     <div class="box">
         <h3>🎬 SENGKUNI x REPLIZ PRO</h3>
-        
-        <input type="text" id="v_title" placeholder="Judul Postingan...">
-        
-        <div class="label">Waktu Tayang:</div>
-        <select id="postTime">
-            <option value="now">🚀 Kirim Sekarang (Langsung Tayang)</option>
-            <option value="schedule">📅 Ikuti Jadwal Default Repliz</option>
-        </select>
-
-        <div class="label">Ukuran Video:</div>
+        <input type="text" id="v_title" placeholder="Ketik Judul Postingan...">
         <select id="ratio">
             <option value="9:16">Shorts (Portrait 9:16)</option>
             <option value="16:9">YouTube (Landscape 16:9)</option>
         </select>
-        
-        <div class="label">Hapus Watermark (Zoom):</div>
         <select id="zoomLevel">
-            <option value="1">Original (Tanpa Zoom)</option>
-            <option value="1.15">Hapus WM (Zoom 15%)</option>
-            <option value="1.25">WM Tebal (Zoom 25%)</option>
+            <option value="1">Original (No Zoom)</option>
+            <option value="1.15">Hapus Watermark (Zoom 15%)</option>
+            <option value="1.25">Hapus Watermark (Zoom 25%)</option>
         </select>
-
         <input type="file" id="v1_in" accept="video/*">
-        <div class="label">Video Utama (Horeg)</div>
         <input type="file" id="v2_in" accept="video/*">
-        <div class="label">Video Reaksi (Mute)</div>
-        
         <button id="gasBtn">GABUNG & POST KE REPLIZ</button>
         <div id="status">Ready Mas Eko!</div>
     </div>
-
     <video id="v1" crossorigin="anonymous" playsinline></video>
     <video id="v2" loop muted crossorigin="anonymous" playsinline></video>
     <canvas id="c"></canvas>
 
     <script>
-        // PAKAI LINK GAS MAS EKO YANG SUDAH KONEK
         const URL_GAS = "https://script.google.com/macros/s/AKfycbyC_JLl-wwjrnT0xPdKrAW9xXyuCbLo4IcNxQWgy77xnBOpI-54qpOJ-J0w5pSUB4dL/exec";
 
         const v1 = document.getElementById('v1');
@@ -62,72 +43,41 @@
         const canvas = document.getElementById('c');
         const ctx = canvas.getContext('2d');
         const status = document.getElementById('status');
-        const gasBtn = document.getElementById('gasBtn');
 
         document.getElementById('v1_in').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('v2_in').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
-        gasBtn.onclick = async () => {
-            if(!v1.src || !v2.src || !document.getElementById('v_title').value) return alert("Data belum lengkap Mas!");
-            
+        document.getElementById('gasBtn').onclick = async () => {
+            if(!v1.src || !v2.src) return alert("Pilih video dulu Mas!");
             const ratio = document.getElementById('ratio').value;
             const zoom = parseFloat(document.getElementById('zoomLevel').value);
             canvas.width = (ratio === "9:16") ? 720 : 1280;
             canvas.height = (ratio === "9:16") ? 1280 : 720;
 
             status.innerText = "⏳ SEDANG MEREKAM & ZOOM...";
-            gasBtn.disabled = true;
-
-            v1.currentTime = 0; v2.currentTime = 0;
-            await v1.play(); v2.play();
-
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const source = audioCtx.createMediaElementSource(v1);
-            const dest = audioCtx.createMediaStreamDestination();
-            source.connect(dest); source.connect(audioCtx.destination);
-
-            const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+            v1.play(); v2.play();
+            const stream = canvas.captureStream(30);
             const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
             let chunks = [];
             rec.ondataavailable = (e) => chunks.push(e.data);
-            
-            v1.onended = () => { if(rec.state === "recording") rec.stop(); };
+            v1.onended = () => rec.stop();
 
             rec.onstop = async () => {
-                status.innerText = "🚀 TERBANG KE REPLIZ...";
+                status.innerText = "🚀 MENGIRIM KE REPLIZ...";
                 const blob = new Blob(chunks, { type: 'video/webm' });
                 const reader = new FileReader();
                 reader.onloadend = async () => {
                     const base64 = reader.result.split(',')[1];
-                    
-                    // LOGIKA WAKTU: Menentukan scheduleAt
-                    let waktuPost;
-                    if (document.getElementById('postTime').value === "now") {
-                        let d = new Date();
-                        d.setHours(d.getHours() - 1); // Mundurin 1 jam biar Repliz langsung sikat
-                        waktuPost = d.toISOString();
-                    } else {
-                        waktuPost = new Date().toISOString();
-                    }
-
                     const formData = new URLSearchParams();
                     formData.append('file', base64);
                     formData.append('title', document.getElementById('v_title').value);
-                    formData.append('scheduleAt', waktuPost); // Tetap kirim scheduleAt biar Java nggak error
 
-                    try {
-                        const res = await fetch(URL_GAS, { method: 'POST', body: formData });
-                        const hasilText = await res.text();
-                        status.innerText = hasilText;
-                        alert("MANTAP MAS EKO! Cek Dashboard Repliz.");
-                    } catch (e) {
-                        status.innerText = "❌ Gagal Kirim Sinyal.";
-                    }
-                    gasBtn.disabled = false;
+                    const res = await fetch(URL_GAS, { method: 'POST', body: formData });
+                    status.innerText = await res.text();
+                    alert("Berhasil Mas Eko! Cek Dashboard Repliz.");
                 };
                 reader.readAsDataURL(blob);
             };
-
             rec.start();
             function draw() {
                 if(rec.state === "recording"){
