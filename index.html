@@ -3,132 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker Pro - Clean Mode</title>
+    <title>Sengkuni Maker Pro x Repliz</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 20px; }
-        .box { background: #111; padding: 25px; border-radius: 20px; border: 3px solid #00ff00; box-shadow: 0 0 15px #00ff00; max-width: 450px; margin: auto; }
-        select, input, button { width: 100%; margin: 10px 0; padding: 15px; border-radius: 10px; border: none; box-sizing: border-box; font-size: 14px; }
-        select { background: #333; color: #fff; border: 1px solid #555; }
-        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; font-size: 18px; }
-        .label { font-size: 11px; color: #888; text-align: left; margin-top: -5px; margin-left: 5px; }
-        #status { margin-top: 20px; color: #00ff00; font-weight: bold; }
+        .box { background: #111; padding: 20px; border-radius: 20px; border: 3px solid #00ff00; max-width: 450px; margin: auto; }
+        select, input, button { width: 100%; margin: 10px 0; padding: 12px; border-radius: 8px; border: none; box-sizing: border-box; }
+        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; font-size: 16px; }
+        #status { margin-top: 15px; color: #00ff00; font-weight: bold; font-size: 13px; }
         canvas, video { display: none; }
     </style>
 </head>
 <body>
-
     <div class="box">
-        <h2>🎬 SENGKUNI CLEAN MODE</h2>
-        
-        <div class="label">Pilih Ukuran Video:</div>
+        <h3>🎬 SENGKUNI x REPLIZ PRO</h3>
+        <input type="text" id="v_title" placeholder="Ketik Judul Postingan...">
         <select id="ratio">
-            <option value="9:16">Portrait (9:16) - Cocok buat Shorts</option>
-            <option value="16:9">Landscape (16:9) - Cocok buat YT Biasa</option>
+            <option value="9:16">Shorts (Portrait 9:16)</option>
+            <option value="16:9">YouTube (Landscape 16:9)</option>
         </select>
-
-        <div class="label">Hapus Watermark (Zoom):</div>
         <select id="zoomLevel">
-            <option value="1">Normal (Ori)</option>
-            <option value="1.1">Zoom 10% (Hapus WM Tipis)</option>
-            <option value="1.2">Zoom 20% (Hapus WM Tebal)</option>
+            <option value="1">Original (No Zoom)</option>
+            <option value="1.15">Hapus Watermark (Zoom 15%)</option>
+            <option value="1.25">Hapus Watermark (Zoom 25%)</option>
         </select>
-        
         <input type="file" id="v1_in" accept="video/*">
-        <div class="label">Video Utama (Suara Horeg)</div>
-        
         <input type="file" id="v2_in" accept="video/*">
-        <div class="label">Video Reaksi (Mute)</div>
-        
-        <button id="gasBtn">GABUNG & SIMPAN</button>
+        <button id="gasBtn">GABUNG & POST KE REPLIZ</button>
         <div id="status">Ready Mas Eko!</div>
     </div>
-
     <video id="v1" crossorigin="anonymous" playsinline></video>
     <video id="v2" loop muted crossorigin="anonymous" playsinline></video>
     <canvas id="c"></canvas>
 
     <script>
+        const URL_GAS = "https://script.google.com/macros/s/AKfycbyC_JLl-wwjrnT0xPdKrAW9xXyuCbLo4IcNxQWgy77xnBOpI-54qpOJ-J0w5pSUB4dL/exec";
+
         const v1 = document.getElementById('v1');
         const v2 = document.getElementById('v2');
         const canvas = document.getElementById('c');
         const ctx = canvas.getContext('2d');
         const status = document.getElementById('status');
-        const gasBtn = document.getElementById('gasBtn');
 
         document.getElementById('v1_in').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
         document.getElementById('v2_in').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
 
-        gasBtn.onclick = async () => {
-            if (!v1.src || !v2.src) return alert("Pilih kedua videonya dulu!");
-            
+        document.getElementById('gasBtn').onclick = async () => {
+            if(!v1.src || !v2.src) return alert("Pilih video dulu Mas!");
             const ratio = document.getElementById('ratio').value;
             const zoom = parseFloat(document.getElementById('zoomLevel').value);
+            canvas.width = (ratio === "9:16") ? 720 : 1280;
+            canvas.height = (ratio === "9:16") ? 1280 : 720;
 
-            // Set Resolusi berdasarkan pilihan Mas Eko
-            if (ratio === "9:16") {
-                canvas.width = 720; canvas.height = 1280;
-            } else {
-                canvas.width = 1280; canvas.height = 720;
-            }
-
-            gasBtn.disabled = true;
-            status.innerText = "⏳ SEDANG BERAKSI... JANGAN PINDAH TAB!";
-
-            await v1.play();
-            await v2.play();
-            
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const source = audioCtx.createMediaElementSource(v1);
-            const dest = audioCtx.createMediaStreamDestination();
-            source.connect(dest); source.connect(audioCtx.destination);
-
-            const stream = new MediaStream([
-                ...canvas.captureStream(30).getVideoTracks(), 
-                ...dest.stream.getAudioTracks()
-            ]);
-
-            const rec = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus' });
+            status.innerText = "⏳ SEDANG MEREKAM & ZOOM...";
+            v1.play(); v2.play();
+            const stream = canvas.captureStream(30);
+            const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
             let chunks = [];
-            rec.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-            
-            v1.onended = () => { if (rec.state === "recording") rec.stop(); };
+            rec.ondataavailable = (e) => chunks.push(e.data);
+            v1.onended = () => rec.stop();
 
-            rec.onstop = () => {
+            rec.onstop = async () => {
+                status.innerText = "🚀 MENGIRIM KE REPLIZ...";
                 const blob = new Blob(chunks, { type: 'video/webm' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = "Sengkuni_Clean_" + Date.now() + ".webm";
-                a.click();
-                status.innerText = "✅ SELESAI! CEK DOWNLOAD/GALERI.";
-                gasBtn.disabled = false;
-                v1.pause(); v2.pause();
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    const base64 = reader.result.split(',')[1];
+                    const formData = new URLSearchParams();
+                    formData.append('file', base64);
+                    formData.append('title', document.getElementById('v_title').value);
+
+                    const res = await fetch(URL_GAS, { method: 'POST', body: formData });
+                    status.innerText = await res.text();
+                    alert("Berhasil Mas Eko! Cek Dashboard Repliz.");
+                };
+                reader.readAsDataURL(blob);
             };
-
             rec.start();
-
             function draw() {
-                if (rec.state === "recording") {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                    // LOGIKA HAPUS WATERMARK (ZOOM)
-                    const zW = canvas.width * zoom;
-                    const zH = canvas.height * zoom;
-                    const offX = (canvas.width - zW) / 2;
-                    const offY = (canvas.height - zH) / 2;
-
-                    // Gambar Video Utama (Background) dengan Zoom
-                    ctx.drawImage(v1, offX, offY, zW, zH);
-
-                    // Gambar Video Reaksi (Overlay)
-                    if (ratio === "9:16") {
-                        // Posisi Reaksi buat Portrait
-                        ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
-                    } else {
-                        // Posisi Reaksi buat Landscape
-                        ctx.drawImage(v2, canvas.width - 320, canvas.height - 240, 280, 200);
-                    }
-                    
+                if(rec.state === "recording"){
+                    const zW = canvas.width * zoom; const zH = canvas.height * zoom;
+                    ctx.drawImage(v1, (canvas.width-zW)/2, (canvas.height-zH)/2, zW, zH);
+                    if(ratio === "9:16") ctx.drawImage(v2, 40, canvas.height-350, 220, 300);
+                    else ctx.drawImage(v2, canvas.width-320, canvas.height-240, 280, 200);
                     requestAnimationFrame(draw);
                 }
             }
