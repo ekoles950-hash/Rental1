@@ -1,95 +1,80 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker Pro x Repliz</title>
-    <style>
-        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 20px; }
-        .box { background: #111; padding: 20px; border-radius: 20px; border: 3px solid #00ff00; max-width: 450px; margin: auto; }
-        select, input, button { width: 100%; margin: 10px 0; padding: 12px; border-radius: 8px; border: none; box-sizing: border-box; }
-        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; font-size: 16px; }
-        #status { margin-top: 15px; color: #00ff00; font-weight: bold; font-size: 13px; }
-        canvas, video { display: none; }
-    </style>
-</head>
-<body>
-    <div class="box">
-        <h3>🎬 SENGKUNI x REPLIZ PRO</h3>
-        <input type="text" id="v_title" placeholder="Ketik Judul Postingan...">
-        <select id="ratio">
-            <option value="9:16">Shorts (Portrait 9:16)</option>
-            <option value="16:9">YouTube (Landscape 16:9)</option>
-        </select>
-        <select id="zoomLevel">
-            <option value="1">Original (No Zoom)</option>
-            <option value="1.15">Hapus Watermark (Zoom 15%)</option>
-            <option value="1.25">Hapus Watermark (Zoom 25%)</option>
-        </select>
-        <input type="file" id="v1_in" accept="video/*">
-        <input type="file" id="v2_in" accept="video/*">
-        <button id="gasBtn">GABUNG & POST KE REPLIZ</button>
-        <div id="status">Ready Mas Eko!</div>
+<div class="box">
+    <h3>🎬 SENGKUNI x REPLIZ PRO</h3>
+    
+    <input type="text" id="v_title" placeholder="Ketik Judul Postingan...">
+    
+    <div class="label" style="color: #00ff00; font-weight: bold;">✅ Hubungkan ke YouTube:</div>
+    <div style="text-align: left; background: #222; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+        <input type="checkbox" id="yt_channel" checked style="width: auto; margin-right: 10px;"> 
+        <span style="font-size: 14px;">YouTube Pantelo (Active)</span>
     </div>
-    <video id="v1" crossorigin="anonymous" playsinline></video>
-    <video id="v2" loop muted crossorigin="anonymous" playsinline></video>
-    <canvas id="c"></canvas>
 
-    <script>
-        const URL_GAS = "https://script.google.com/macros/s/AKfycbyC_JLl-wwjrnT0xPdKrAW9xXyuCbLo4IcNxQWgy77xnBOpI-54qpOJ-J0w5pSUB4dL/exec";
+    <div class="label">Opsi Pengiriman:</div>
+    <select id="postMode" onchange="toggleDate()">
+        <option value="now">🚀 Kirim Sekarang (Langsung Post)</option>
+        <option value="later">📅 Jadwalkan Konten</option>
+    </select>
+    
+    <input type="datetime-local" id="v_date" style="display:none;">
 
-        const v1 = document.getElementById('v1');
-        const v2 = document.getElementById('v2');
-        const canvas = document.getElementById('c');
-        const ctx = canvas.getContext('2d');
-        const status = document.getElementById('status');
+    <div class="label">Ukuran & Zoom:</div>
+    <select id="ratio">
+        <option value="9:16">Shorts (9:16)</option>
+        <option value="16:9">YouTube (16:9)</option>
+    </select>
+    
+    <input type="file" id="v1_in" accept="video/*">
+    <div class="label">Video Utama</div>
+    <input type="file" id="v2_in" accept="video/*">
+    <div class="label">Video Reaksi</div>
+    
+    <button id="gasBtn">GABUNG & POST KE REPLIZ</button>
+    <div id="status">Ready Mas Eko!</div>
+</div>
 
-        document.getElementById('v1_in').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
-        document.getElementById('v2_in').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
+<script>
+    // Fungsi munculin input tanggal kalau pilih 'Jadwalkan'
+    function toggleDate() {
+        const mode = document.getElementById('postMode').value;
+        document.getElementById('v_date').style.display = (mode === 'later') ? 'block' : 'none';
+    }
 
-        document.getElementById('gasBtn').onclick = async () => {
-            if(!v1.src || !v2.src) return alert("Pilih video dulu Mas!");
-            const ratio = document.getElementById('ratio').value;
-            const zoom = parseFloat(document.getElementById('zoomLevel').value);
-            canvas.width = (ratio === "9:16") ? 720 : 1280;
-            canvas.height = (ratio === "9:16") ? 1280 : 720;
+    // Bagian rec.onstop (Ganti logic pengirimannya)
+    rec.onstop = async () => {
+        status.innerText = "🚀 MENGIRIM KE REPLIZ...";
+        const blob = new Blob(chunks, { type: 'video/mp4' });
+        const reader = new FileReader();
 
-            status.innerText = "⏳ SEDANG MEREKAM & ZOOM...";
-            v1.play(); v2.play();
-            const stream = canvas.captureStream(30);
-            const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
-            let chunks = [];
-            rec.ondataavailable = (e) => chunks.push(e.data);
-            v1.onended = () => rec.stop();
-
-            rec.onstop = async () => {
-                status.innerText = "🚀 MENGIRIM KE REPLIZ...";
-                const blob = new Blob(chunks, { type: 'video/webm' });
-                const reader = new FileReader();
-                reader.onloadend = async () => {
-                    const base64 = reader.result.split(',')[1];
-                    const formData = new URLSearchParams();
-                    formData.append('file', base64);
-                    formData.append('title', document.getElementById('v_title').value);
-
-                    const res = await fetch(URL_GAS, { method: 'POST', body: formData });
-                    status.innerText = await res.text();
-                    alert("Berhasil Mas Eko! Cek Dashboard Repliz.");
-                };
-                reader.readAsDataURL(blob);
-            };
-            rec.start();
-            function draw() {
-                if(rec.state === "recording"){
-                    const zW = canvas.width * zoom; const zH = canvas.height * zoom;
-                    ctx.drawImage(v1, (canvas.width-zW)/2, (canvas.height-zH)/2, zW, zH);
-                    if(ratio === "9:16") ctx.drawImage(v2, 40, canvas.height-350, 220, 300);
-                    else ctx.drawImage(v2, canvas.width-320, canvas.height-240, 280, 200);
-                    requestAnimationFrame(draw);
-                }
+        reader.onloadend = async () => {
+            const base64 = reader.result.split(',')[1];
+            
+            // LOGIKA WAKTU REPLIZ
+            let finalDate;
+            if (document.getElementById('postMode').value === 'now') {
+                let now = new Date();
+                now.setMinutes(now.getMinutes() - 1); // Biar langsung sikat
+                finalDate = now.toISOString();
+            } else {
+                finalDate = new Date(document.getElementById('v_date').value).toISOString();
             }
-            draw();
+
+            const formData = new URLSearchParams();
+            formData.append('file', base64);
+            formData.append('title', document.getElementById('v_title').value);
+            formData.append('scheduleAt', finalDate);
+            
+            // Kirim status centang (jika dicentang maka kirim ID Akun)
+            const isYtChecked = document.getElementById('yt_channel').checked;
+            formData.append('accountId', isYtChecked ? "680affa5ce12f2f72916f67e" : "");
+
+            try {
+                const response = await fetch(URL_GAS, { method: 'POST', body: formData });
+                status.innerText = "✅ " + await response.text();
+            } catch (err) {
+                status.innerText = "❌ Gagal Terhubung ke Repliz.";
+            }
+            gasBtn.disabled = false;
         };
-    </script>
-</body>
-</html>
+        reader.readAsDataURL(blob);
+    };
+</script>
