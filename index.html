@@ -3,139 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Direct Upload</title>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <title>Sengkuni Maker - Durasi Fix</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; }
         .box { background: #111; padding: 20px; border-radius: 20px; border: 3px solid #00ff00; box-shadow: 0 0 15px #00ff00; max-width: 450px; margin: auto; }
         input, select, button { width: 100%; margin: 10px 0; padding: 12px; border-radius: 8px; border: none; box-sizing: border-box; }
-        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; }
+        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; font-size: 16px; }
+        button:disabled { background: #444; color: #888; }
+        #status { margin-top: 15px; color: #00ff00; font-weight: bold; font-size: 13px; }
         #previewVideo { width: 100%; border-radius: 10px; margin-top: 15px; display: none; border: 2px solid #00ff00; }
-        #status { margin-top: 10px; color: #00ff00; font-size: 13px; font-weight: bold; }
+        #downloadMaster { display: none; margin-top: 10px; color: #00ff00; font-weight: bold; text-decoration: underline; }
         canvas, .raw-video { display: none; }
+        .label { font-size: 11px; color: #888; text-align: left; margin: 5px 0 0 5px; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h3>🎬 SENGKUNI DIRECT UPLOAD</h3>
-    <input type="text" id="v_title" placeholder="Judul Video YouTube...">
-    <textarea id="v_desc" placeholder="Deskripsi Video..." style="width:100%; height:60px; border-radius:8px; padding:10px;"></textarea>
-
-    <input type="file" id="v1_in" accept="video/*">
-    <div style="font-size:11px; color:#888;">Video Utama</div>
-    <input type="file" id="v2_in" accept="video/*">
-    <div style="font-size:11px; color:#888;">Video Reaksi</div>
-
-    <button id="gasBtn">1. GABUNG VIDEO</button>
-    <button id="uploadBtn" style="background:#ff0000; color:#fff; display:none;">2. LOGIN & UPLOAD KE YOUTUBE</button>
-    
-    <div id="status">Ready Mas Eko!</div>
-    <video id="previewVideo" controls></video>
-</div>
-
-<video id="v1" class="raw-video"></video>
-<video id="v2" class="raw-video" loop muted></video>
-<canvas id="c"></canvas>
-
-<script>
-    // --- SETTING WAJIB MAS EKO ---
-    const CLIENT_ID = "MASUKKAN_CLIENT_ID_DARI_GOOGLE_CLOUD.apps.googleusercontent.com";
-    // ----------------------------
-
-    let finalBlob = null;
-    let accessToken = null;
-
-    const v1 = document.getElementById('v1');
-    const v2 = document.getElementById('v2');
-    const canvas = document.getElementById('c');
-    const ctx = canvas.getContext('2d');
-    const status = document.getElementById('status');
-    const uploadBtn = document.getElementById('uploadBtn');
-
-    document.getElementById('v1_in').onchange = (e) => v1.src = URL.createObjectURL(e.target.files[0]);
-    document.getElementById('v2_in').onchange = (e) => v2.src = URL.createObjectURL(e.target.files[0]);
-
-    // FUNGSI GABUNG VIDEO
-    document.getElementById('gasBtn').onclick = async () => {
-        if(!v1.src || !v2.src) return alert("Pilih video dulu!");
-        canvas.width = 720; canvas.height = 1280;
-        status.innerText = "⏳ Sedang Menggabung...";
+    <div class="box">
+        <h3>🎬 SENGKUNI x REPLIZ PRO</h3>
+        <input type="text" id="v_title" placeholder="Ketik Judul Postingan...">
         
-        v1.currentTime = 0; v2.currentTime = 0;
-        await v1.play(); v2.play();
+        <input type="file" id="v1_in" accept="video/*">
+        <div class="label">Video Utama (Suara & Durasi)</div>
+        <input type="file" id="v2_in" accept="video/*">
+        <div class="label">Video Reaksi (Bisu & Loop)</div>
+        
+        <button id="gasBtn">GABUNG & POST KE REPLIZ</button>
+        <div id="status">Ready Mas Eko!</div>
 
-        const stream = canvas.captureStream(30);
-        const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
-        let chunks = [];
-        rec.ondataavailable = e => chunks.push(e.data);
-        rec.onstop = () => {
-            finalBlob = new Blob(chunks, { type: 'video/mp4' });
-            document.getElementById('previewVideo').src = URL.createObjectURL(finalBlob);
-            document.getElementById('previewVideo').style.display = "block";
-            uploadBtn.style.display = "block";
-            status.innerText = "✅ Gabung Selesai! Klik tombol merah untuk Upload.";
-        };
-        v1.onended = () => rec.stop();
-        rec.start();
+        <video id="previewVideo" controls></video>
+        <a id="downloadMaster" href="#">📥 DOWNLOAD MASTER.MP4</a>
+    </div>
 
-        function draw() {
-            if(rec.state === "recording") {
-                ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
-                ctx.drawImage(v2, 40, 900, 220, 300);
-                requestAnimationFrame(draw);
-            }
-        }
-        draw();
-    };
+    <video id="v1" class="raw-video" crossorigin="anonymous" playsinline></video>
+    <video id="v2" class="raw-video" loop muted crossorigin="anonymous" playsinline></video>
+    <canvas id="c"></canvas>
 
-    // FUNGSI LOGIN & UPLOAD
-    uploadBtn.onclick = () => {
-        const client = google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: 'https://www.googleapis.com/auth/youtube.upload',
-            callback: (response) => {
-                if (response.access_token) {
-                    accessToken = response.access_token;
-                    eksekusiUpload();
+    <script>
+        const URL_GAS = "https://script.google.com/macros/s/AKfycbyC_JLl-wwjrnT0xPdKrAW9xXyuCbLo4IcNxQWgy77xnBOpI-54qpOJ-J0w5pSUB4dL/exec";
+
+        const v1 = document.getElementById('v1');
+        const v2 = document.getElementById('v2');
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        const status = document.getElementById('status');
+        const gasBtn = document.getElementById('gasBtn');
+        const preview = document.getElementById('previewVideo');
+        const dlLink = document.getElementById('downloadMaster');
+
+        document.getElementById('v1_in').onchange = (e) => { v1.src = URL.createObjectURL(e.target.files[0]); };
+        document.getElementById('v2_in').onchange = (e) => { v2.src = URL.createObjectURL(e.target.files[0]); };
+
+        gasBtn.onclick = async () => {
+            if(!v1.src || !v2.src) return alert("Pilih video dulu Mas!");
+            
+            canvas.width = 720; 
+            canvas.height = 1280;
+            gasBtn.disabled = true;
+            status.innerText = "⏳ Sedang Proses (Ikut Durasi Utama)...";
+
+            v1.currentTime = 0; v2.currentTime = 0;
+            await v1.play(); v2.play();
+
+            // Setup Audio dari Video Utama
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioCtx.createMediaElementSource(v1);
+            const dest = audioCtx.createMediaStreamDestination();
+            source.connect(dest);
+            source.connect(audioCtx.destination);
+
+            const stream = new MediaStream([
+                ...canvas.captureStream(30).getVideoTracks(),
+                ...dest.stream.getAudioTracks()
+            ]);
+
+            const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            let chunks = [];
+            rec.ondataavailable = (e) => chunks.push(e.data);
+            
+            // KUNCI: Berhenti tepat saat video utama habis
+            v1.onended = () => {
+                if(rec.state === "recording") rec.stop();
+            };
+
+            rec.onstop = async () => {
+                const finalBlob = new Blob(chunks, { type: 'video/mp4' });
+                const videoUrl = URL.createObjectURL(finalBlob);
+
+                preview.src = videoUrl;
+                preview.style.display = "block";
+                dlLink.href = videoUrl;
+                dlLink.download = "master.mp4";
+                dlLink.style.display = "block";
+
+                status.innerText = "🚀 Mengirim ke Repliz...";
+
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    const base64 = reader.result.split(',')[1];
+                    const formData = new URLSearchParams();
+                    formData.append('file', base64);
+                    formData.append('title', document.getElementById('v_title').value);
+                    
+                    let d = new Date();
+                    d.setUTCHours(5, 0, 0, 0); 
+                    formData.append('scheduleAt', d.toISOString());
+
+                    try {
+                        const res = await fetch(URL_GAS, { method: 'POST', body: formData });
+                        status.innerText = "✅ " + await res.text();
+                    } catch (e) {
+                        status.innerText = "❌ Gagal Kirim.";
+                    }
+                    gasBtn.disabled = false;
+                };
+                reader.readAsDataURL(finalBlob);
+            };
+
+            rec.start();
+            function draw() {
+                if(rec.state === "recording"){
+                    ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(v2, 40, 900, 220, 300);
+                    requestAnimationFrame(draw);
                 }
-            },
-        });
-        client.requestAccessToken();
-    };
-
-    async function eksekusiUpload() {
-        status.innerText = "🚀 Menghubungi YouTube...";
-        const metadata = {
-            snippet: {
-                title: document.getElementById('v_title').value,
-                description: document.getElementById('v_desc').value,
-                categoryId: '22'
-            },
-            status: { privacyStatus: 'public' }
-        };
-
-        const form = new FormData();
-        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        form.append('file', finalBlob);
-
-        try {
-            const res = await fetch('https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + accessToken },
-                body: form
-            });
-            const data = await res.json();
-            if(data.id) {
-                status.innerText = "✅ BERHASIL! Video ID: " + data.id;
-                alert("Video sudah terbang ke YouTube Mas Eko!");
-            } else {
-                status.innerText = "❌ Gagal: " + JSON.stringify(data.error);
             }
-        } catch (e) {
-            status.innerText = "❌ Error Koneksi.";
-        }
-    }
-</script>
+            draw();
+        };
+    </script>
 </body>
 </html>
