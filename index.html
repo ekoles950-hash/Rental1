@@ -1,88 +1,215 @@
-<div class="box">
-    <h3>🎬 SENGKUNI MULTI-AI</h3>
-    <input type="text" id="v_title" placeholder="Judul & Prompt Thumbnail...">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sengkuni Multi-AI Pro</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root {
+            --neon-green: #00ff00;
+            --dark-bg: #0a0a0a;
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--dark-bg); 
+            background-image: radial-gradient(circle at top right, #003300, transparent);
+            color: #fff; 
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
 
-    <div class="label">Pilih Mesin AI:</div>
-    <select id="api_provider">
-        <option value="gemini">Google AI Studio (Gemini 2.0)</option>
-        <option value="maia">Maia Router (GPT-5.1 Codex)</option>
-    </select>
-    <input type="password" id="api_key" placeholder="Masukkan API KEY Mas di sini...">
+        .container { 
+            width: 100%;
+            max-width: 450px; 
+            padding: 20px;
+            box-sizing: border-box;
+        }
 
-    <div class="label">Ukuran Video:</div>
-    <select id="ratio">
-        <option value="9:16">Shorts (9:16)</option>
-        <option value="16:9">YouTube (16:9)</option>
-    </select>
+        .card { 
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 25px; 
+            border-radius: 24px; 
+            border: 1px solid rgba(0, 255, 0, 0.2); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
 
-    <input type="file" id="v1_in" accept="video/*">
-    <input type="file" id="v2_in" accept="video/*">
+        h2 { 
+            margin: 0 0 20px 0; 
+            font-size: 24px; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--neon-green);
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
 
-    <button id="gasBtn">GABUNG & BUAT THUMBNAIL AI</button>
-    <div id="status">Ready Mas Eko!</div>
+        .input-group { margin-bottom: 15px; text-align: left; }
+        
+        label { 
+            display: block; 
+            font-size: 11px; 
+            color: var(--neon-green); 
+            margin-bottom: 5px; 
+            margin-left: 5px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
 
-    <div id="ai_area" style="display:none; margin-top:20px;">
-        <img id="thumbPreview" style="width:100%; border-radius:10px; border:2px solid #00ff00;">
-        <button id="uploadBtn" style="background:#ff0000; color:#fff; margin-top:15px;">UPLOAD KE YOUTUBE</button>
+        input[type="text"], input[type="password"], select, textarea { 
+            width: 100%; 
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #333;
+            padding: 12px; 
+            border-radius: 12px; 
+            color: #fff; 
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--neon-green);
+            outline: none;
+            box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+        }
+
+        .file-input-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="file"] {
+            font-size: 11px;
+            color: #888;
+        }
+
+        button { 
+            width: 100%; 
+            padding: 15px; 
+            border-radius: 12px; 
+            border: none; 
+            font-weight: bold; 
+            font-size: 16px; 
+            cursor: pointer; 
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        #gasBtn { 
+            background: var(--neon-green); 
+            color: #000; 
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+            margin-top: 10px;
+        }
+
+        #gasBtn:active { transform: scale(0.98); }
+        #gasBtn:disabled { background: #333; color: #666; box-shadow: none; }
+
+        #uploadBtn { 
+            background: #ff0000; 
+            color: #fff; 
+            display: none; 
+            margin-top: 15px;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+        }
+
+        #status { 
+            margin-top: 15px; 
+            font-size: 13px; 
+            font-weight: bold;
+            color: #aaa;
+        }
+
+        #previewVideo, #thumbPreview { 
+            width: 100%; 
+            border-radius: 14px; 
+            margin-top: 20px; 
+            display: none; 
+            border: 1px solid var(--neon-green); 
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 10px;
+            color: #444;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>🎬 Sengkuni Pro</h2>
+        
+        <div class="input-group">
+            <label>Judul & Prompt AI</label>
+            <input type="text" id="v_title" placeholder="Contoh: Sound Horeg Mberot...">
+        </div>
+
+        <div class="input-group">
+            <label>Mesin AI & API Key</label>
+            <div style="display: flex; gap: 5px;">
+                <select id="api_provider" style="flex: 1;">
+                    <option value="maia">Maia Router</option>
+                    <option value="gemini">Gemini Studio</option>
+                </select>
+                <input type="password" id="api_key" placeholder="API Key..." style="flex: 1.5;">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Format Video</label>
+            <select id="ratio">
+                <option value="9:16">Shorts (9:16)</option>
+                <option value="16:9">YouTube (16:9)</option>
+            </select>
+        </div>
+
+        <div class="file-input-wrapper">
+            <div class="input-group">
+                <label>Video Horeg</label>
+                <input type="file" id="v1_in" accept="video/*">
+            </div>
+            <div class="input-group">
+                <label>Video Reaksi</label>
+                <input type="file" id="v2_in" accept="video/*">
+            </div>
+        </div>
+        
+        <button id="gasBtn">Proses Gabung</button>
+        
+        <div id="status">Sengkuni Siap Beraksi!</div>
+
+        <video id="previewVideo" controls></video>
+        <img id="thumbPreview" alt="Thumbnail AI">
+        
+        <button id="uploadBtn">Upload ke YouTube</button>
     </div>
+    
+    <div class="footer">DIBUAT KHUSUS UNTUK MAS EKO</div>
 </div>
 
+<video id="v1" style="display:none;" crossorigin="anonymous"></video>
+<video id="v2" style="display:none;" loop muted crossorigin="anonymous"></video>
+<canvas id="c" style="display:none;"></canvas>
+
 <script>
-    // Fungsi panggil AI yang fleksibel
-    async function panggilAI(base64Image) {
-        const provider = document.getElementById('api_provider').value;
-        const key = document.getElementById('api_key').value;
-        const judul = document.getElementById('v_title').value;
-
-        if(!key) return alert("API KEY Kosong Mas!");
-
-        status.innerText = `🤖 Menghubungi ${provider.toUpperCase()}...`;
-
-        try {
-            if (provider === "gemini") {
-                // --- JALUR GOOGLE AI STUDIO (GEMINI) ---
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: `Berdasarkan gambar referensi ini, buatkan prompt detail untuk thumbnail YouTube dengan judul: ${judul}` },
-                                { inline_data: { mime_type: "image/jpeg", data: base64Image.split(',')[1] } }
-                            ]
-                        }]
-                    })
-                });
-                const data = await res.json();
-                // Catatan: Gemini biasanya teks, jika Mas mau Gemini bikin gambar, 
-                // pastikan pakai model Imagen di AI Studio.
-                console.log(data);
-                status.innerText = "✅ Prompt AI Gemini Berhasil!";
-                
-            } else if (provider === "maia") {
-                // --- JALUR MAIA ROUTER ---
-                const res = await fetch('https://api.maiarouter.ai/v1/images/generations', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: "openai/gpt-5.1-codex-mini",
-                        prompt: `High quality YouTube thumbnail for: ${judul}`,
-                        image_reference: base64Image,
-                        size: "1280x720"
-                    })
-                });
-                const data = await res.json();
-                if(data.data) {
-                    document.getElementById('thumbPreview').src = data.data[0].url;
-                    document.getElementById('ai_area').style.display = "block";
-                    status.innerText = "✅ Thumbnail MAIA Siap!";
-                }
-            }
-        } catch (e) {
-            status.innerText = "❌ Gagal panggil API.";
-        }
-    }
-    
-    // (Fungsi draw, recording, dll tetap sama seperti versi sebelumnya)
+    // Masukkan Logika JavaScript Mas yang tadi di sini (Fungsi draw, recording, panggilAI, dll)
+    // Pastikan ID elemennya cocok!
 </script>
+
+</body>
+</html>
