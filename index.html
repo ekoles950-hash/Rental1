@@ -3,25 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni TikTok Cutter</title>
+    <title>Sengkuni TikTok Cutter - 9:16</title>
     <style>
         :root { --neon: #00ff00; --bg: #050505; }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 15px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 15px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
         .card { width: 100%; max-width: 400px; background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0,255,0,0.3); text-align: center; box-shadow: 0 10px 30px #000; }
         h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 25px; font-style: italic; letter-spacing: 2px; }
         
-        .upload-box { background: rgba(0,0,0,0.5); border: 2px dashed rgba(0,255,0,0.2); padding: 30px; border-radius: 20px; margin-bottom: 20px; }
-        .file-label { cursor: pointer; color: var(--neon); font-weight: bold; font-size: 14px; }
+        .upload-box { background: rgba(0,0,0,0.5); border: 2px dashed rgba(0,255,0,0.2); padding: 30px; border-radius: 20px; margin-bottom: 20px; cursor: pointer; }
+        .file-label { cursor: pointer; color: var(--neon); font-weight: bold; font-size: 14px; display: block; }
         input[type="file"] { display: none; }
         
         #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; background: var(--neon); color: #000; font-size: 14px; display: none; box-shadow: 0 0 20px rgba(0, 255, 0, 0.3); }
+        #gasBtn:disabled { background: #333; color: #888; box-shadow: none; cursor: not-allowed; }
         
         #status { margin-top: 20px; font-size: 12px; color: var(--neon); font-weight: bold; }
         
         .part-list { margin-top: 25px; display: grid; gap: 12px; }
-        .part-item { background: #111; border: 1px solid #333; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--neon); }
-        .part-info { font-size: 13px; font-weight: bold; color: #fff; }
-        .dl-link { background: var(--neon); color: #000; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: bold; }
+        .part-item { background: #111; border: 1px solid #333; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--neon); animation: slideIn 0.3s ease-out; }
+        .part-info { font-size: 13px; font-weight: bold; color: #fff; text-align: left; }
+        .dl-link { background: var(--neon); color: #000; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        video { display: none; }
     </style>
 </head>
 <body>
@@ -29,22 +33,22 @@
 <div class="card">
     <h2>🎬 TIKTOK CUTTER</h2>
 
-    <div class="upload-box">
-        <label for="videoInput" class="file-label">
-            <span>📁 UPLOAD VIDEO (16:9)</span>
-            <p style="font-size: 10px; color: #888; margin-top: 10px;" id="fileName">Hasil otomatis jadi 9:16</p>
+    <div class="upload-box" onclick="document.getElementById('videoInput').click()">
+        <label class="file-label">
+            <span>📁 UPLOAD VIDEO LONG</span>
+            <p style="font-size: 10px; color: #888; margin-top: 10px;" id="fileName">Otomatis Potong 60s & Zoom 9:16</p>
         </label>
         <input type="file" id="videoInput" accept="video/*">
     </div>
 
-    <button id="gasBtn">POTONG JADI 9:16 (INSTAN)</button>
+    <button id="gasBtn">MULAI POTONG PART SAT-SET</button>
     
-    <div id="status">Video akan dipecah @60 detik.</div>
+    <div id="status">Ready Mas Eko! Silakan upload file.</div>
 
     <div class="part-list" id="resultArea"></div>
 </div>
 
-<video id="vSource" style="display:none;"></video>
+<video id="vSource" crossorigin="anonymous"></video>
 
 <script>
     const videoInput = document.getElementById('videoInput');
@@ -57,31 +61,38 @@
         const file = e.target.files[0];
         if (file) {
             vSource.src = URL.createObjectURL(file);
-            document.getElementById('fileName').innerText = file.name;
+            document.getElementById('fileName').innerText = "File: " + file.name;
             gasBtn.style.display = "block";
+            status.innerText = "Video siap diproses!";
         }
     };
 
     gasBtn.onclick = async () => {
         gasBtn.disabled = true;
         resultArea.innerHTML = "";
-        status.innerText = "⏳ Memproses Potongan 9:16...";
-
+        
         const duration = vSource.duration;
+        const totalParts = Math.ceil(duration / 60);
         let start = 0;
         let part = 1;
 
+        status.innerText = `⏳ Memulai pemrosesan total ${totalParts} Part...`;
+
         while (start < duration) {
-            const end = Math.min(start + 60, duration);
+            status.innerText = `⏳ Sedang mengolah PART ${part} dari ${totalParts}...`;
             
-            // Menggunakan MediaRecorder untuk konversi aspect ratio secara cepat
+            const end = Math.min(start + 60, duration);
             const partBlob = await convertTo916(start, end);
             
+            // Tampilkan tombol unduh segera setelah satu part selesai
             const item = document.createElement('div');
             item.className = 'part-item';
             item.innerHTML = `
-                <div class="part-info">PART ${part} <span style="color:var(--neon);">(9:16)</span></div>
-                <a href="${URL.createObjectURL(partBlob)}" download="Sengkuni_TikTok_Part_${part}.mp4" class="dl-link">UNDUH</a>
+                <div class="part-info">
+                    PART ${part}<br>
+                    <span style="color:#888; font-weight:normal; font-size:10px;">DURASI: ${Math.floor(end - start)}s</span>
+                </div>
+                <a href="${URL.createObjectURL(partBlob)}" download="Sengkuni_Part_${part}.mp4" class="dl-link">UNDUH</a>
             `;
             resultArea.appendChild(item);
 
@@ -89,7 +100,7 @@
             part++;
         }
 
-        status.innerText = "✅ SELESAI! Video siap buat TikTok.";
+        status.innerText = "✅ SEMUA PART SELESAI DIPOTONG!";
         gasBtn.disabled = false;
     };
 
@@ -98,7 +109,7 @@
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Set ukuran standar TikTok
+            // Ukuran Standar TikTok (Vertikal)
             canvas.width = 720;
             canvas.height = 1280;
 
@@ -107,7 +118,7 @@
                 const stream = canvas.captureStream(30);
                 const recorder = new MediaRecorder(stream, { 
                     mimeType: 'video/webm;codecs=vp9',
-                    videoBitsPerSecond: 5000000 
+                    videoBitsPerSecond: 4000000 // Kualitas tinggi
                 });
                 const chunks = [];
 
@@ -116,7 +127,7 @@
 
                 const render = () => {
                     if (vSource.currentTime < end && !vSource.paused) {
-                        // Logika Zoom Tengah (Crop 16:9 ke 9:16)
+                        // Logika Zoom Tengah Otomatis
                         const scale = canvas.height / vSource.videoHeight;
                         const newWidth = vSource.videoWidth * scale;
                         const offset = (newWidth - canvas.width) / 2;
@@ -132,6 +143,7 @@
                 vSource.play();
                 render();
 
+                // Hentikan rekaman per part
                 setTimeout(() => {
                     vSource.pause();
                     if(recorder.state === "recording") recorder.stop();
