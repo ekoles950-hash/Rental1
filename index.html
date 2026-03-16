@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker - Manual Snap</title>
+    <title>Sengkuni Maker - Kontrol Teks</title>
     <style>
         :root { --neon: #00ff00; --bg: #0a0a0a; --glass: rgba(255, 255, 255, 0.05); }
         body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 15px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #003300, transparent); }
@@ -22,19 +22,28 @@
 <body>
 
 <div class="card">
-    <h2>🎬 SENGKUNI MAKER</h2>
+    <h2>🎬 SENGKUNI PRO</h2>
     
     <div class="input-group">
-        <label>Tulisan di Thumbnail</label>
-        <input type="text" id="v_title" placeholder="Ketik Judul..." oninput="updateThumbnail()">
-    </div>
-
-    <div class="input-group">
-        <label>Pilih Detik Jepretan (Awal/Tengah/Akhir)</label>
+        <label>Pilih Detik Jepretan Thumbnail</label>
         <div style="display:flex; gap:10px; align-items:center;">
             <input type="range" id="snap_time" min="1" max="60" value="5" oninput="updateTimeLabel(this.value)">
             <span id="time_label" style="font-size:12px; color:var(--neon); width:50px;">5s</span>
         </div>
+    </div>
+
+    <div class="input-group">
+        <label>Teks 1 (Kuning Racing)</label>
+        <input type="text" id="v_title1" placeholder="Judul Atas..." oninput="updateThumbnail()">
+        <label style="font-size:8px; margin-top:5px; color:#aaa;">Posisi Teks 1 (Naik/Turun)</label>
+        <input type="range" id="t1_pos" min="50" max="1200" value="150" oninput="updateThumbnail()">
+    </div>
+
+    <div class="input-group">
+        <label>Teks 2 (Putih Sport)</label>
+        <input type="text" id="v_title2" placeholder="Judul Bawah..." oninput="updateThumbnail()">
+        <label style="font-size:8px; margin-top:5px; color:#aaa;">Posisi Teks 2 (Naik/Turun)</label>
+        <input type="range" id="t2_pos" min="50" max="1200" value="1150" oninput="updateThumbnail()">
     </div>
 
     <div class="input-group">
@@ -59,7 +68,7 @@
         <div class="input-group"><label>Vidio Reaksi</label><input type="file" id="v2_in" accept="video/*"></div>
     </div>
 
-    <button id="gasBtn">GABUNG & JEPRET SESUAI DETIK</button>
+    <button id="gasBtn">GABUNG & JEPRET MANUAL</button>
     <div id="status">Ready Mas Eko! Silakan pilih video.</div>
 
     <video id="previewVideo" controls></video>
@@ -82,27 +91,31 @@
     const gasBtn = document.getElementById('gasBtn');
     const dlBtn = document.getElementById('dlThumb');
     const snapTime = document.getElementById('snap_time');
+    
+    // Kontrol Teks
+    const t1Input = document.getElementById('v_title1');
+    const t2Input = document.getElementById('v_title2');
+    const t1Pos = document.getElementById('t1_pos');
+    const t2Pos = document.getElementById('t2_pos');
 
     let capturedFrame = null;
 
     document.getElementById('v1_in').onchange = (e) => {
         const file = e.target.files[0];
         v1.src = URL.createObjectURL(file);
-        // Otomatis set slider max sesuai durasi video
-        v1.onloadedmetadata = () => {
-            snapTime.max = Math.floor(v1.duration);
-        };
+        v1.onloadedmetadata = () => { snapTime.max = Math.floor(v1.duration); };
     };
     document.getElementById('v2_in').onchange = (e) => v2.src = URL.createObjectURL(e.target.files[0]);
 
-    function updateTimeLabel(val) {
-        document.getElementById('time_label').innerText = val + "s";
-    }
+    function updateTimeLabel(val) { document.getElementById('time_label').innerText = val + "s"; }
 
     function updateSize() {
         const mode = document.getElementById('ratio').value;
         thumbCanvas.width = (mode === "9:16") ? 720 : 1280;
         thumbCanvas.height = (mode === "9:16") ? 1280 : 720;
+        // Update slider max posisi teks sesuai ukuran kanvas
+        t1Pos.max = thumbCanvas.height - 50;
+        t2Pos.max = thumbCanvas.height - 50;
     }
     updateSize();
 
@@ -122,7 +135,7 @@
         const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
         let chunks = [];
 
-        // JEPRET OTOMATIS BERDASARKAN INPUT SLIDER
+        // JEPRET OTOMATIS BERDASARKAN INPUT SLIDER WAKTU
         setTimeout(() => {
             capturedFrame = document.createElement('canvas');
             capturedFrame.width = canvas.width;
@@ -160,25 +173,34 @@
         if(!capturedFrame) return;
         tCtx.drawImage(capturedFrame, 0, 0, thumbCanvas.width, thumbCanvas.height);
         
-        const teks = document.getElementById('v_title').value;
+        const teks1 = t1Input.value.toUpperCase();
+        const teks2 = t2Input.value.toUpperCase();
         const gaya = document.getElementById('font_style').value;
-        
+        const x = thumbCanvas.width / 2;
+
         tCtx.font = gaya;
         tCtx.textAlign = "center";
-        tCtx.fillStyle = "#ffff00"; // Kuning Horeg
         tCtx.strokeStyle = "black";
         tCtx.lineWidth = 12;
-        
-        const x = thumbCanvas.width / 2;
-        const y = thumbCanvas.height - 120;
-        
-        tCtx.strokeText(teks.toUpperCase(), x, y);
-        tCtx.fillText(teks.toUpperCase(), x, y);
+
+        // Gambar Teks 1 (Kuning Atas)
+        if(teks1) {
+            tCtx.fillStyle = "#ffff00"; // Kuning Racing
+            tCtx.strokeText(teks1, x, parseInt(t1Pos.value));
+            tCtx.fillText(teks1, x, parseInt(t1Pos.value));
+        }
+
+        // Gambar Teks 2 (Putih Bawah)
+        if(teks2) {
+            tCtx.fillStyle = "#ffffff"; // Putih Sport
+            tCtx.strokeText(teks2, x, parseInt(t2Pos.value));
+            tCtx.fillText(teks2, x, parseInt(t2Pos.value));
+        }
     }
 
     dlBtn.onclick = () => {
         const link = document.createElement('a');
-        link.download = 'SENGKUNI_THUMBNAIL.jpg';
+        link.download = 'SENGKUNI_THUMBNAIL_PRO.jpg';
         link.href = thumbCanvas.toDataURL('image/jpeg', 0.95);
         link.click();
     };
