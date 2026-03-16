@@ -3,48 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni TikTok Cutter - 9:16</title>
+    <title>Sengkuni TikTok Cutter - Subtitle</title>
     <style>
         :root { --neon: #00ff00; --bg: #050505; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 15px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
         .card { width: 100%; max-width: 400px; background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0,255,0,0.3); text-align: center; box-shadow: 0 10px 30px #000; }
-        h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 25px; font-style: italic; letter-spacing: 2px; }
-        
-        .upload-box { background: rgba(0,0,0,0.5); border: 2px dashed rgba(0,255,0,0.2); padding: 30px; border-radius: 20px; margin-bottom: 20px; cursor: pointer; }
-        .file-label { cursor: pointer; color: var(--neon); font-weight: bold; font-size: 14px; display: block; }
-        input[type="file"] { display: none; }
-        
-        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; background: var(--neon); color: #000; font-size: 14px; display: none; box-shadow: 0 0 20px rgba(0, 255, 0, 0.3); }
-        #gasBtn:disabled { background: #333; color: #888; box-shadow: none; cursor: not-allowed; }
-        
-        #status { margin-top: 20px; font-size: 12px; color: var(--neon); font-weight: bold; }
-        
-        .part-list { margin-top: 25px; display: grid; gap: 12px; }
-        .part-item { background: #111; border: 1px solid #333; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--neon); animation: slideIn 0.3s ease-out; }
-        .part-info { font-size: 13px; font-weight: bold; color: #fff; text-align: left; }
-        .dl-link { background: var(--neon); color: #000; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-        
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 20px; font-style: italic; letter-spacing: 2px; }
+        .input-group { margin-bottom: 15px; text-align: left; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 15px; }
+        label { display: block; font-size: 10px; color: var(--neon); font-weight: bold; margin-bottom: 5px; }
+        input { width: 100%; background: #000; border: 1px solid #333; padding: 10px; border-radius: 10px; color: #fff; box-sizing: border-box; }
+        .upload-box { background: rgba(0,0,0,0.5); border: 2px dashed rgba(0,255,0,0.2); padding: 20px; border-radius: 15px; margin-bottom: 15px; cursor: pointer; }
+        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; background: var(--neon); color: #000; font-size: 14px; display: none; box-shadow: 0 0 20px rgba(0, 255, 0, 0.3); cursor: pointer; }
+        #status { margin-top: 15px; font-size: 12px; color: var(--neon); font-weight: bold; }
+        .part-list { margin-top: 20px; display: grid; gap: 10px; }
+        .part-item { background: #111; border: 1px solid #333; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--neon); }
+        .dl-link { background: var(--neon); color: #000; padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 10px; font-weight: bold; }
         video { display: none; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🎬 TIKTOK CUTTER</h2>
+    <h2>🎬 TIKTOK SUBTITLE</h2>
+
+    <div class="input-group">
+        <label>Teks Subtitle (Bawah)</label>
+        <input type="text" id="subText" placeholder="Ketik kalimat subtitle di sini...">
+    </div>
 
     <div class="upload-box" onclick="document.getElementById('videoInput').click()">
-        <label class="file-label">
-            <span>📁 UPLOAD VIDEO LONG</span>
-            <p style="font-size: 10px; color: #888; margin-top: 10px;" id="fileName">Otomatis Potong 60s & Zoom 9:16</p>
+        <label class="file-label" style="cursor:pointer; color:var(--neon); font-size:12px; font-weight:bold;">
+            📁 UPLOAD VIDEO LONG
+            <p style="font-size: 9px; color: #888; margin-top: 5px;" id="fileName">Otomatis Potong & Tambah Teks</p>
         </label>
         <input type="file" id="videoInput" accept="video/*">
     </div>
 
-    <button id="gasBtn">MULAI POTONG PART SAT-SET</button>
-    
-    <div id="status">Ready Mas Eko! Silakan upload file.</div>
-
+    <button id="gasBtn">GAS POTONG + SUBTITLE</button>
+    <div id="status">Ready Mas Eko! Ketik subtitle dulu ya.</div>
     <div class="part-list" id="resultArea"></div>
 </div>
 
@@ -61,93 +57,84 @@
         const file = e.target.files[0];
         if (file) {
             vSource.src = URL.createObjectURL(file);
-            document.getElementById('fileName').innerText = "File: " + file.name;
+            document.getElementById('fileName').innerText = file.name;
             gasBtn.style.display = "block";
-            status.innerText = "Video siap diproses!";
         }
     };
 
     gasBtn.onclick = async () => {
         gasBtn.disabled = true;
         resultArea.innerHTML = "";
-        
         const duration = vSource.duration;
         const totalParts = Math.ceil(duration / 60);
         let start = 0;
         let part = 1;
 
-        status.innerText = `⏳ Memulai pemrosesan total ${totalParts} Part...`;
-
         while (start < duration) {
-            status.innerText = `⏳ Sedang mengolah PART ${part} dari ${totalParts}...`;
-            
+            status.innerText = `⏳ Memproses PART ${part} (Dengan Subtitle)...`;
             const end = Math.min(start + 60, duration);
-            const partBlob = await convertTo916(start, end);
+            const partBlob = await convertWithSub(start, end);
             
-            // Tampilkan tombol unduh segera setelah satu part selesai
             const item = document.createElement('div');
             item.className = 'part-item';
             item.innerHTML = `
-                <div class="part-info">
-                    PART ${part}<br>
-                    <span style="color:#888; font-weight:normal; font-size:10px;">DURASI: ${Math.floor(end - start)}s</span>
-                </div>
-                <a href="${URL.createObjectURL(partBlob)}" download="Sengkuni_Part_${part}.mp4" class="dl-link">UNDUH</a>
+                <div style="font-size:12px; font-weight:bold;">PART ${part}</div>
+                <a href="${URL.createObjectURL(partBlob)}" download="Part_${part}_Subtitle.mp4" class="dl-link">UNDUH</a>
             `;
             resultArea.appendChild(item);
-
-            start += 60;
-            part++;
+            start += 60; part++;
         }
-
-        status.innerText = "✅ SEMUA PART SELESAI DIPOTONG!";
+        status.innerText = "✅ SELESAI! SEMUA SUDAH BERTEKS.";
         gasBtn.disabled = false;
     };
 
-    async function convertTo916(start, end) {
+    async function convertWithSub(start, end) {
         return new Promise((resolve) => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            
-            // Ukuran Standar TikTok (Vertikal)
-            canvas.width = 720;
-            canvas.height = 1280;
+            canvas.width = 720; canvas.height = 1280;
 
             vSource.currentTime = start;
             vSource.onseeked = () => {
-                const stream = canvas.captureStream(30);
-                const recorder = new MediaRecorder(stream, { 
-                    mimeType: 'video/webm;codecs=vp9',
-                    videoBitsPerSecond: 4000000 // Kualitas tinggi
-                });
+                const audioCtx = new AudioContext();
+                const source = audioCtx.createMediaElementSource(vSource);
+                const dest = audioCtx.createMediaStreamDestination();
+                source.connect(dest); source.connect(audioCtx.destination);
+
+                const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+                const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
                 const chunks = [];
 
                 recorder.ondataavailable = e => chunks.push(e.data);
-                recorder.onstop = () => resolve(new Blob(chunks, { type: 'video/mp4' }));
+                recorder.onstop = () => { audioCtx.close(); resolve(new Blob(chunks, { type: 'video/mp4' })); };
 
                 const render = () => {
                     if (vSource.currentTime < end && !vSource.paused) {
-                        // Logika Zoom Tengah Otomatis
+                        // Zoom 9:16
                         const scale = canvas.height / vSource.videoHeight;
                         const newWidth = vSource.videoWidth * scale;
                         const offset = (newWidth - canvas.width) / 2;
-                        
                         ctx.drawImage(vSource, -offset, 0, newWidth, canvas.height);
+                        
+                        // --- GAMBAR SUBTITLE ---
+                        const text = document.getElementById('subText').value.toUpperCase();
+                        if(text) {
+                            ctx.font = "bold 40px Arial";
+                            ctx.textAlign = "center";
+                            // Background Hitam Transparan buat Teks
+                            ctx.fillStyle = "rgba(0,0,0,0.5)";
+                            ctx.fillRect(50, 1100, 620, 80);
+                            // Teks Putih
+                            ctx.fillStyle = "#fff";
+                            ctx.fillText(text, 360, 1155);
+                        }
+
                         requestAnimationFrame(render);
-                    } else {
-                        recorder.stop();
-                    }
+                    } else { recorder.stop(); }
                 };
 
-                recorder.start();
-                vSource.play();
-                render();
-
-                // Hentikan rekaman per part
-                setTimeout(() => {
-                    vSource.pause();
-                    if(recorder.state === "recording") recorder.stop();
-                }, (end - start) * 1000);
+                recorder.start(); vSource.play(); render();
+                setTimeout(() => { vSource.pause(); if(recorder.state === "recording") recorder.stop(); }, (end - start) * 1000);
             };
         });
     }
