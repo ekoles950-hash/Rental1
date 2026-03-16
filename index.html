@@ -3,212 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Multi-AI Pro</title>
+    <title>Sengkuni Maker Pro</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        :root {
-            --neon-green: #00ff00;
-            --dark-bg: #0a0a0a;
-            --glass: rgba(255, 255, 255, 0.05);
-        }
-        
-        body { 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background-color: var(--dark-bg); 
-            background-image: radial-gradient(circle at top right, #003300, transparent);
-            color: #fff; 
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-        }
-
-        .container { 
-            width: 100%;
-            max-width: 450px; 
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .card { 
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 25px; 
-            border-radius: 24px; 
-            border: 1px solid rgba(0, 255, 0, 0.2); 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        h2 { 
-            margin: 0 0 20px 0; 
-            font-size: 24px; 
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--neon-green);
-            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .input-group { margin-bottom: 15px; text-align: left; }
-        
-        label { 
-            display: block; 
-            font-size: 11px; 
-            color: var(--neon-green); 
-            margin-bottom: 5px; 
-            margin-left: 5px;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-
-        input[type="text"], input[type="password"], select, textarea { 
-            width: 100%; 
-            background: rgba(0,0,0,0.3);
-            border: 1px solid #333;
-            padding: 12px; 
-            border-radius: 12px; 
-            color: #fff; 
-            font-size: 14px;
-            box-sizing: border-box;
-            transition: 0.3s;
-        }
-
-        input:focus, select:focus {
-            border-color: var(--neon-green);
-            outline: none;
-            box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
-        }
-
-        .file-input-wrapper {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        input[type="file"] {
-            font-size: 11px;
-            color: #888;
-        }
-
-        button { 
-            width: 100%; 
-            padding: 15px; 
-            border-radius: 12px; 
-            border: none; 
-            font-weight: bold; 
-            font-size: 16px; 
-            cursor: pointer; 
-            transition: 0.3s;
-            text-transform: uppercase;
-        }
-
-        #gasBtn { 
-            background: var(--neon-green); 
-            color: #000; 
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
-            margin-top: 10px;
-        }
-
-        #gasBtn:active { transform: scale(0.98); }
-        #gasBtn:disabled { background: #333; color: #666; box-shadow: none; }
-
-        #uploadBtn { 
-            background: #ff0000; 
-            color: #fff; 
-            display: none; 
-            margin-top: 15px;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
-        }
-
-        #status { 
-            margin-top: 15px; 
-            font-size: 13px; 
-            font-weight: bold;
-            color: #aaa;
-        }
-
-        #previewVideo, #thumbPreview { 
-            width: 100%; 
-            border-radius: 14px; 
-            margin-top: 20px; 
-            display: none; 
-            border: 1px solid var(--neon-green); 
-        }
-
-        .footer {
-            margin-top: 20px;
-            font-size: 10px;
-            color: #444;
-            letter-spacing: 1px;
-        }
+        :root { --neon: #00ff00; --bg: #0a0a0a; --glass: rgba(255, 255, 255, 0.05); }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; justify-content: center; min-height: 100vh; background-image: radial-gradient(circle at top right, #003300, transparent); }
+        .card { width: 100%; max-width: 450px; background: var(--glass); backdrop-filter: blur(10px); padding: 25px; border-radius: 24px; border: 1px solid rgba(0, 255, 0, 0.2); margin: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
+        h2 { color: var(--neon); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0, 255, 0, 0.5); margin-bottom: 20px; }
+        .input-group { margin-bottom: 12px; text-align: left; }
+        label { display: block; font-size: 10px; color: var(--neon); text-transform: uppercase; margin: 0 0 5px 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid #333; padding: 12px; border-radius: 12px; color: #fff; box-sizing: border-box; font-size: 14px; }
+        input:focus { border-color: var(--neon); outline: none; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        #gasBtn { background: var(--neon); color: #000; box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); }
+        #uploadBtn { background: #ff0000; color: #fff; display: none; }
+        #status { margin-top: 15px; font-size: 12px; color: #00ff00; font-weight: bold; }
+        video#previewVideo, img#thumbPreview { width: 100%; border-radius: 12px; margin-top: 15px; display: none; border: 1px solid var(--neon); }
+        canvas, .raw-video { display: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="card">
-        <h2>🎬 Sengkuni Pro</h2>
-        
-        <div class="input-group">
-            <label>Judul & Prompt AI</label>
-            <input type="text" id="v_title" placeholder="Contoh: Sound Horeg Mberot...">
-        </div>
+<div class="card">
+    <h2>🎬 SENGKUNI PRO</h2>
+    
+    <div class="input-group">
+        <label>Judul Postingan</label>
+        <input type="text" id="v_title" placeholder="Ketik judul untuk AI...">
+    </div>
 
+    <div class="grid">
         <div class="input-group">
-            <label>Mesin AI & API Key</label>
-            <div style="display: flex; gap: 5px;">
-                <select id="api_provider" style="flex: 1;">
-                    <option value="maia">Maia Router</option>
-                    <option value="gemini">Gemini Studio</option>
-                </select>
-                <input type="password" id="api_key" placeholder="API Key..." style="flex: 1.5;">
-            </div>
-        </div>
-
-        <div class="input-group">
-            <label>Format Video</label>
-            <select id="ratio">
-                <option value="9:16">Shorts (9:16)</option>
-                <option value="16:9">YouTube (16:9)</option>
+            <label>Provider</label>
+            <select id="api_provider">
+                <option value="maia">Maia Router</option>
+                <option value="gemini">Gemini Studio</option>
             </select>
         </div>
-
-        <div class="file-input-wrapper">
-            <div class="input-group">
-                <label>Video Horeg</label>
-                <input type="file" id="v1_in" accept="video/*">
-            </div>
-            <div class="input-group">
-                <label>Video Reaksi</label>
-                <input type="file" id="v2_in" accept="video/*">
-            </div>
+        <div class="input-group">
+            <label>API Key</label>
+            <input type="password" id="api_key" placeholder="sk-...">
         </div>
-        
-        <button id="gasBtn">Proses Gabung</button>
-        
-        <div id="status">Sengkuni Siap Beraksi!</div>
-
-        <video id="previewVideo" controls></video>
-        <img id="thumbPreview" alt="Thumbnail AI">
-        
-        <button id="uploadBtn">Upload ke YouTube</button>
     </div>
-    
-    <div class="footer">DIBUAT KHUSUS UNTUK MAS EKO</div>
+
+    <div class="input-group">
+        <label>Format Video</label>
+        <select id="ratio">
+            <option value="9:16">Shorts (9:16)</option>
+            <option value="16:9">YouTube (16:9)</option>
+        </select>
+    </div>
+
+    <div class="grid">
+        <div class="input-group">
+            <label>Video Horeg</label>
+            <input type="file" id="v1_in" accept="video/*">
+        </div>
+        <div class="input-group">
+            <label>Video Reaksi</label>
+            <input type="file" id="v2_in" accept="video/*">
+        </div>
+    </div>
+
+    <button id="gasBtn">MULAI GABUNG VIDEO</button>
+    <div id="status">Ready Mas Eko!</div>
+
+    <video id="previewVideo" controls></video>
+    <img id="thumbPreview" alt="AI Thumbnail">
+    <button id="uploadBtn">UPLOAD KE YOUTUBE</button>
 </div>
 
-<video id="v1" style="display:none;" crossorigin="anonymous"></video>
-<video id="v2" style="display:none;" loop muted crossorigin="anonymous"></video>
-<canvas id="c" style="display:none;"></canvas>
+<video id="v1" class="raw-video" crossorigin="anonymous"></video>
+<video id="v2" class="raw-video" loop muted crossorigin="anonymous"></video>
+<canvas id="c"></canvas>
 
 <script>
-    // Masukkan Logika JavaScript Mas yang tadi di sini (Fungsi draw, recording, panggilAI, dll)
-    // Pastikan ID elemennya cocok!
+    const v1 = document.getElementById('v1');
+    const v2 = document.getElementById('v2');
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const status = document.getElementById('status');
+    const gasBtn = document.getElementById('gasBtn');
+    const preview = document.getElementById('previewVideo');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    let finalBlob = null;
+    let screenshotBase64 = null;
+
+    // Handle input file
+    document.getElementById('v1_in').onchange = (e) => v1.src = URL.createObjectURL(e.target.files[0]);
+    document.getElementById('v2_in').onchange = (e) => v2.src = URL.createObjectURL(e.target.files[0]);
+
+    // FUNGSI UTAMA
+    gasBtn.onclick = async () => {
+        if(!v1.src || !v2.src || !document.getElementById('v_title').value) return alert("Lengkapi data Mas Eko!");
+        
+        const mode = document.getElementById('ratio').value;
+        canvas.width = (mode === "9:16") ? 720 : 1280;
+        canvas.height = (mode === "9:16") ? 1280 : 720;
+        
+        gasBtn.disabled = true;
+        status.innerText = "⏳ SEDANG MEREKAM VIDEO & SUARA...";
+        
+        v1.currentTime = 0; v2.currentTime = 0;
+        await v1.play(); v2.play();
+
+        // AUDIO ENGINE
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaElementSource(v1);
+        const dest = audioCtx.createMediaStreamDestination();
+        source.connect(dest); source.connect(audioCtx.destination);
+
+        const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+        const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
+        let chunks = [];
+
+        // Ambil Screenshot buat AI
+        setTimeout(() => {
+            screenshotBase64 = canvas.toDataURL('image/jpeg', 0.8);
+        }, 2000);
+
+        rec.ondataavailable = e => chunks.push(e.data);
+        rec.onstop = () => {
+            finalBlob = new Blob(chunks, { type: 'video/mp4' });
+            preview.src = URL.createObjectURL(finalBlob);
+            preview.style.display = "block";
+            status.innerText = "🤖 MEMANGGIL AI THUMBNAIL...";
+            buatThumbnailAI();
+            gasBtn.disabled = false;
+        };
+
+        v1.onended = () => { if(rec.state === "recording") rec.stop(); };
+        rec.start();
+
+        function draw() {
+            if(rec.state === "recording") {
+                ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
+                if(mode === "9:16") ctx.drawImage(v2, 40, canvas.height-350, 220, 300);
+                else ctx.drawImage(v2, canvas.width-320, canvas.height-240, 280, 200);
+                requestAnimationFrame(draw);
+            }
+        }
+        draw();
+    };
+
+    async function buatThumbnailAI() {
+        const provider = document.getElementById('api_provider').value;
+        const key = document.getElementById('api_key').value;
+        const judul = document.getElementById('v_title').value;
+
+        if(!key) { status.innerText = "✅ Gabung Selesai! (Tanpa AI karena Key Kosong)"; return; }
+
+        try {
+            const url = provider === "maia" ? 'https://api.maiarouter.ai/v1/images/generations' : 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key;
+            
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: "openai/gpt-5.1-codex-mini",
+                    prompt: `YouTube Thumbnail Pro: ${judul}`,
+                    image_reference: screenshotBase64
+                })
+            });
+            const data = await res.json();
+            if(data.data) {
+                document.getElementById('thumbPreview').src = data.data[0].url;
+                document.getElementById('thumbPreview').style.display = "block";
+                uploadBtn.style.display = "block";
+                status.innerText = "✅ SEMUA SIAP MAS EKO!";
+            }
+        } catch (e) { status.innerText = "✅ Gabung Selesai! (AI Gagal/Saldo Habis)"; }
+    }
 </script>
 
 </body>
