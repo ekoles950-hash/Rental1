@@ -3,62 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Pro v.Final</title>
+    <title>Sengkuni Maker - Edisi Gratis</title>
     <style>
         :root { --neon: #00ff00; --bg: #0a0a0a; --glass: rgba(255, 255, 255, 0.05); }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; justify-content: center; min-height: 100vh; background-image: radial-gradient(circle at top right, #003300, transparent); }
-        .card { width: 100%; max-width: 450px; background: var(--glass); backdrop-filter: blur(10px); padding: 25px; border-radius: 24px; border: 1px solid rgba(0, 255, 0, 0.2); margin: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 15px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #003300, transparent); }
+        .card { width: 100%; max-width: 450px; background: var(--glass); backdrop-filter: blur(10px); padding: 20px; border-radius: 24px; border: 1px solid rgba(0, 255, 0, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
         h2 { color: var(--neon); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0, 255, 0, 0.5); margin-bottom: 20px; }
         .input-group { margin-bottom: 12px; text-align: left; }
-        label { display: block; font-size: 10px; color: var(--neon); text-transform: uppercase; margin: 0 0 5px 5px; font-weight: bold; }
-        input, select { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid #333; padding: 12px; border-radius: 12px; color: #fff; box-sizing: border-box; font-size: 14px; }
-        button { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        #gasBtn { background: var(--neon); color: #000; box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); }
+        label { display: block; font-size: 10px; color: var(--neon); text-transform: uppercase; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid #333; padding: 12px; border-radius: 12px; color: #fff; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; background: var(--neon); color: #000; box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); }
         #status { margin-top: 15px; font-size: 12px; color: var(--neon); font-weight: bold; }
-        video#previewVideo, img#thumbPreview { width: 100%; border-radius: 14px; margin-top: 15px; display: none; border: 2px solid var(--neon); }
+        
+        /* Thumbnail Preview */
+        #thumbCanvas { width: 100%; border-radius: 14px; margin-top: 15px; border: 2px solid var(--neon); display: none; }
+        #previewVideo { width: 100%; border-radius: 14px; margin-top: 15px; display: none; border: 1px solid #333; }
         canvas, .raw-video { display: none; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🎬 SENGKUNI PRO</h2>
+    <h2>🎬 SENGKUNI MAKER</h2>
     
     <div class="input-group">
-        <label>Judul Postingan</label>
-        <input type="text" id="v_title" placeholder="Ketik judul untuk AI...">
+        <label>Tulisan di Thumbnail</label>
+        <input type="text" id="v_title" placeholder="Ketik Judul Thumbnail..." oninput="updateThumbnail()">
     </div>
 
     <div class="input-group">
-        <label>API KEY MAIA ROUTER</label>
-        <input type="password" id="api_key" placeholder="Paste sk-maia... di sini">
+        <label>Pilih Gaya Tulisan (Font)</label>
+        <select id="font_style" onchange="updateThumbnail()">
+            <option value="bold 80px Impact">Gaya Balap (Impact)</option>
+            <option value="italic bold 70px Arial">Gaya Sport (Arial Italic)</option>
+            <option value="bold 60px 'Segoe UI'">Gaya Modern (Segoe)</option>
+        </select>
     </div>
 
     <div class="input-group">
         <label>Ukuran Video</label>
-        <select id="ratio">
+        <select id="ratio" onchange="updateSize()">
             <option value="9:16">Shorts (9:16)</option>
             <option value="16:9">YouTube (16:9)</option>
         </select>
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div class="input-group">
-            <label>Video Horeg</label>
-            <input type="file" id="v1_in" accept="video/*">
-        </div>
-        <div class="input-group">
-            <label>Video Reaksi</label>
-            <input type="file" id="v2_in" accept="video/*">
-        </div>
+        <div class="input-group"><label>Vidio Horeg</label><input type="file" id="v1_in" accept="video/*"></div>
+        <div class="input-group"><label>Vidio Reaksi</label><input type="file" id="v2_in" accept="video/*"></div>
     </div>
 
-    <button id="gasBtn">GABUNG & BUAT FOTO AI</button>
+    <button id="gasBtn">GABUNG & JEPRET THUMBNAIL</button>
     <div id="status">Ready Mas Eko!</div>
 
     <video id="previewVideo" controls></video>
-    <div id="ai_label" style="display:none; color:var(--neon); font-size:12px; margin-top:15px; font-weight:bold;">📸 HASIL THUMBNAIL AI:</div>
-    <img id="thumbPreview">
+    
+    <canvas id="thumbCanvas"></canvas>
+    <button id="dlThumb" style="display:none; background:#555; color:#fff;">📥 DOWNLOAD THUMBNAIL GRATIS</button>
 </div>
 
 <video id="v1" class="raw-video" crossorigin="anonymous" playsinline></video>
@@ -70,90 +71,99 @@
     const v2 = document.getElementById('v2');
     const canvas = document.getElementById('c');
     const ctx = canvas.getContext('2d');
+    const thumbCanvas = document.getElementById('thumbCanvas');
+    const tCtx = thumbCanvas.getContext('2d');
     const status = document.getElementById('status');
     const gasBtn = document.getElementById('gasBtn');
-    const preview = document.getElementById('previewVideo');
-    const thumbImg = document.getElementById('thumbPreview');
+    const dlBtn = document.getElementById('dlThumb');
 
-    let screenshotBase64 = null;
+    let capturedFrame = null;
 
     document.getElementById('v1_in').onchange = (e) => v1.src = URL.createObjectURL(e.target.files[0]);
     document.getElementById('v2_in').onchange = (e) => v2.src = URL.createObjectURL(e.target.files[0]);
 
+    function updateSize() {
+        const mode = document.getElementById('ratio').value;
+        thumbCanvas.width = (mode === "9:16") ? 720 : 1280;
+        thumbCanvas.height = (mode === "9:16") ? 1280 : 720;
+    }
+    updateSize();
+
     gasBtn.onclick = async () => {
-        if(!v1.src || !v2.src || !document.getElementById('v_title').value) return alert("Lengkapi data Mas Eko!");
-        
+        if(!v1.src || !v2.src) return alert("Pilih video dulu!");
         const mode = document.getElementById('ratio').value;
         canvas.width = (mode === "9:16") ? 720 : 1280;
         canvas.height = (mode === "9:16") ? 1280 : 720;
         
         gasBtn.disabled = true;
-        status.innerText = "⏳ SEDANG MEREKAM (SUARA & DURASI UTAMA)...";
-        
-        v1.currentTime = 0; v2.currentTime = 0;
-        await v1.play(); v2.play();
+        status.innerText = "⏳ SEDANG MEREKAM...";
+        v1.play(); v2.play();
 
-        // AUDIO ENGINE (DURASI & SUARA IKUT V1)
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioCtx.createMediaElementSource(v1);
-        const dest = audioCtx.createMediaStreamDestination();
-        source.connect(dest); source.connect(audioCtx.destination);
-
-        const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+        const stream = canvas.captureStream(30);
         const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
         let chunks = [];
 
-        // Screenshot Referensi AI
-        setTimeout(() => { screenshotBase64 = canvas.toDataURL('image/jpeg', 0.8); }, 2000);
+        // OTOMATIS JEPRET GAMBAR DI DETIK KE-1
+        setTimeout(() => {
+            capturedFrame = document.createElement('canvas');
+            capturedFrame.width = canvas.width;
+            capturedFrame.height = canvas.height;
+            capturedFrame.getContext('2d').drawImage(v1, 0, 0, canvas.width, canvas.height);
+            updateThumbnail(); 
+            thumbCanvas.style.display = "block";
+            dlBtn.style.display = "block";
+        }, 1500);
 
         rec.ondataavailable = e => chunks.push(e.data);
         rec.onstop = () => {
-            const finalBlob = new Blob(chunks, { type: 'video/mp4' });
-            preview.src = URL.createObjectURL(finalBlob);
-            preview.style.display = "block";
-            status.innerText = "🤖 MEMANGGIL MAIA ROUTER...";
-            buatThumbnailAI();
+            const blob = new Blob(chunks, { type: 'video/mp4' });
+            document.getElementById('previewVideo').src = URL.createObjectURL(blob);
+            document.getElementById('previewVideo').style.display = "block";
+            status.innerText = "✅ SELESAI! Video & Thumbnail sudah jadi.";
             gasBtn.disabled = false;
         };
 
-        v1.onended = () => { if(rec.state === "recording") rec.stop(); };
+        v1.onended = () => rec.stop();
         rec.start();
 
         function draw() {
             if(rec.state === "recording") {
                 ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
-                if(mode === "9:16") ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
-                else ctx.drawImage(v2, canvas.width - 320, canvas.height - 240, 280, 200);
+                if(mode === "9:16") ctx.drawImage(v2, 40, 930, 220, 300);
+                else ctx.drawImage(v2, canvas.width-320, canvas.height-240, 280, 200);
                 requestAnimationFrame(draw);
             }
         }
         draw();
     };
 
-    async function buatThumbnailAI() {
-        const key = document.getElementById('api_key').value;
-        const judul = document.getElementById('v_title').value;
-        if(!key) { status.innerText = "✅ VIDEO SELESAI!"; return; }
-
-        try {
-            const res = await fetch('https://api.maiarouter.ai/v1/images/generations', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: "openai/gpt-image-1-mini",
-                    prompt: `YouTube Thumbnail: ${judul}. Cinematic, Vibrant.`,
-                    n: 1, size: "1024x1024"
-                })
-            });
-            const data = await res.json();
-            if(data.data) {
-                thumbImg.src = data.data[0].url;
-                thumbImg.style.display = "block";
-                document.getElementById('ai_label').style.display = "block";
-                status.innerText = "✅ VIDEO & FOTO AI SIAP!";
-            }
-        } catch (e) { status.innerText = "❌ AI Error. Cek Saldo."; }
+    function updateThumbnail() {
+        if(!capturedFrame) return;
+        tCtx.drawImage(capturedFrame, 0, 0, thumbCanvas.width, thumbCanvas.height);
+        
+        const teks = document.getElementById('v_title').value;
+        const gaya = document.getElementById('font_style').value;
+        
+        // Desain Teks Sangar
+        tCtx.font = gaya;
+        tCtx.textAlign = "center";
+        tCtx.fillStyle = "#ffff00"; // Kuning Racing
+        tCtx.strokeStyle = "black";
+        tCtx.lineWidth = 10;
+        
+        const x = thumbCanvas.width / 2;
+        const y = thumbCanvas.height - 100;
+        
+        tCtx.strokeText(teks.toUpperCase(), x, y);
+        tCtx.fillText(teks.toUpperCase(), x, y);
     }
+
+    dlBtn.onclick = () => {
+        const link = document.createElement('a');
+        link.download = 'thumbnail_sengkuni.jpg';
+        link.href = thumbCanvas.toDataURL('image/jpeg', 0.9);
+        link.click();
+    };
 </script>
 </body>
 </html>
