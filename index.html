@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Direct YouTube</title>
+    <title>Sengkuni Maker v.Final</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; }
         .box { background: #111; padding: 20px; border-radius: 20px; border: 3px solid #00ff00; box-shadow: 0 0 15px #00ff00; max-width: 450px; margin: auto; }
         input, select, button, textarea { width: 100%; margin: 10px 0; padding: 12px; border-radius: 8px; border: none; box-sizing: border-box; }
         button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; font-size: 16px; }
+        button:disabled { background: #444; color: #888; cursor: not-allowed; }
         #status { margin-top: 15px; color: #00ff00; font-weight: bold; font-size: 13px; }
         #previewVideo { width: 100%; border-radius: 10px; margin-top: 15px; display: none; border: 2px solid #00ff00; }
         .label { font-size: 11px; color: #888; text-align: left; margin: 5px 0 0 5px; }
@@ -19,14 +20,21 @@
 <body>
 
 <div class="box">
-    <h3>🎬 SENGKUNI DIRECT YOUTUBE</h3>
+    <h3>🎬 SENGKUNI x DIRECT YOUTUBE</h3>
+    
     <input type="text" id="v_title" placeholder="Judul Video YouTube...">
-    <textarea id="v_desc" placeholder="Deskripsi Video..." style="height:60px;"></textarea>
+    <textarea id="v_desc" placeholder="Deskripsi Video..." style="height:60px; background:#222; color:#fff; border:1px solid #333; padding:10px;"></textarea>
+
+    <div class="label">Pilih Ukuran Video:</div>
+    <select id="ratio">
+        <option value="9:16">Shorts (Portrait 9:16)</option>
+        <option value="16:9">YouTube (Landscape 16:9)</option>
+    </select>
 
     <input type="file" id="v1_in" accept="video/*">
     <div class="label">Video Utama (Suara & Durasi)</div>
     <input type="file" id="v2_in" accept="video/*">
-    <div class="label">Video Reaksi (Loop & Bisu)</div>
+    <div class="label">Video Reaksi (Bisu & Loop)</div>
 
     <button id="gasBtn">1. GABUNG VIDEO</button>
     <button id="uploadBtn" style="background:#ff0000; color:#fff; display:none;">2. LOGIN & UPLOAD KE YOUTUBE</button>
@@ -40,8 +48,8 @@
 <canvas id="c"></canvas>
 
 <script>
-    // --- MASUKKAN CLIENT ID MAS EKO DI SINI ---
-    const CLIENT_ID = "MASUKKAN_CLIENT_ID_DARI_GOOGLE_CLOUD_MAS.apps.googleusercontent.com";
+    // --- WAJIB ISI: CLIENT ID DARI GOOGLE CLOUD MAS EKO ---
+    const CLIENT_ID = "MASUKKAN_CLIENT_ID_MAS.apps.googleusercontent.com";
     
     let finalBlob = null;
     let accessToken = null;
@@ -51,6 +59,7 @@
     const canvas = document.getElementById('c');
     const ctx = canvas.getContext('2d');
     const status = document.getElementById('status');
+    const gasBtn = document.getElementById('gasBtn');
     const uploadBtn = document.getElementById('uploadBtn');
     const preview = document.getElementById('previewVideo');
 
@@ -58,11 +67,15 @@
     document.getElementById('v2_in').onchange = (e) => v2.src = URL.createObjectURL(e.target.files[0]);
 
     // 1. PROSES GABUNG VIDEO
-    document.getElementById('gasBtn').onclick = async () => {
-        if(!v1.src || !v2.src || !document.getElementById('v_title').value) return alert("Data belum lengkap Mas!");
+    gasBtn.onclick = async () => {
+        if(!v1.src || !v2.src || !document.getElementById('v_title').value) return alert("Lengkapi judul dan video dulu Mas!");
         
-        canvas.width = 720; canvas.height = 1280;
-        status.innerText = "⏳ Sedang Menggabung Video & Suara...";
+        const mode = document.getElementById('ratio').value;
+        canvas.width = (mode === "9:16") ? 720 : 1280;
+        canvas.height = (mode === "9:16") ? 1280 : 720;
+        
+        gasBtn.disabled = true;
+        status.innerText = "⏳ Sedang Menggabung (" + mode + ")...";
         uploadBtn.style.display = "none";
         preview.style.display = "none";
 
@@ -84,16 +97,21 @@
             preview.src = URL.createObjectURL(finalBlob);
             preview.style.display = "block";
             uploadBtn.style.display = "block";
-            status.innerText = "✅ Gabung Selesai! Cek video di bawah, lalu klik tombol merah.";
+            status.innerText = "✅ Gabung Selesai! Cek video, lalu klik tombol merah.";
+            gasBtn.disabled = false;
         };
 
-        v1.onended = () => rec.stop();
+        v1.onended = () => { if(rec.state === "recording") rec.stop(); };
         rec.start();
 
         function draw() {
             if(rec.state === "recording") {
                 ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
-                ctx.drawImage(v2, 40, 900, 220, 300);
+                if(mode === "9:16") {
+                    ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
+                } else {
+                    ctx.drawImage(v2, canvas.width - 320, canvas.height - 240, 280, 200);
+                }
                 requestAnimationFrame(draw);
             }
         }
@@ -102,7 +120,7 @@
 
     // 2. PROSES LOGIN & UPLOAD
     uploadBtn.onclick = () => {
-        if (!CLIENT_ID.includes(".apps")) return alert("Mas Eko, isi Client ID dulu di kodingannya!");
+        if (CLIENT_ID.includes("MASUKKAN")) return alert("Mas Eko, isi Client ID dulu di kodingannya!");
         
         const client = google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
@@ -110,15 +128,15 @@
             callback: (response) => {
                 if (response.access_token) {
                     accessToken = response.access_token;
-                    mulaiUploadKeYouTube();
+                    mulaiUpload();
                 }
             },
         });
         client.requestAccessToken();
     };
 
-    async function mulaiUploadKeYouTube() {
-        status.innerText = "🚀 Menghubungi Server YouTube...";
+    async function mulaiUpload() {
+        status.innerText = "🚀 Menghubungi YouTube...";
         const metadata = {
             snippet: {
                 title: document.getElementById('v_title').value,
@@ -140,8 +158,8 @@
             });
             const data = await res.json();
             if(data.id) {
-                status.innerText = "✅ BERHASIL! Video ID: " + data.id;
-                alert("MANTAP MAS EKO! Video sudah terbang ke akun YouTube Mas.");
+                status.innerText = "✅ BERHASIL DIUPLOAD!";
+                alert("MANTAP MAS EKO! Video sudah masuk ke YouTube.");
             } else {
                 status.innerText = "❌ Gagal: " + (data.error ? data.error.message : "Cek kuota API");
             }
