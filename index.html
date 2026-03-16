@@ -3,192 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker - Pro Theme</title>
+    <title>Sengkuni Pro - Smart Zoom</title>
     <style>
-        /* TEMA DARK NEON KESUKAAN MAS EKO */
-        :root { --neon: #00ff00; --bg: #050505; --glass: rgba(255, 255, 255, 0.03); --border: rgba(0, 255, 0, 0.3); }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; min-height: 100vh; background-image: radial-gradient(circle at top right, #002200, transparent); }
-        
-        .card { width: 100%; max-width: 450px; background: var(--glass); backdrop-filter: blur(15px); padding: 25px; border-radius: 30px; border: 1px solid var(--border); box-shadow: 0 15px 35px rgba(0,0,0,0.8); text-align: center; }
-        
-        h2 { color: var(--neon); text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 15px var(--neon); margin-bottom: 25px; font-style: italic; }
-        
-        .input-group { margin-bottom: 15px; text-align: left; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
-        label { display: block; font-size: 10px; color: var(--neon); text-transform: uppercase; margin-bottom: 8px; font-weight: bold; letter-spacing: 1px; }
-        
-        input[type="text"], select { width: 100%; background: #000; border: 1px solid #222; padding: 12px; border-radius: 10px; color: #fff; font-size: 14px; outline: none; }
-        input[type="range"] { width: 100%; accent-color: var(--neon); cursor: pointer; }
-        
-        input[type="file"] { font-size: 11px; color: #888; }
-        
-        button { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; letter-spacing: 1px; }
-        #gasBtn { background: var(--neon); color: #000; box-shadow: 0 0 20px rgba(0, 255, 0, 0.4); }
-        #gasBtn:active { transform: scale(0.98); }
-        
-        #status { margin-top: 20px; font-size: 12px; color: var(--neon); font-weight: bold; text-shadow: 0 0 5px #000; }
-        
-        #previewVideo, #thumbCanvas { width: 100%; border-radius: 15px; margin-top: 20px; border: 2px solid var(--neon); display: none; box-shadow: 0 0 15px rgba(0,255,0,0.2); }
-        #dlThumb { background: #222; color: #fff; border: 1px solid #444; display: none; }
-        
-        canvas, .raw-video { display: none; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        :root { --neon: #00ff00; --bg: #050505; --glass: rgba(255, 255, 255, 0.03); }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
+        .card { width: 100%; max-width: 450px; background: var(--glass); backdrop-filter: blur(15px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0,255,0,0.3); text-align: center; box-shadow: 0 10px 30px #000; }
+        h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 20px; font-style: italic; }
+        .input-group { margin-bottom: 12px; text-align: left; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; }
+        label { display: block; font-size: 10px; color: var(--neon); text-transform: uppercase; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; background: #000; border: 1px solid #222; padding: 10px; border-radius: 10px; color: #fff; }
+        button { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; background: var(--neon); color: #000; }
+        #status { margin-top: 15px; font-size: 12px; color: var(--neon); font-weight: bold; }
+        .part-list { margin-top: 20px; display: grid; gap: 10px; }
+        .part-btn { background: #222; color: #fff; border: 1px solid var(--neon); padding: 10px; border-radius: 8px; text-decoration: none; font-size: 12px; display: none; text-align: center; }
+        canvas, .raw-v { display: none; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🎬 SENGKUNI PRO</h2>
-    
-    <div class="input-group">
-        <label>Mode Postingan</label>
-        <select id="ratio" onchange="updateSize()">
-            <option value="9:16">YouTube ke Shorts (9:16)</option>
-            <option value="16:9">YouTube Tetap Long (16:9)</option>
-        </select>
-    </div>
+    <h2>🎬 SENGKUNI SMART ZOOM</h2>
 
     <div class="input-group">
-        <label>Momen Thumbnail: <span id="time_label" style="float:right;">5s</span></label>
-        <input type="range" id="snap_time" min="1" max="60" value="5" oninput="updateTimeLabel(this.value)">
+        <label>Geser Kamera (Kiri <-> Kanan)</label>
+        <input type="range" id="zoom_pos" min="0" max="100" value="50">
+        <div style="display:flex; justify-content:space-between; font-size:8px; color:#888; margin-top:5px;">
+            <span>KIRI</span><span>TENGAH</span><span>KANAN</span>
+        </div>
     </div>
 
     <div class="input-group">
-        <label>Judul 1 (Kuning) & Posisi</label>
-        <input type="text" id="v_title1" placeholder="Teks Atas..." oninput="updateThumbnail()">
-        <input type="range" id="t1_pos" min="50" max="1200" value="200" oninput="updateThumbnail()">
+        <label>Judul & Posisi</label>
+        <input type="text" id="t1" placeholder="Judul Atas..." oninput="drawThumb()">
+        <input type="range" id="t1p" min="50" max="1200" value="200" oninput="drawThumb()">
     </div>
 
-    <div class="input-group">
-        <label>Judul 2 (Putih) & Posisi</label>
-        <input type="text" id="v_title2" placeholder="Teks Bawah..." oninput="updateThumbnail()">
-        <input type="range" id="t2_pos" min="50" max="1200" value="1100" oninput="updateThumbnail()">
+    <div class="grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="input-group"><label>Vidio Long</label><input type="file" id="v1i" accept="video/*"></div>
+        <div class="input-group"><label>Vidio Reaksi</label><input type="file" id="v2i" accept="video/*"></div>
     </div>
 
-    <div class="grid">
-        <div class="input-group"><label>Vidio Long</label><input type="file" id="v1_in" accept="video/*"></div>
-        <div class="input-group"><label>Vidio Reaksi</label><input type="file" id="v2_in" accept="video/*"></div>
+    <button id="gasBtn">GAS POTONG PART (60s)</button>
+    <div id="status">Ready Mas Eko! Atur kamera dulu ya.</div>
+
+    <div class="part-list" id="downloadArea">
+        <label id="listLabel" style="display:none; color:var(--neon)">UNDUH PART (MANUAL):</label>
     </div>
 
-    <button id="gasBtn">GAS GABUNG VIDEO</button>
-    <div id="status">Ready Mas Eko! Temanya sudah sangar.</div>
-
-    <video id="previewVideo" controls></video>
-    <canvas id="thumbCanvas"></canvas>
-    <button id="dlThumb">📥 DOWNLOAD THUMBNAIL</button>
+    <canvas id="thumbCanvas" style="width:100%; border-radius:15px; margin-top:15px; display:none; border:2px solid var(--neon)"></canvas>
 </div>
 
-<video id="v1" class="raw-video" crossorigin="anonymous" playsinline></video>
-<video id="v2" class="raw-video" loop muted crossorigin="anonymous" playsinline></video>
+<video id="v1" class="raw-v"></video>
+<video id="v2" class="raw-v" loop muted></video>
 <canvas id="c"></canvas>
 
 <script>
     const v1 = document.getElementById('v1');
     const v2 = document.getElementById('v2');
-    const canvas = document.getElementById('c');
-    const ctx = canvas.getContext('2d');
-    const thumbCanvas = document.getElementById('thumbCanvas');
-    const tCtx = thumbCanvas.getContext('2d');
+    const c = document.getElementById('c');
+    const ctx = c.getContext('2d');
+    const tc = document.getElementById('thumbCanvas');
+    const tctx = tc.getContext('2d');
     const status = document.getElementById('status');
     const gasBtn = document.getElementById('gasBtn');
-    const dlBtn = document.getElementById('dlThumb');
-    
-    let capturedFrame = null;
+    const dlArea = document.getElementById('downloadArea');
+    const zoomPos = document.getElementById('zoom_pos');
 
-    document.getElementById('v1_in').onchange = (e) => {
-        v1.src = URL.createObjectURL(e.target.files[0]);
-        v1.onloadedmetadata = () => { document.getElementById('snap_time').max = Math.floor(v1.duration); };
-    };
-    document.getElementById('v2_in').onchange = (e) => v2.src = URL.createObjectURL(e.target.files[0]);
+    let frame = null;
 
-    function updateTimeLabel(val) { document.getElementById('time_label').innerText = val + "s"; }
+    document.getElementById('v1i').onchange = (e) => v1.src = URL.createObjectURL(e.target.files[0]);
+    document.getElementById('v2i').onchange = (e) => v2.src = URL.createObjectURL(e.target.files[0]);
 
-    function updateSize() {
-        const mode = document.getElementById('ratio').value;
-        thumbCanvas.width = (mode === "9:16") ? 720 : 1280;
-        thumbCanvas.height = (mode === "9:16") ? 1280 : 720;
+    function drawThumb() {
+        if(!frame) return;
+        tc.width=720; tc.height=1280;
+        tctx.drawImage(frame, 0, 0, 720, 1280);
+        tctx.font="bold 80px Impact"; tctx.textAlign="center"; tctx.fillStyle="#ffff00";
+        tctx.strokeStyle="black"; tctx.lineWidth=10;
+        const txt = document.getElementById('t1').value.toUpperCase();
+        tctx.strokeText(txt, 360, document.getElementById('t1p').value);
+        tctx.fillText(txt, 360, document.getElementById('t1p').value);
     }
-    updateSize();
 
     gasBtn.onclick = async () => {
-        if(!v1.src || !v2.src) return alert("Pilih video dulu Mas!");
-        const mode = document.getElementById('ratio').value;
-        canvas.width = (mode === "9:16") ? 720 : 1280;
-        canvas.height = (mode === "9:16") ? 1280 : 720;
-        
+        if(!v1.src || !v2.src) return alert("Pilih video dulu Mas Eko!");
         gasBtn.disabled = true;
-        status.innerText = "⏳ SEDANG MENGOLAH... SUARA DIJAMIN GLERRR!";
+        dlArea.innerHTML = '<label style="color:var(--neon)">HASIL UNDUH PART:</label>';
+        
+        c.width = 720; c.height = 1280;
+        let currentTime = 0;
+        let partCount = 1;
 
-        const audioCtx = new AudioContext();
-        const source = audioCtx.createMediaElementSource(v1);
-        const dest = audioCtx.createMediaStreamDestination();
-        source.connect(dest); source.connect(audioCtx.destination);
-
-        const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
-        const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
-        let chunks = [];
-
-        v1.currentTime = 0; v1.play(); v2.play();
-        rec.start();
-
-        setTimeout(() => {
-            capturedFrame = document.createElement('canvas');
-            capturedFrame.width = canvas.width; capturedFrame.height = canvas.height;
-            drawFrame(capturedFrame.getContext('2d'), canvas.width, canvas.height, mode);
-            updateThumbnail();
-            thumbCanvas.style.display = "block"; dlBtn.style.display = "block";
-        }, document.getElementById('snap_time').value * 1000);
-
-        rec.ondataavailable = e => chunks.push(e.data);
-        rec.onstop = () => {
-            const blob = new Blob(chunks, { type: 'video/mp4' });
-            document.getElementById('previewVideo').src = URL.createObjectURL(blob);
-            document.getElementById('previewVideo').style.display = "block";
-            status.innerText = "✅ SELESAI MAS EKO! HASILNYA MANTAP.";
-            gasBtn.disabled = false;
+        // Jepret Thumbnail sesuai posisi kamera yang diatur
+        v1.currentTime = 2;
+        v1.onseeked = () => {
+            frame = document.createElement('canvas'); frame.width=720; frame.height=1280;
+            renderFrame(frame.getContext('2d'));
+            drawThumb(); tc.style.display="block";
         };
 
-        v1.onended = () => rec.stop();
+        while (currentTime < v1.duration) {
+            status.innerText = `⏳ Memproses Part ${partCount}...`;
+            const duration = Math.min(60, v1.duration - currentTime);
+            const partBlob = await recordPart(currentTime, duration);
+            
+            const btn = document.createElement('a');
+            btn.href = URL.createObjectURL(partBlob);
+            btn.download = `SENGKUNI_PART_${partCount}.mp4`;
+            btn.className = 'part-btn';
+            btn.style.display = 'block';
+            btn.innerText = `📥 UNDUH PART ${partCount} (${Math.floor(duration)}s)`;
+            dlArea.appendChild(btn);
 
-        function drawFrame(targetCtx, w, h, m) {
-            if (m === "9:16") {
-                const scale = h / v1.videoHeight;
-                const newW = v1.videoWidth * scale;
-                const offset = (newW - w) / 2;
-                targetCtx.drawImage(v1, -offset, 0, newW, h);
-                targetCtx.drawImage(v2, 40, h-350, 220, 300);
-            } else {
-                targetCtx.drawImage(v1, 0, 0, w, h);
-                targetCtx.drawImage(v2, w-320, h-240, 280, 200);
-            }
+            currentTime += duration;
+            partCount++;
         }
-
-        function draw() {
-            if(rec.state === "recording") {
-                drawFrame(ctx, canvas.width, canvas.height, mode);
-                requestAnimationFrame(draw);
-            }
-        }
-        draw();
+        status.innerText = "✅ SELESAI SEMUA PART!";
+        gasBtn.disabled = false;
     };
 
-    function updateThumbnail() {
-        if(!capturedFrame) return;
-        tCtx.drawImage(capturedFrame, 0, 0, thumbCanvas.width, thumbCanvas.height);
-        tCtx.font = "bold 85px Impact"; tCtx.textAlign = "center";
-        tCtx.strokeStyle = "black"; tCtx.lineWidth = 12;
-        const x = thumbCanvas.width / 2;
-        const t1 = document.getElementById('v_title1').value.toUpperCase();
-        const t2 = document.getElementById('v_title2').value.toUpperCase();
-        if(t1) { tCtx.fillStyle = "#ffff00"; tCtx.strokeText(t1, x, document.getElementById('t1_pos').value); tCtx.fillText(t1, x, document.getElementById('t1_pos').value); }
-        if(t2) { tCtx.fillStyle = "#ffffff"; tCtx.strokeText(t2, x, document.getElementById('t2_pos').value); tCtx.fillText(t2, x, document.getElementById('t2_pos').value); }
+    function renderFrame(targetCtx) {
+        const s = 1280 / v1.videoHeight;
+        const nw = v1.videoWidth * s;
+        // Rumus Geser Kamera: Berdasarkan slider 0-100
+        const totalOverlap = nw - 720;
+        const offset = (totalOverlap * zoomPos.value) / 100;
+        
+        targetCtx.drawImage(v1, -offset, 0, nw, 1280);
+        targetCtx.drawImage(v2, 40, 930, 220, 300);
     }
 
-    dlBtn.onclick = () => {
-        const a = document.createElement('a');
-        a.download = 'THUMBNAIL_SENGKUNI_PRO.jpg';
-        a.href = thumbCanvas.toDataURL('image/jpeg', 0.95);
-        a.click();
-    };
+    async function recordPart(start, duration) {
+        return new Promise((resolve) => {
+            v1.currentTime = start;
+            v1.play(); v2.play();
+
+            const audioCtx = new AudioContext();
+            const source = audioCtx.createMediaElementSource(v1);
+            const dest = audioCtx.createMediaStreamDestination();
+            source.connect(dest); source.connect(audioCtx.destination);
+
+            const stream = new MediaStream([...c.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+            const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            let chunks = [];
+
+            rec.ondataavailable = e => chunks.push(e.data);
+            rec.onstop = () => { audioCtx.close(); resolve(new Blob(chunks, {type: 'video/mp4'})); };
+
+            const render = () => {
+                if (rec.state === 'recording') {
+                    renderFrame(ctx);
+                    requestAnimationFrame(render);
+                }
+            };
+
+            rec.start();
+            render();
+            setTimeout(() => { rec.stop(); v1.pause(); v2.pause(); }, duration * 1000);
+        });
+    }
 </script>
 </body>
 </html>
