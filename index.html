@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker - Edisi Gratis</title>
+    <title>Sengkuni Maker - Manual Snap</title>
     <style>
         :root { --neon: #00ff00; --bg: #0a0a0a; --glass: rgba(255, 255, 255, 0.05); }
         body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 15px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #003300, transparent); }
@@ -14,8 +14,6 @@
         input, select { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid #333; padding: 12px; border-radius: 12px; color: #fff; box-sizing: border-box; }
         button { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; background: var(--neon); color: #000; box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); }
         #status { margin-top: 15px; font-size: 12px; color: var(--neon); font-weight: bold; }
-        
-        /* Thumbnail Preview */
         #thumbCanvas { width: 100%; border-radius: 14px; margin-top: 15px; border: 2px solid var(--neon); display: none; }
         #previewVideo { width: 100%; border-radius: 14px; margin-top: 15px; display: none; border: 1px solid #333; }
         canvas, .raw-video { display: none; }
@@ -28,15 +26,23 @@
     
     <div class="input-group">
         <label>Tulisan di Thumbnail</label>
-        <input type="text" id="v_title" placeholder="Ketik Judul Thumbnail..." oninput="updateThumbnail()">
+        <input type="text" id="v_title" placeholder="Ketik Judul..." oninput="updateThumbnail()">
     </div>
 
     <div class="input-group">
-        <label>Pilih Gaya Tulisan (Font)</label>
+        <label>Pilih Detik Jepretan (Awal/Tengah/Akhir)</label>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <input type="range" id="snap_time" min="1" max="60" value="5" oninput="updateTimeLabel(this.value)">
+            <span id="time_label" style="font-size:12px; color:var(--neon); width:50px;">5s</span>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>Gaya Tulisan (Font)</label>
         <select id="font_style" onchange="updateThumbnail()">
-            <option value="bold 80px Impact">Gaya Balap (Impact)</option>
-            <option value="italic bold 70px Arial">Gaya Sport (Arial Italic)</option>
-            <option value="bold 60px 'Segoe UI'">Gaya Modern (Segoe)</option>
+            <option value="bold 85px Impact">Racing Bold (Impact)</option>
+            <option value="italic bold 75px Arial">Sport Italic (Arial)</option>
+            <option value="bold 65px 'Segoe UI'">Modern Pro (Segoe)</option>
         </select>
     </div>
 
@@ -53,13 +59,12 @@
         <div class="input-group"><label>Vidio Reaksi</label><input type="file" id="v2_in" accept="video/*"></div>
     </div>
 
-    <button id="gasBtn">GABUNG & JEPRET THUMBNAIL</button>
-    <div id="status">Ready Mas Eko!</div>
+    <button id="gasBtn">GABUNG & JEPRET SESUAI DETIK</button>
+    <div id="status">Ready Mas Eko! Silakan pilih video.</div>
 
     <video id="previewVideo" controls></video>
-    
     <canvas id="thumbCanvas"></canvas>
-    <button id="dlThumb" style="display:none; background:#555; color:#fff;">📥 DOWNLOAD THUMBNAIL GRATIS</button>
+    <button id="dlThumb" style="display:none; background:#333; color:#fff;">📥 DOWNLOAD THUMBNAIL GRATIS</button>
 </div>
 
 <video id="v1" class="raw-video" crossorigin="anonymous" playsinline></video>
@@ -76,11 +81,23 @@
     const status = document.getElementById('status');
     const gasBtn = document.getElementById('gasBtn');
     const dlBtn = document.getElementById('dlThumb');
+    const snapTime = document.getElementById('snap_time');
 
     let capturedFrame = null;
 
-    document.getElementById('v1_in').onchange = (e) => v1.src = URL.createObjectURL(e.target.files[0]);
+    document.getElementById('v1_in').onchange = (e) => {
+        const file = e.target.files[0];
+        v1.src = URL.createObjectURL(file);
+        // Otomatis set slider max sesuai durasi video
+        v1.onloadedmetadata = () => {
+            snapTime.max = Math.floor(v1.duration);
+        };
+    };
     document.getElementById('v2_in').onchange = (e) => v2.src = URL.createObjectURL(e.target.files[0]);
+
+    function updateTimeLabel(val) {
+        document.getElementById('time_label').innerText = val + "s";
+    }
 
     function updateSize() {
         const mode = document.getElementById('ratio').value;
@@ -90,20 +107,22 @@
     updateSize();
 
     gasBtn.onclick = async () => {
-        if(!v1.src || !v2.src) return alert("Pilih video dulu!");
+        if(!v1.src || !v2.src) return alert("Pilih video dulu Mas!");
         const mode = document.getElementById('ratio').value;
+        const sTime = parseInt(snapTime.value);
+
         canvas.width = (mode === "9:16") ? 720 : 1280;
         canvas.height = (mode === "9:16") ? 1280 : 720;
         
         gasBtn.disabled = true;
-        status.innerText = "⏳ SEDANG MEREKAM...";
+        status.innerText = "⏳ SEDANG MENGGABUNG... JANGAN KELUAR!";
         v1.play(); v2.play();
 
         const stream = canvas.captureStream(30);
         const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
         let chunks = [];
 
-        // OTOMATIS JEPRET GAMBAR DI DETIK KE-1
+        // JEPRET OTOMATIS BERDASARKAN INPUT SLIDER
         setTimeout(() => {
             capturedFrame = document.createElement('canvas');
             capturedFrame.width = canvas.width;
@@ -112,14 +131,14 @@
             updateThumbnail(); 
             thumbCanvas.style.display = "block";
             dlBtn.style.display = "block";
-        }, 1500);
+        }, sTime * 1000);
 
         rec.ondataavailable = e => chunks.push(e.data);
         rec.onstop = () => {
             const blob = new Blob(chunks, { type: 'video/mp4' });
             document.getElementById('previewVideo').src = URL.createObjectURL(blob);
             document.getElementById('previewVideo').style.display = "block";
-            status.innerText = "✅ SELESAI! Video & Thumbnail sudah jadi.";
+            status.innerText = "✅ VIDEO SELESAI! Cek Thumbnail di bawah.";
             gasBtn.disabled = false;
         };
 
@@ -144,15 +163,14 @@
         const teks = document.getElementById('v_title').value;
         const gaya = document.getElementById('font_style').value;
         
-        // Desain Teks Sangar
         tCtx.font = gaya;
         tCtx.textAlign = "center";
-        tCtx.fillStyle = "#ffff00"; // Kuning Racing
+        tCtx.fillStyle = "#ffff00"; // Kuning Horeg
         tCtx.strokeStyle = "black";
-        tCtx.lineWidth = 10;
+        tCtx.lineWidth = 12;
         
         const x = thumbCanvas.width / 2;
-        const y = thumbCanvas.height - 100;
+        const y = thumbCanvas.height - 120;
         
         tCtx.strokeText(teks.toUpperCase(), x, y);
         tCtx.fillText(teks.toUpperCase(), x, y);
@@ -160,8 +178,8 @@
 
     dlBtn.onclick = () => {
         const link = document.createElement('a');
-        link.download = 'thumbnail_sengkuni.jpg';
-        link.href = thumbCanvas.toDataURL('image/jpeg', 0.9);
+        link.download = 'SENGKUNI_THUMBNAIL.jpg';
+        link.href = thumbCanvas.toDataURL('image/jpeg', 0.95);
         link.click();
     };
 </script>
