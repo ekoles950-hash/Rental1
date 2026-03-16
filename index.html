@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker v.Final</title>
+    <title>Sengkuni Maker Pro + AI Thumbnail</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 15px; }
         .box { background: #111; padding: 20px; border-radius: 20px; border: 3px solid #00ff00; box-shadow: 0 0 15px #00ff00; max-width: 450px; margin: auto; }
         input, select, button, textarea { width: 100%; margin: 10px 0; padding: 12px; border-radius: 8px; border: none; box-sizing: border-box; }
-        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; font-size: 16px; }
-        button:disabled { background: #444; color: #888; cursor: not-allowed; }
+        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; }
         #status { margin-top: 15px; color: #00ff00; font-weight: bold; font-size: 13px; }
-        #previewVideo { width: 100%; border-radius: 10px; margin-top: 15px; display: none; border: 2px solid #00ff00; }
+        #thumbPreview { width: 100%; border-radius: 10px; margin-top: 10px; display: none; border: 2px dashed #00ff00; }
         .label { font-size: 11px; color: #888; text-align: left; margin: 5px 0 0 5px; }
         canvas, .raw-video { display: none; }
     </style>
@@ -20,27 +19,30 @@
 <body>
 
 <div class="box">
-    <h3>🎬 SENGKUNI x DIRECT YOUTUBE</h3>
+    <h3>🎬 SENGKUNI AI GENERATOR</h3>
     
-    <input type="text" id="v_title" placeholder="Judul Video YouTube...">
-    <textarea id="v_desc" placeholder="Deskripsi Video..." style="height:60px; background:#222; color:#fff; border:1px solid #333; padding:10px;"></textarea>
-
-    <div class="label">Pilih Ukuran Video:</div>
+    <input type="text" id="v_title" placeholder="Judul Video & Prompt Foto AI...">
+    
+    <div class="label">Pilih Ukuran:</div>
     <select id="ratio">
-        <option value="9:16">Shorts (Portrait 9:16)</option>
-        <option value="16:9">YouTube (Landscape 16:9)</option>
+        <option value="9:16">Shorts (9:16)</option>
+        <option value="16:9">YouTube (16:9)</option>
     </select>
 
     <input type="file" id="v1_in" accept="video/*">
-    <div class="label">Video Utama (Suara & Durasi)</div>
+    <div class="label">Video Utama</div>
     <input type="file" id="v2_in" accept="video/*">
-    <div class="label">Video Reaksi (Bisu & Loop)</div>
+    <div class="label">Video Reaksi</div>
 
-    <button id="gasBtn">1. GABUNG VIDEO</button>
-    <button id="uploadBtn" style="background:#ff0000; color:#fff; display:none;">2. LOGIN & UPLOAD KE YOUTUBE</button>
+    <button id="gasBtn">1. GABUNG & AMBIL REFERENSI AI</button>
     
+    <div id="ai_area" style="display:none;">
+        <div class="label" style="color:#00ff00;">🔥 HASIL THUMBNAIL AI:</div>
+        <img id="thumbPreview" src="" alt="Thumbnail AI">
+        <button id="uploadBtn" style="background:#ff0000; color:#fff;">2. UPLOAD VIDEO + THUMBNAIL</button>
+    </div>
+
     <div id="status">Ready Mas Eko!</div>
-    <video id="previewVideo" controls></video>
 </div>
 
 <video id="v1" class="raw-video" crossorigin="anonymous" playsinline></video>
@@ -48,123 +50,93 @@
 <canvas id="c"></canvas>
 
 <script>
-    // --- WAJIB ISI: CLIENT ID DARI GOOGLE CLOUD MAS EKO ---
-    const CLIENT_ID = "MASUKKAN_CLIENT_ID_MAS.apps.googleusercontent.com";
+    // --- SETTING API KEY MAIA ROUTER MAS EKO ---
+    const MAIA_API_KEY = "MASUKKAN_API_KEY_DARI_SCREENSHOT_MAS"; 
+    const CLIENT_ID = "MASUKKAN_CLIENT_ID_GOOGLE_MAS";
     
     let finalBlob = null;
-    let accessToken = null;
+    let screenshotBase64 = null;
 
     const v1 = document.getElementById('v1');
     const v2 = document.getElementById('v2');
     const canvas = document.getElementById('c');
     const ctx = canvas.getContext('2d');
     const status = document.getElementById('status');
-    const gasBtn = document.getElementById('gasBtn');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const preview = document.getElementById('previewVideo');
 
     document.getElementById('v1_in').onchange = (e) => v1.src = URL.createObjectURL(e.target.files[0]);
     document.getElementById('v2_in').onchange = (e) => v2.src = URL.createObjectURL(e.target.files[0]);
 
-    // 1. PROSES GABUNG VIDEO
-    gasBtn.onclick = async () => {
-        if(!v1.src || !v2.src || !document.getElementById('v_title').value) return alert("Lengkapi judul dan video dulu Mas!");
-        
+    // 1. GABUNG VIDEO & AMBIL SCREENSHOT
+    document.getElementById('gasBtn').onclick = async () => {
         const mode = document.getElementById('ratio').value;
         canvas.width = (mode === "9:16") ? 720 : 1280;
         canvas.height = (mode === "9:16") ? 1280 : 720;
         
-        gasBtn.disabled = true;
-        status.innerText = "⏳ Sedang Menggabung (" + mode + ")...";
-        uploadBtn.style.display = "none";
-        preview.style.display = "none";
-
+        status.innerText = "⏳ Gabung & Mencari Momen Terbaik untuk AI...";
         v1.currentTime = 0; v2.currentTime = 0;
         await v1.play(); v2.play();
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioCtx.createMediaElementSource(v1);
-        const dest = audioCtx.createMediaStreamDestination();
-        source.connect(dest); source.connect(audioCtx.destination);
-
-        const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+        const stream = canvas.captureStream(30);
         const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
         let chunks = [];
+        
+        // Ambil screenshot di detik ke-2 (saat video sudah jalan)
+        setTimeout(() => {
+            screenshotBase64 = canvas.toDataURL('image/jpeg', 0.8);
+            console.log("📸 Screenshot Referensi Berhasil Diambil");
+        }, 2000);
 
         rec.ondataavailable = e => chunks.push(e.data);
-        rec.onstop = () => {
+        rec.onstop = async () => {
             finalBlob = new Blob(chunks, { type: 'video/mp4' });
-            preview.src = URL.createObjectURL(finalBlob);
-            preview.style.display = "block";
-            uploadBtn.style.display = "block";
-            status.innerText = "✅ Gabung Selesai! Cek video, lalu klik tombol merah.";
-            gasBtn.disabled = false;
+            status.innerText = "🤖 Sedang Membuat Thumbnail AI di MAIA Router...";
+            buatThumbnailAI();
         };
 
-        v1.onended = () => { if(rec.state === "recording") rec.stop(); };
+        v1.onended = () => rec.stop();
         rec.start();
 
         function draw() {
             if(rec.state === "recording") {
                 ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
-                if(mode === "9:16") {
-                    ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
-                } else {
-                    ctx.drawImage(v2, canvas.width - 320, canvas.height - 240, 280, 200);
-                }
+                ctx.drawImage(v2, 40, canvas.height - 350, 220, 300);
                 requestAnimationFrame(draw);
             }
         }
         draw();
     };
 
-    // 2. PROSES LOGIN & UPLOAD
-    uploadBtn.onclick = () => {
-        if (CLIENT_ID.includes("MASUKKAN")) return alert("Mas Eko, isi Client ID dulu di kodingannya!");
+    // 2. FUNGSI MANGGIL MAIA ROUTER (GPT-5.1-CODEX-MINI)
+    async function buatThumbnailAI() {
+        const judul = document.getElementById('v_title').value;
         
-        const client = google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: 'https://www.googleapis.com/auth/youtube.upload',
-            callback: (response) => {
-                if (response.access_token) {
-                    accessToken = response.access_token;
-                    mulaiUpload();
-                }
-            },
-        });
-        client.requestAccessToken();
-    };
-
-    async function mulaiUpload() {
-        status.innerText = "🚀 Menghubungi YouTube...";
-        const metadata = {
-            snippet: {
-                title: document.getElementById('v_title').value,
-                description: document.getElementById('v_desc').value,
-                categoryId: '22'
-            },
-            status: { privacyStatus: 'public' }
-        };
-
-        const form = new FormData();
-        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        form.append('file', finalBlob);
-
         try {
-            const res = await fetch('https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status', {
+            const response = await fetch('https://api.maiarouter.ai/v1/images/generations', {
                 method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + accessToken },
-                body: form
+                headers: {
+                    'Authorization': `Bearer ${MAIA_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: "openai/gpt-5.1-codex-mini",
+                    prompt: `Buatkan YouTube Thumbnail sedetail mungkin. Judul: ${judul}. Referensi visual: Gunakan gaya pencahayaan sinematik, teks 3D yang mencolok, dan suasana horeg yang megah.`,
+                    image_reference: screenshotBase64, // Mengirim screenshot sebagai referensi
+                    n: 1,
+                    size: "1280x720"
+                })
             });
-            const data = await res.json();
-            if(data.id) {
-                status.innerText = "✅ BERHASIL DIUPLOAD!";
-                alert("MANTAP MAS EKO! Video sudah masuk ke YouTube.");
+
+            const data = await response.json();
+            if(data.data && data.data[0].url) {
+                document.getElementById('thumbPreview').src = data.data[0].url;
+                document.getElementById('thumbPreview').style.display = "block";
+                document.getElementById('ai_area').style.display = "block";
+                status.innerText = "✅ Video & Thumbnail AI Siap!";
             } else {
-                status.innerText = "❌ Gagal: " + (data.error ? data.error.message : "Cek kuota API");
+                status.innerText = "❌ AI Gagal: " + JSON.stringify(data);
             }
         } catch (e) {
-            status.innerText = "❌ Error Koneksi.";
+            status.innerText = "❌ Gagal Konek ke MAIA Router.";
         }
     }
 </script>
