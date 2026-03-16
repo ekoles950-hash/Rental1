@@ -3,270 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClipAI Pro - Multi Clip Manager</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>Sengkuni Maker - Pro Theme</title>
     <style>
-        .video-container {
-            aspect-ratio: 9/16;
-            max-height: 65vh;
-            background: #000;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 18px;
-            width: 18px;
-            border-radius: 50%;
-            background: #6366f1;
-            cursor: pointer;
-            border: 2px solid white;
-        }
-        .clip-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .clip-card:hover {
-            transform: translateY(-5px);
-            border-color: #6366f1;
-        }
-        #video-preview {
-            object-fit: cover;
-        }
+        /* TEMA DARK NEON KESUKAAN MAS EKO */
+        :root { --neon: #00ff00; --bg: #050505; --glass: rgba(255, 255, 255, 0.03); --border: rgba(0, 255, 0, 0.3); }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; min-height: 100vh; background-image: radial-gradient(circle at top right, #002200, transparent); }
+        
+        .card { width: 100%; max-width: 450px; background: var(--glass); backdrop-filter: blur(15px); padding: 25px; border-radius: 30px; border: 1px solid var(--border); box-shadow: 0 15px 35px rgba(0,0,0,0.8); text-align: center; }
+        
+        h2 { color: var(--neon); text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 15px var(--neon); margin-bottom: 25px; font-style: italic; }
+        
+        .input-group { margin-bottom: 15px; text-align: left; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        label { display: block; font-size: 10px; color: var(--neon); text-transform: uppercase; margin-bottom: 8px; font-weight: bold; letter-spacing: 1px; }
+        
+        input[type="text"], select { width: 100%; background: #000; border: 1px solid #222; padding: 12px; border-radius: 10px; color: #fff; font-size: 14px; outline: none; }
+        input[type="range"] { width: 100%; accent-color: var(--neon); cursor: pointer; }
+        
+        input[type="file"] { font-size: 11px; color: #888; }
+        
+        button { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; letter-spacing: 1px; }
+        #gasBtn { background: var(--neon); color: #000; box-shadow: 0 0 20px rgba(0, 255, 0, 0.4); }
+        #gasBtn:active { transform: scale(0.98); }
+        
+        #status { margin-top: 20px; font-size: 12px; color: var(--neon); font-weight: bold; text-shadow: 0 0 5px #000; }
+        
+        #previewVideo, #thumbCanvas { width: 100%; border-radius: 15px; margin-top: 20px; border: 2px solid var(--neon); display: none; box-shadow: 0 0 15px rgba(0,255,0,0.2); }
+        #dlThumb { background: #222; color: #fff; border: 1px solid #444; display: none; }
+        
+        canvas, .raw-video { display: none; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans">
+<body>
 
-    <!-- Navbar -->
-    <nav class="p-4 border-b border-white/5 flex justify-between items-center bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
-        <div class="flex items-center gap-2">
-            <div class="bg-indigo-600 p-1.5 rounded-lg shadow-lg shadow-indigo-500/40">
-                <i data-lucide="layers" class="w-5 h-5 text-white"></i>
-            </div>
-            <h1 class="font-bold text-lg tracking-tight">Clip<span class="text-indigo-400">Master</span></h1>
-        </div>
-        <div class="flex items-center gap-4">
-            <span id="clip-count" class="text-xs bg-slate-800 px-3 py-1 rounded-full border border-white/10 text-slate-400">0 Klip Tersimpan</span>
-            <button id="export-all-btn" class="hidden bg-emerald-600 hover:bg-emerald-700 px-5 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2">
-                <i data-lucide="check-circle" class="w-4 h-4"></i> Ekspor Semua
-            </button>
-        </div>
-    </nav>
+<div class="card">
+    <h2>🎬 SENGKUNI PRO</h2>
+    
+    <div class="input-group">
+        <label>Mode Postingan</label>
+        <select id="ratio" onchange="updateSize()">
+            <option value="9:16">YouTube ke Shorts (9:16)</option>
+            <option value="16:9">YouTube Tetap Long (16:9)</option>
+        </select>
+    </div>
 
-    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+    <div class="input-group">
+        <label>Momen Thumbnail: <span id="time_label" style="float:right;">5s</span></label>
+        <input type="range" id="snap_time" min="1" max="60" value="5" oninput="updateTimeLabel(this.value)">
+    </div>
+
+    <div class="input-group">
+        <label>Judul 1 (Kuning) & Posisi</label>
+        <input type="text" id="v_title1" placeholder="Teks Atas..." oninput="updateThumbnail()">
+        <input type="range" id="t1_pos" min="50" max="1200" value="200" oninput="updateThumbnail()">
+    </div>
+
+    <div class="input-group">
+        <label>Judul 2 (Putih) & Posisi</label>
+        <input type="text" id="v_title2" placeholder="Teks Bawah..." oninput="updateThumbnail()">
+        <input type="range" id="t2_pos" min="50" max="1200" value="1100" oninput="updateThumbnail()">
+    </div>
+
+    <div class="grid">
+        <div class="input-group"><label>Vidio Long</label><input type="file" id="v1_in" accept="video/*"></div>
+        <div class="input-group"><label>Vidio Reaksi</label><input type="file" id="v2_in" accept="video/*"></div>
+    </div>
+
+    <button id="gasBtn">GAS GABUNG VIDEO</button>
+    <div id="status">Ready Mas Eko! Temanya sudah sangar.</div>
+
+    <video id="previewVideo" controls></video>
+    <canvas id="thumbCanvas"></canvas>
+    <button id="dlThumb">📥 DOWNLOAD THUMBNAIL</button>
+</div>
+
+<video id="v1" class="raw-video" crossorigin="anonymous" playsinline></video>
+<video id="v2" class="raw-video" loop muted crossorigin="anonymous" playsinline></video>
+<canvas id="c"></canvas>
+
+<script>
+    const v1 = document.getElementById('v1');
+    const v2 = document.getElementById('v2');
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const thumbCanvas = document.getElementById('thumbCanvas');
+    const tCtx = thumbCanvas.getContext('2d');
+    const status = document.getElementById('status');
+    const gasBtn = document.getElementById('gasBtn');
+    const dlBtn = document.getElementById('dlThumb');
+    
+    let capturedFrame = null;
+
+    document.getElementById('v1_in').onchange = (e) => {
+        v1.src = URL.createObjectURL(e.target.files[0]);
+        v1.onloadedmetadata = () => { document.getElementById('snap_time').max = Math.floor(v1.duration); };
+    };
+    document.getElementById('v2_in').onchange = (e) => v2.src = URL.createObjectURL(e.target.files[0]);
+
+    function updateTimeLabel(val) { document.getElementById('time_label').innerText = val + "s"; }
+
+    function updateSize() {
+        const mode = document.getElementById('ratio').value;
+        thumbCanvas.width = (mode === "9:16") ? 720 : 1280;
+        thumbCanvas.height = (mode === "9:16") ? 1280 : 720;
+    }
+    updateSize();
+
+    gasBtn.onclick = async () => {
+        if(!v1.src || !v2.src) return alert("Pilih video dulu Mas!");
+        const mode = document.getElementById('ratio').value;
+        canvas.width = (mode === "9:16") ? 720 : 1280;
+        canvas.height = (mode === "9:16") ? 1280 : 720;
         
-        <!-- Left: Editor Space -->
-        <div class="flex-1 p-4 flex flex-col items-center justify-center bg-black/40 relative">
-            
-            <!-- Placeholder Upload -->
-            <div id="drop-zone" class="w-full max-w-[300px] video-container border-2 border-dashed border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center text-slate-500 hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all cursor-pointer">
-                <i data-lucide="upload" class="w-10 h-10 mb-4 opacity-20"></i>
-                <p class="font-bold text-sm">Klik Pilih Video 20 Menit</p>
-                <input type="file" id="file-input" class="hidden" accept="video/*">
-            </div>
+        gasBtn.disabled = true;
+        status.innerText = "⏳ SEDANG MENGOLAH... SUARA DIJAMIN GLERRR!";
 
-            <!-- Video Player -->
-            <div id="editor-ui" class="hidden w-full max-w-[300px] video-container relative bg-black rounded-[2.5rem] overflow-hidden shadow-2xl ring-1 ring-white/10">
-                <video id="video-preview" class="w-full h-full"></video>
-                
-                <div id="subtitle-display" class="absolute bottom-28 left-0 right-0 text-center px-4 pointer-events-none">
-                    <span id="sub-text" class="hidden bg-yellow-400 text-black px-2 py-1 rounded font-black text-sm uppercase italic shadow-lg">AI CAPTION</span>
-                </div>
+        const audioCtx = new AudioContext();
+        const source = audioCtx.createMediaElementSource(v1);
+        const dest = audioCtx.createMediaStreamDestination();
+        source.connect(dest); source.connect(audioCtx.destination);
 
-                <div class="absolute bottom-6 left-0 right-0 px-6 flex justify-between items-center">
-                    <button id="play-pause" class="bg-white/10 backdrop-blur-md p-3 rounded-full border border-white/10">
-                        <i data-lucide="play" id="play-icon"></i>
-                    </button>
-                    <div class="text-[10px] font-mono bg-black/60 px-3 py-1.5 rounded-full border border-white/5">
-                        <span id="current-time">00:00</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+        const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
+        let chunks = [];
 
-        <!-- Right: Controls & List -->
-        <div class="w-full lg:w-[450px] bg-slate-900 border-l border-white/5 flex flex-col h-full overflow-hidden">
-            
-            <!-- Control Header -->
-            <div class="p-6 border-b border-white/5">
-                <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Pemotong Klip</h2>
-                
-                <div class="space-y-6 mb-6">
-                    <div class="flex justify-between items-center">
-                        <span class="text-2xl font-black text-white" id="clip-duration-text">0.0s</span>
-                        <div class="flex gap-2">
-                            <button id="btn-60s" class="text-[10px] bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-md font-bold transition">1 MENIT</button>
-                            <button id="btn-15s" class="text-[10px] bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-md font-bold transition">15 DETIK</button>
-                        </div>
-                    </div>
-                    
-                    <div class="relative h-1.5 bg-slate-800 rounded-full">
-                        <input type="range" id="trim-start" class="absolute w-full h-1.5 appearance-none bg-transparent pointer-events-auto" value="0">
-                        <input type="range" id="trim-end" class="absolute w-full h-1.5 appearance-none bg-transparent pointer-events-auto" value="100">
-                    </div>
-                    
-                    <div class="flex justify-between text-[10px] font-mono text-slate-400">
-                        <span>DARI: <b id="start-val" class="text-indigo-400">0s</b></span>
-                        <span>SAMPAI: <b id="end-val" class="text-indigo-400">0s</b></span>
-                    </div>
-                </div>
+        v1.currentTime = 0; v1.play(); v2.play();
+        rec.start();
 
-                <button id="save-clip-btn" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 shadow-lg shadow-indigo-600/20">
-                    <i data-lucide="plus-circle" class="w-5 h-5"></i> Simpan ke Antrean
-                </button>
-            </div>
+        setTimeout(() => {
+            capturedFrame = document.createElement('canvas');
+            capturedFrame.width = canvas.width; capturedFrame.height = canvas.height;
+            drawFrame(capturedFrame.getContext('2d'), canvas.width, canvas.height, mode);
+            updateThumbnail();
+            thumbCanvas.style.display = "block"; dlBtn.style.display = "block";
+        }, document.getElementById('snap_time').value * 1000);
 
-            <!-- Scrollable Clip Gallery -->
-            <div class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-950/30">
-                <h3 class="text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="list-video" class="w-3 h-3"></i> Antrean Hasil Klip
-                </h3>
-                
-                <div id="clip-gallery" class="grid grid-cols-1 gap-3">
-                    <!-- Klip akan muncul di sini -->
-                    <div id="empty-state" class="text-center py-10 opacity-20 italic text-sm">
-                        Belum ada klip yang disimpan.
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
+        rec.ondataavailable = e => chunks.push(e.data);
+        rec.onstop = () => {
+            const blob = new Blob(chunks, { type: 'video/mp4' });
+            document.getElementById('previewVideo').src = URL.createObjectURL(blob);
+            document.getElementById('previewVideo').style.display = "block";
+            status.innerText = "✅ SELESAI MAS EKO! HASILNYA MANTAP.";
+            gasBtn.disabled = false;
+        };
 
-    <script>
-        lucide.createIcons();
+        v1.onended = () => rec.stop();
 
-        const video = document.getElementById('video-preview');
-        const fileInput = document.getElementById('file-input');
-        const dropZone = document.getElementById('drop-zone');
-        const editorUI = document.getElementById('editor-ui');
-        const trimStart = document.getElementById('trim-start');
-        const trimEnd = document.getElementById('trim-end');
-        const saveClipBtn = document.getElementById('save-clip-btn');
-        const clipGallery = document.getElementById('clip-gallery');
-        const emptyState = document.getElementById('empty-state');
-        const clipCountEl = document.getElementById('clip-count');
-        const exportAllBtn = document.getElementById('export-all-btn');
-
-        let savedClips = [];
-
-        // File Handler
-        dropZone.onclick = () => fileInput.click();
-        fileInput.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                video.src = URL.createObjectURL(file);
-                dropZone.classList.add('hidden');
-                editorUI.classList.remove('hidden');
-                video.onloadedmetadata = () => {
-                    trimStart.max = video.duration;
-                    trimEnd.max = video.duration;
-                    trimEnd.value = Math.min(60, video.duration);
-                    updateTrimUI();
-                };
+        function drawFrame(targetCtx, w, h, m) {
+            if (m === "9:16") {
+                const scale = h / v1.videoHeight;
+                const newW = v1.videoWidth * scale;
+                const offset = (newW - w) / 2;
+                targetCtx.drawImage(v1, -offset, 0, newW, h);
+                targetCtx.drawImage(v2, 40, h-350, 220, 300);
+            } else {
+                targetCtx.drawImage(v1, 0, 0, w, h);
+                targetCtx.drawImage(v2, w-320, h-240, 280, 200);
             }
-        };
-
-        // Quick Preset Buttons
-        document.getElementById('btn-60s').onclick = () => setDuration(60);
-        document.getElementById('btn-15s').onclick = () => setDuration(15);
-
-        function setDuration(sec) {
-            const start = parseFloat(trimStart.value);
-            trimEnd.value = Math.min(start + sec, video.duration);
-            updateTrimUI();
         }
 
-        function updateTrimUI() {
-            const start = parseFloat(trimStart.value);
-            const end = parseFloat(trimEnd.value);
-            const duration = end - start;
-            
-            document.getElementById('start-val').innerText = start.toFixed(1) + 's';
-            document.getElementById('end-val').innerText = end.toFixed(1) + 's';
-            document.getElementById('clip-duration-text').innerText = duration.toFixed(1) + 's';
-        }
-
-        trimStart.oninput = () => {
-            if (parseFloat(trimStart.value) >= parseFloat(trimEnd.value)) trimStart.value = trimEnd.value - 0.1;
-            updateTrimUI();
-            video.currentTime = trimStart.value;
-        };
-        trimEnd.oninput = () => {
-            if (parseFloat(trimEnd.value) <= parseFloat(trimStart.value)) trimEnd.value = parseFloat(trimStart.value) + 0.1;
-            updateTrimUI();
-        };
-
-        // SAVE CLIP TO GALLERY
-        saveClipBtn.onclick = () => {
-            if (!video.src) return;
-            
-            const newClip = {
-                id: Date.now(),
-                start: parseFloat(trimStart.value),
-                end: parseFloat(trimEnd.value),
-                duration: parseFloat(trimEnd.value) - parseFloat(trimStart.value)
-            };
-
-            savedClips.push(newClip);
-            renderGallery();
-        };
-
-        function renderGallery() {
-            emptyState.classList.add('hidden');
-            exportAllBtn.classList.remove('hidden');
-            clipCountEl.innerText = `${savedClips.length} Klip Tersimpan`;
-            
-            clipGallery.innerHTML = '';
-            savedClips.forEach((clip, index) => {
-                const card = document.createElement('div');
-                card.className = "clip-card bg-slate-900 border border-white/5 p-4 rounded-2xl flex items-center justify-between group";
-                card.innerHTML = `
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-indigo-600/20 rounded-xl flex items-center justify-center text-indigo-400 font-bold">
-                            ${index + 1}
-                        </div>
-                        <div>
-                            <p class="font-bold text-sm text-white">Klip #${index + 1}</p>
-                            <p class="text-[10px] text-slate-500 font-mono italic">${clip.start.toFixed(1)}s - ${clip.end.toFixed(1)}s (${clip.duration.toFixed(1)} detik)</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="previewClip(${clip.start})" class="p-2 bg-slate-800 hover:bg-white/10 rounded-lg text-slate-400"><i data-lucide="play" class="w-4 h-4"></i></button>
-                        <button onclick="removeClip(${clip.id})" class="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                `;
-                clipGallery.appendChild(card);
-            });
-            lucide.createIcons();
-        }
-
-        window.previewClip = (time) => {
-            video.currentTime = time;
-            video.play();
-        };
-
-        window.removeClip = (id) => {
-            savedClips = savedClips.filter(c => c.id !== id);
-            if (savedClips.length === 0) {
-                emptyState.classList.remove('hidden');
-                exportAllBtn.classList.add('hidden');
+        function draw() {
+            if(rec.state === "recording") {
+                drawFrame(ctx, canvas.width, canvas.height, mode);
+                requestAnimationFrame(draw);
             }
-            renderGallery();
-        };
-
-        // Video Player Logic
-        document.getElementById('play-pause').onclick = () => {
-            if (video.paused) video.play(); else video.pause();
-        };
-
-        video.ontimeupdate = () => {
-            document.getElementById('current-time').innerText = Math.floor(video.currentTime) + 's';
-            if (video.currentTime >= trimEnd.value) video.currentTime = trimStart.value;
-        };
-
-        function formatTime(seconds) {
-            const m = Math.floor(seconds / 60);
-            const s = Math.floor(seconds % 60);
-            return `${m}:${s.toString().padStart(2, '0')}`;
         }
-    </script>
-</body> 
+        draw();
+    };
+
+    function updateThumbnail() {
+        if(!capturedFrame) return;
+        tCtx.drawImage(capturedFrame, 0, 0, thumbCanvas.width, thumbCanvas.height);
+        tCtx.font = "bold 85px Impact"; tCtx.textAlign = "center";
+        tCtx.strokeStyle = "black"; tCtx.lineWidth = 12;
+        const x = thumbCanvas.width / 2;
+        const t1 = document.getElementById('v_title1').value.toUpperCase();
+        const t2 = document.getElementById('v_title2').value.toUpperCase();
+        if(t1) { tCtx.fillStyle = "#ffff00"; tCtx.strokeText(t1, x, document.getElementById('t1_pos').value); tCtx.fillText(t1, x, document.getElementById('t1_pos').value); }
+        if(t2) { tCtx.fillStyle = "#ffffff"; tCtx.strokeText(t2, x, document.getElementById('t2_pos').value); tCtx.fillText(t2, x, document.getElementById('t2_pos').value); }
+    }
+
+    dlBtn.onclick = () => {
+        const a = document.createElement('a');
+        a.download = 'THUMBNAIL_SENGKUNI_PRO.jpg';
+        a.href = thumbCanvas.toDataURL('image/jpeg', 0.95);
+        a.click();
+    };
+</script>
+</body>
 </html>
