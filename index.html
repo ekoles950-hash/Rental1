@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Maker - Kontrol Teks</title>
+    <title>Sengkuni Sat-Set</title>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
     <style>
         :root { --neon: #00ff00; --bg: #0a0a0a; --glass: rgba(255, 255, 255, 0.05); }
         body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 15px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #003300, transparent); }
@@ -14,52 +15,21 @@
         input, select { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid #333; padding: 12px; border-radius: 12px; color: #fff; box-sizing: border-box; }
         button { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; background: var(--neon); color: #000; box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); }
         #status { margin-top: 15px; font-size: 12px; color: var(--neon); font-weight: bold; }
-        #thumbCanvas { width: 100%; border-radius: 14px; margin-top: 15px; border: 2px solid var(--neon); display: none; }
-        #previewVideo { width: 100%; border-radius: 14px; margin-top: 15px; display: none; border: 1px solid #333; }
-        canvas, .raw-video { display: none; }
+        #previewVideo { width: 100%; border-radius: 14px; margin-top: 15px; display: none; border: 2px solid var(--neon); }
+        .progress-bar { width: 100%; background: #333; height: 10px; border-radius: 5px; margin-top: 10px; display: none; overflow: hidden; }
+        .progress-inner { width: 0%; height: 100%; background: var(--neon); transition: 0.1s; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🎬 SENGKUNI PRO</h2>
+    <h2>🎬 SENGKUNI SAT-SET</h2>
     
     <div class="input-group">
-        <label>Pilih Detik Jepretan Thumbnail</label>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <input type="range" id="snap_time" min="1" max="60" value="5" oninput="updateTimeLabel(this.value)">
-            <span id="time_label" style="font-size:12px; color:var(--neon); width:50px;">5s</span>
-        </div>
-    </div>
-
-    <div class="input-group">
-        <label>Teks 1 (Kuning Racing)</label>
-        <input type="text" id="v_title1" placeholder="Judul Atas..." oninput="updateThumbnail()">
-        <label style="font-size:8px; margin-top:5px; color:#aaa;">Posisi Teks 1 (Naik/Turun)</label>
-        <input type="range" id="t1_pos" min="50" max="1200" value="150" oninput="updateThumbnail()">
-    </div>
-
-    <div class="input-group">
-        <label>Teks 2 (Putih Sport)</label>
-        <input type="text" id="v_title2" placeholder="Judul Bawah..." oninput="updateThumbnail()">
-        <label style="font-size:8px; margin-top:5px; color:#aaa;">Posisi Teks 2 (Naik/Turun)</label>
-        <input type="range" id="t2_pos" min="50" max="1200" value="1150" oninput="updateThumbnail()">
-    </div>
-
-    <div class="input-group">
-        <label>Gaya Tulisan (Font)</label>
-        <select id="font_style" onchange="updateThumbnail()">
-            <option value="bold 85px Impact">Racing Bold (Impact)</option>
-            <option value="italic bold 75px Arial">Sport Italic (Arial)</option>
-            <option value="bold 65px 'Segoe UI'">Modern Pro (Segoe)</option>
-        </select>
-    </div>
-
-    <div class="input-group">
         <label>Ukuran Video</label>
-        <select id="ratio" onchange="updateSize()">
-            <option value="9:16">Shorts (9:16)</option>
-            <option value="16:9">YouTube (16:9)</option>
+        <select id="ratio">
+            <option value="shorts">Shorts (9:16)</option>
+            <option value="youtube">YouTube (16:9)</option>
         </select>
     </div>
 
@@ -68,142 +38,81 @@
         <div class="input-group"><label>Vidio Reaksi</label><input type="file" id="v2_in" accept="video/*"></div>
     </div>
 
-    <button id="gasBtn">GABUNG & JEPRET MANUAL</button>
-    <div id="status">Ready Mas Eko! Silakan pilih video.</div>
+    <button id="gasBtn">PROSES GABUNG (CEPAT)</button>
+    
+    <div class="progress-bar" id="p_bar"><div class="progress-inner" id="p_inner"></div></div>
+    <div id="status">Ready Mas Eko! Tanpa Nunggu Lama.</div>
 
     <video id="previewVideo" controls></video>
-    <canvas id="thumbCanvas"></canvas>
-    <button id="dlThumb" style="display:none; background:#333; color:#fff;">📥 DOWNLOAD THUMBNAIL GRATIS</button>
 </div>
 
-<video id="v1" class="raw-video" crossorigin="anonymous" playsinline></video>
-<video id="v2" class="raw-video" loop muted crossorigin="anonymous" playsinline></video>
-<canvas id="c"></canvas>
-
 <script>
-    const v1 = document.getElementById('v1');
-    const v2 = document.getElementById('v2');
-    const canvas = document.getElementById('c');
-    const ctx = canvas.getContext('2d');
-    const thumbCanvas = document.getElementById('thumbCanvas');
-    const tCtx = thumbCanvas.getContext('2d');
+    const { createFFmpeg, fetchFile } = FFmpeg;
+    const ffmpeg = createFFmpeg({ log: true });
     const status = document.getElementById('status');
     const gasBtn = document.getElementById('gasBtn');
-    const dlBtn = document.getElementById('dlThumb');
-    const snapTime = document.getElementById('snap_time');
-    
-    // Kontrol Teks
-    const t1Input = document.getElementById('v_title1');
-    const t2Input = document.getElementById('v_title2');
-    const t1Pos = document.getElementById('t1_pos');
-    const t2Pos = document.getElementById('t2_pos');
-
-    let capturedFrame = null;
-
-    document.getElementById('v1_in').onchange = (e) => {
-        const file = e.target.files[0];
-        v1.src = URL.createObjectURL(file);
-        v1.onloadedmetadata = () => { snapTime.max = Math.floor(v1.duration); };
-    };
-    document.getElementById('v2_in').onchange = (e) => v2.src = URL.createObjectURL(e.target.files[0]);
-
-    function updateTimeLabel(val) { document.getElementById('time_label').innerText = val + "s"; }
-
-    function updateSize() {
-        const mode = document.getElementById('ratio').value;
-        thumbCanvas.width = (mode === "9:16") ? 720 : 1280;
-        thumbCanvas.height = (mode === "9:16") ? 1280 : 720;
-        // Update slider max posisi teks sesuai ukuran kanvas
-        t1Pos.max = thumbCanvas.height - 50;
-        t2Pos.max = thumbCanvas.height - 50;
-    }
-    updateSize();
+    const pBar = document.getElementById('p_bar');
+    const pInner = document.getElementById('p_inner');
 
     gasBtn.onclick = async () => {
-        if(!v1.src || !v2.src) return alert("Pilih video dulu Mas!");
+        const v1 = document.getElementById('v1_in').files[0];
+        const v2 = document.getElementById('v2_in').files[0];
         const mode = document.getElementById('ratio').value;
-        const sTime = parseInt(snapTime.value);
 
-        canvas.width = (mode === "9:16") ? 720 : 1280;
-        canvas.height = (mode === "9:16") ? 1280 : 720;
-        
+        if (!v1 || !v2) return alert("Pilih kedua video dulu Mas!");
+
         gasBtn.disabled = true;
-        status.innerText = "⏳ SEDANG MENGGABUNG... JANGAN KELUAR!";
-        v1.play(); v2.play();
+        pBar.style.display = "block";
+        status.innerText = "⏳ Menyiapkan Mesin...";
 
-        const stream = canvas.captureStream(30);
-        const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
-        let chunks = [];
+        if (!ffmpeg.isLoaded()) await ffmpeg.load();
 
-        // JEPRET OTOMATIS BERDASARKAN INPUT SLIDER WAKTU
-        setTimeout(() => {
-            capturedFrame = document.createElement('canvas');
-            capturedFrame.width = canvas.width;
-            capturedFrame.height = canvas.height;
-            capturedFrame.getContext('2d').drawImage(v1, 0, 0, canvas.width, canvas.height);
-            updateThumbnail(); 
-            thumbCanvas.style.display = "block";
-            dlBtn.style.display = "block";
-        }, sTime * 1000);
+        status.innerText = "⚡ Sedang Mengolah Video (Sat-set)...";
 
-        rec.ondataavailable = e => chunks.push(e.data);
-        rec.onstop = () => {
-            const blob = new Blob(chunks, { type: 'video/mp4' });
-            document.getElementById('previewVideo').src = URL.createObjectURL(blob);
-            document.getElementById('previewVideo').style.display = "block";
-            status.innerText = "✅ VIDEO SELESAI! Cek Thumbnail di bawah.";
-            gasBtn.disabled = false;
-        };
+        // Tulis file ke memori FFmpeg
+        ffmpeg.FS('writeFile', 'horeg.mp4', await fetchFile(v1));
+        ffmpeg.FS('writeFile', 'reaksi.mp4', await fetchFile(v2));
 
-        v1.onended = () => rec.stop();
-        rec.start();
-
-        function draw() {
-            if(rec.state === "recording") {
-                ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
-                if(mode === "9:16") ctx.drawImage(v2, 40, 930, 220, 300);
-                else ctx.drawImage(v2, canvas.width-320, canvas.height-240, 280, 200);
-                requestAnimationFrame(draw);
-            }
+        // Command FFmpeg: Gabung video + Ambil audio murni dari Horeg
+        // v2 (reaksi) dikecilkan dan ditaruh di pojok
+        let filter = "";
+        if(mode === "shorts") {
+            filter = "[1:v]scale=220:-1[vid2];[0:v][vid2]overlay=40:h-350[outv]";
+        } else {
+            filter = "[1:v]scale=280:-1[vid2];[0:v][vid2]overlay=main_w-320:main_h-240[outv]";
         }
-        draw();
-    };
 
-    function updateThumbnail() {
-        if(!capturedFrame) return;
-        tCtx.drawImage(capturedFrame, 0, 0, thumbCanvas.width, thumbCanvas.height);
+        // Jalankan perintah: -shortest agar durasi ikut video paling pendek (Horeg)
+        // -map 0:a gunanya mengambil audio MURNI dari video 1 saja
+        await ffmpeg.run(
+            '-i', 'horeg.mp4', 
+            '-i', 'reaksi.mp4', 
+            '-filter_complex', filter, 
+            '-map', '[outv]', 
+            '-map', '0:a', 
+            '-c:v', 'libx264', 
+            '-preset', 'ultrafast', 
+            '-crf', '28', 
+            '-c:a', 'copy', 
+            '-shortest', 
+            'output.mp4'
+        );
+
+        status.innerText = "✅ SELESAI MAS EKO!";
+        const data = ffmpeg.FS('readFile', 'output.mp4');
+        const videoBlob = new Blob([data.buffer], { type: 'video/mp4' });
         
-        const teks1 = t1Input.value.toUpperCase();
-        const teks2 = t2Input.value.toUpperCase();
-        const gaya = document.getElementById('font_style').value;
-        const x = thumbCanvas.width / 2;
-
-        tCtx.font = gaya;
-        tCtx.textAlign = "center";
-        tCtx.strokeStyle = "black";
-        tCtx.lineWidth = 12;
-
-        // Gambar Teks 1 (Kuning Atas)
-        if(teks1) {
-            tCtx.fillStyle = "#ffff00"; // Kuning Racing
-            tCtx.strokeText(teks1, x, parseInt(t1Pos.value));
-            tCtx.fillText(teks1, x, parseInt(t1Pos.value));
-        }
-
-        // Gambar Teks 2 (Putih Bawah)
-        if(teks2) {
-            tCtx.fillStyle = "#ffffff"; // Putih Sport
-            tCtx.strokeText(teks2, x, parseInt(t2Pos.value));
-            tCtx.fillText(teks2, x, parseInt(t2Pos.value));
-        }
-    }
-
-    dlBtn.onclick = () => {
-        const link = document.createElement('a');
-        link.download = 'SENGKUNI_THUMBNAIL_PRO.jpg';
-        link.href = thumbCanvas.toDataURL('image/jpeg', 0.95);
-        link.click();
+        const preview = document.getElementById('previewVideo');
+        preview.src = URL.createObjectURL(videoBlob);
+        preview.style.display = "block";
+        gasBtn.disabled = false;
+        pBar.style.display = "none";
     };
+
+    // Update Progress
+    ffmpeg.setProgress(({ ratio }) => {
+        pInner.style.width = (ratio * 100) + "%";
+    });
 </script>
 </body>
 </html>
