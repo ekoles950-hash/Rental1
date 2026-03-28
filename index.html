@@ -3,49 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni TikTok Cutter - Suara Gler</title>
+    <title>Sengkuni TikTok Cutter - Repliz System</title>
     <style>
         :root { --neon: #00ff00; --bg: #050505; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 15px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
         .card { width: 100%; max-width: 400px; background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0,255,0,0.3); text-align: center; box-shadow: 0 10px 30px #000; }
         h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 25px; font-style: italic; letter-spacing: 2px; }
         .upload-box { background: rgba(0,0,0,0.5); border: 2px dashed rgba(0,255,0,0.2); padding: 30px; border-radius: 20px; margin-bottom: 20px; cursor: pointer; }
-        .file-label { cursor: pointer; color: var(--neon); font-weight: bold; font-size: 14px; }
-        input[type="file"] { display: none; }
-        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; background: var(--neon); color: #000; font-size: 14px; display: none; box-shadow: 0 0 20px rgba(0, 255, 0, 0.3); }
+        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; background: var(--neon); color: #000; display: none; box-shadow: 0 0 20px rgba(0, 255, 0, 0.3); }
         #status { margin-top: 20px; font-size: 12px; color: var(--neon); font-weight: bold; }
         .part-list { margin-top: 25px; display: grid; gap: 12px; }
-        .part-item { background: #111; border: 1px solid #333; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--neon); }
-        .dl-link { background: var(--neon); color: #000; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .part-item { background: #111; border: 1px solid #333; padding: 15px; border-radius: 15px; display: flex; flex-direction: column; gap: 10px; border-left: 5px solid var(--neon); text-align: left; }
+        .btn-group { display: flex; gap: 8px; }
+        .dl-link { background: var(--neon); color: #000; padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 10px; font-weight: bold; text-transform: uppercase; flex: 1; text-align: center; }
+        .repliz-btn { background: #fff; color: #000; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 10px; font-weight: bold; text-transform: uppercase; flex: 1; border: none; }
         video { display: none; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🎬 TIKTOK CUTTER</h2>
+    <h2>🎬 SENGKUNI CUTTER</h2>
     <div class="upload-box" onclick="document.getElementById('videoInput').click()">
-        <label class="file-label">
+        <label style="cursor:pointer; color:var(--neon); font-weight:bold;">
             <span>📁 UPLOAD VIDEO LONG</span>
-            <p style="font-size: 10px; color: #888; margin-top: 10px;" id="fileName">Otomatis Potong & Suara Glerrr</p>
+            <p style="font-size: 10px; color: #888; margin-top: 10px;" id="fileName">Otomatis 9:16 & Kirim Repliz</p>
         </label>
         <input type="file" id="videoInput" accept="video/*">
     </div>
-    <button id="gasBtn">MULAI POTONG PART (SUARA ON)</button>
-    <div id="status">Silakan upload video Mas Eko.</div>
+    <button id="gasBtn">MULAI POTONG PART</button>
+    <div id="status">Ready Mas Eko! Silakan upload video.</div>
     <div class="part-list" id="resultArea"></div>
 </div>
 
 <video id="vSource" crossorigin="anonymous"></video>
 
 <script>
-    const videoInput = document.getElementById('videoInput');
+    // MAS EKO: MASUKKAN LINK /exec GOOGLE SCRIPT MAS DI SINI
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyC_JLl-wwjrnT0xPdKrAW9xXyuCbLo4IcNxQWgy77xnBOpI-54qpOJ-J0w5pSUB4dL/exec";
+
+    const vInput = document.getElementById('videoInput');
     const vSource = document.getElementById('vSource');
     const gasBtn = document.getElementById('gasBtn');
     const status = document.getElementById('status');
     const resultArea = document.getElementById('resultArea');
 
-    videoInput.onchange = (e) => {
+    vInput.onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
             vSource.src = URL.createObjectURL(file);
@@ -57,78 +60,75 @@
     gasBtn.onclick = async () => {
         gasBtn.disabled = true;
         resultArea.innerHTML = "";
-        const duration = vSource.duration;
-        const totalParts = Math.ceil(duration / 60);
-        let start = 0;
-        let part = 1;
-
-        while (start < duration) {
-            status.innerText = `⏳ Memproses PART ${part} dari ${totalParts} (Sabar Mas Eko)...`;
-            const end = Math.min(start + 60, duration);
-            const partBlob = await convertTo916WithAudio(start, end);
-            
-            const item = document.createElement('div');
-            item.className = 'part-item';
-            item.innerHTML = `
-                <div style="font-size:13px; font-weight:bold;">PART ${part} <span style="color:var(--neon)">(9:16)</span></div>
-                <a href="${URL.createObjectURL(partBlob)}" download="Sengkuni_Part_${part}.mp4" class="dl-link">UNDUH</a>
-            `;
-            resultArea.appendChild(item);
+        let start = 0; let part = 1;
+        while (start < vSource.duration) {
+            status.innerText = `⏳ Memproses PART ${part}...`;
+            const end = Math.min(start + 60, vSource.duration);
+            const blob = await convertTo916(start, end);
+            addPartItem(part, blob);
             start += 60; part++;
         }
-        status.innerText = "✅ SELESAI! SEMUA ADA SUARANYA.";
-        gasBtn.disabled = false;
+        status.innerText = "✅ SELESAI!"; gasBtn.disabled = false;
     };
 
-    async function convertTo916WithAudio(start, end) {
+    function addPartItem(part, blob) {
+        const item = document.createElement('div');
+        item.className = 'part-item';
+        item.innerHTML = `<div style="font-size:13px; font-weight:bold;">PART ${part}</div>`;
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'btn-group';
+        
+        const dl = document.createElement('a');
+        dl.className = 'dl-link'; dl.href = URL.createObjectURL(blob);
+        dl.download = `Part_${part}.mp4`; dl.innerText = "UNDUH";
+        
+        const repliz = document.createElement('button');
+        repliz.className = 'repliz-btn'; repliz.innerText = "🚀 REPLIZ";
+        repliz.onclick = () => sendToRepliz(blob, part, repliz);
+        
+        btnGroup.appendChild(dl); btnGroup.appendChild(repliz);
+        item.appendChild(btnGroup); resultArea.appendChild(item);
+    }
+
+    async function sendToRepliz(blob, part, btn) {
+        if (SCRIPT_URL.includes("GANTI_DENGAN_LINK")) return alert("Link Script belum dipasang Mas!");
+        btn.innerText = "⏳ KIRIM..."; btn.disabled = true;
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = async () => {
+            const base64data = reader.result.split(',')[1];
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ videoData: base64data, fileName: `Part_${part}.mp4` }) });
+                btn.innerText = "✅ OK"; btn.style.background = "#00ff00";
+            } catch (e) { btn.innerText = "❌ ERROR"; btn.disabled = false; }
+        };
+    }
+
+    async function convertTo916(start, end) {
         return new Promise((resolve) => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = 720; canvas.height = 1280;
-
             vSource.currentTime = start;
             vSource.onseeked = () => {
-                // --- KUNCI SUARA DI SINI ---
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const audioCtx = new AudioContext();
                 const source = audioCtx.createMediaElementSource(vSource);
                 const dest = audioCtx.createMediaStreamDestination();
-                source.connect(dest);
-                source.connect(audioCtx.destination); // Supaya Mas bisa dengar pas proses
-
-                const stream = new MediaStream([
-                    ...canvas.captureStream(30).getVideoTracks(),
-                    ...dest.stream.getAudioTracks()
-                ]);
-
-                const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+                source.connect(dest); source.connect(audioCtx.destination);
+                const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+                const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
                 const chunks = [];
-
-                recorder.ondataavailable = e => chunks.push(e.data);
-                recorder.onstop = () => {
-                    audioCtx.close();
-                    resolve(new Blob(chunks, { type: 'video/mp4' }));
-                };
-
+                rec.ondataavailable = e => chunks.push(e.data);
+                rec.onstop = () => { audioCtx.close(); resolve(new Blob(chunks, { type: 'video/mp4' })); };
                 const render = () => {
                     if (vSource.currentTime < end && !vSource.paused) {
-                        const scale = canvas.height / vSource.videoHeight;
-                        const newWidth = vSource.videoWidth * scale;
-                        const offset = (newWidth - canvas.width) / 2;
-                        ctx.drawImage(vSource, -offset, 0, newWidth, canvas.height);
+                        const s = 1280 / vSource.videoHeight; const nw = vSource.videoWidth * s;
+                        ctx.drawImage(vSource, -(nw - 720) / 2, 0, nw, 1280);
                         requestAnimationFrame(render);
-                    } else {
-                        recorder.stop();
-                    }
+                    } else { rec.stop(); }
                 };
-
-                recorder.start();
-                vSource.play();
-                render();
-
-                setTimeout(() => {
-                    vSource.pause();
-                    if(recorder.state === "recording") recorder.stop();
-                }, (end - start) * 1000);
+                rec.start(); vSource.play(); render();
+                setTimeout(() => { vSource.pause(); if(rec.state === "recording") rec.stop(); }, (end - start) * 1000);
             };
         });
     }
