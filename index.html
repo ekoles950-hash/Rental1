@@ -3,24 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Cutter - Repliz Auto Schedule</title>
+    <title>Sengkuni X Repliz Auto</title>
     <style>
-        :root { --neon: #00ff00; --bg: #050505; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 15px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
-        .card { width: 100%; max-width: 420px; background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0,255,0,0.3); text-align: center; }
-        h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 20px; font-style: italic; }
-        
-        .input-group { margin-bottom: 12px; text-align: left; }
-        label { display: block; font-size: 10px; color: var(--neon); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
-        input, textarea, select { width: 100%; background: #000; border: 1px solid #333; padding: 10px; border-radius: 10px; color: #fff; box-sizing: border-box; font-size: 13px; }
-        textarea { height: 60px; resize: none; }
-
-        .upload-box { background: rgba(0,0,0,0.5); border: 2px dashed rgba(0,255,0,0.2); padding: 20px; border-radius: 15px; margin-bottom: 15px; cursor: pointer; }
-        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; background: var(--neon); color: #000; cursor: pointer; display: none; box-shadow: 0 0 20px rgba(0, 255, 0, 0.3); }
-        
-        .part-item { background: #111; border: 1px solid #333; padding: 15px; border-radius: 15px; margin-top: 10px; border-left: 5px solid var(--neon); text-align: left; }
-        .btn-group { display: flex; gap: 8px; margin-top: 10px; }
-        .repliz-btn { background: #fff; color: #000; padding: 8px; border-radius: 8px; font-size: 11px; font-weight: bold; flex: 1; border: none; cursor: pointer; }
+        :root { --neon: #00ff00; --bg: #050505; --card-bg: rgba(255, 255, 255, 0.03); }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
+        .card { width: 100%; max-width: 420px; background: var(--card-bg); backdrop-filter: blur(20px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0, 255, 0, 0.3); text-align: center; box-shadow: 0 10px 40px #000; }
+        h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 20px; font-style: italic; letter-spacing: 2px; }
+        .input-group { margin-bottom: 12px; text-align: left; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        label { display: block; font-size: 10px; color: var(--neon); font-weight: bold; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        input, textarea, select { width: 100%; background: #000; border: 1px solid #333; padding: 12px; border-radius: 10px; color: #fff; box-sizing: border-box; font-size: 13px; outline: none; }
+        textarea { height: 70px; resize: none; }
+        .upload-area { border: 2px dashed rgba(0,255,0,0.2); padding: 20px; border-radius: 15px; margin: 15px 0; cursor: pointer; }
+        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; background: var(--neon); color: #000; cursor: pointer; display: none; box-shadow: 0 0 25px rgba(0, 255, 0, 0.4); text-transform: uppercase; }
+        #status { margin-top: 15px; font-size: 11px; color: var(--neon); font-weight: bold; }
+        .part-list { margin-top: 20px; display: grid; gap: 12px; }
+        .part-item { background: #111; border: 1px solid #222; padding: 15px; border-radius: 18px; border-left: 5px solid var(--neon); text-align: left; }
+        .repliz-btn { width: 100%; background: #fff; color: #000; padding: 10px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-top: 10px; border: none; cursor: pointer; text-transform: uppercase; }
+        video { display: none; }
     </style>
 </head>
 <body>
@@ -30,120 +29,127 @@
 
     <div class="input-group">
         <label>Judul Konten</label>
-        <input type="text" id="c_title" placeholder="Contoh: Video Horeg Part 1">
+        <input type="text" id="r_title" placeholder="Contoh: Story Horeg Hari Ini">
     </div>
     <div class="input-group">
-        <label>Deskripsi</label>
-        <textarea id="c_desc" placeholder="Isi deskripsi konten..."></textarea>
+        <label>Deskripsi Konten</label>
+        <textarea id="r_desc" placeholder="Isi deskripsi..."></textarea>
     </div>
+
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div class="input-group">
             <label>Privasi</label>
-            <select id="c_privacy">
-                <option value="public">Publik</option>
-                <option value="private">Pribadi</option>
+            <select id="r_privacy">
+                <option value="public">🌍 PUBLIK</option>
+                <option value="private">🔒 PRIBADI</option>
             </select>
         </div>
         <div class="input-group">
             <label>Jadwal Post</label>
-            <input type="datetime-local" id="c_schedule">
+            <input type="datetime-local" id="r_schedule">
         </div>
     </div>
 
-    <div class="upload-box" onclick="document.getElementById('videoInput').click()">
-        <label style="cursor:pointer; color:var(--neon); font-size: 12px;">📁 UPLOAD VIDEO</label>
+    <div class="upload-area" onclick="document.getElementById('videoInput').click()">
+        <label style="cursor:pointer; color:var(--neon); font-size: 13px;">📁 UPLOAD VIDEO</label>
+        <p id="fn" style="font-size: 10px; color: #666; margin-top: 8px;">Otomatis Potong 60s & Zoom 9:16</p>
         <input type="file" id="videoInput" accept="video/*" style="display:none;">
     </div>
 
-    <button id="gasBtn">GAS POTONG & AUTO-DATA</button>
-    <div id="status" style="margin-top:10px; font-size:12px; color:var(--neon);">Ready Mas Eko!</div>
-    <div id="resultArea"></div>
+    <button id="gasBtn">MULAI PROSES POTONG</button>
+    <div id="status">Silakan upload video Mas Eko.</div>
+    <div id="resultArea" class="part-list"></div>
 </div>
 
 <video id="vSource" style="display:none;"></video>
 
 <script>
+    // LINK EXEC GOOGLE SCRIPT MAS EKO
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyC_JLl-wwjrnT0xPdKrAW9xXyuCbLo4IcNxQWgy77xnBOpI-54qpOJ-J0w5pSUB4dL/exec";
-    const vInput = document.getElementById('videoInput');
-    const vSource = document.getElementById('vSource');
-    const gasBtn = document.getElementById('gasBtn');
-    const resultArea = document.getElementById('resultArea');
 
-    vInput.onchange = (e) => {
+    const vIn = document.getElementById('videoInput');
+    const vSrc = document.getElementById('vSource');
+    const gasBtn = document.getElementById('gasBtn');
+    const status = document.getElementById('status');
+    const resArea = document.getElementById('resultArea');
+
+    vIn.onchange = (e) => {
         if(e.target.files[0]) {
-            vSource.src = URL.createObjectURL(e.target.files[0]);
+            vSrc.src = URL.createObjectURL(e.target.files[0]);
+            document.getElementById('fn').innerText = e.target.files[0].name;
             gasBtn.style.display = "block";
         }
     };
 
     gasBtn.onclick = async () => {
         gasBtn.disabled = true;
-        resultArea.innerHTML = "";
+        resArea.innerHTML = "";
         let start = 0; let part = 1;
-        while (start < vSource.duration) {
-            document.getElementById('status').innerText = `⏳ Potong Part ${part}...`;
-            const end = Math.min(start + 60, vSource.duration);
-            const blob = await convertTo916(start, end);
-            addPartItem(part, blob);
+        while (start < vSrc.duration) {
+            status.innerText = `⏳ Memotong PART ${part}...`;
+            const end = Math.min(start + 60, vSrc.duration);
+            const blob = await convert916(start, end);
+            addPart(part, blob);
             start += 60; part++;
         }
-        document.getElementById('status').innerText = "✅ Selesai!"; gasBtn.disabled = false;
+        status.innerText = "✅ SELESAI!"; gasBtn.disabled = false;
     };
 
-    function addPartItem(part, blob) {
+    function addPart(num, blob) {
         const item = document.createElement('div');
         item.className = 'part-item';
-        item.innerHTML = `<strong>PART ${part}</strong>`;
-        const repliz = document.createElement('button');
-        repliz.className = 'repliz-btn'; repliz.innerText = "🚀 KIRIM + DATA KE REPLIZ";
-        repliz.onclick = () => sendToRepliz(blob, part, repliz);
-        item.appendChild(repliz); resultArea.appendChild(item);
+        item.innerHTML = `<div style="font-size:14px; font-weight:bold;">PART ${num}</div>`;
+        const btn = document.createElement('button');
+        btn.className = 'repliz-btn';
+        btn.innerText = "🚀 KIRIM KE REPLIZ";
+        btn.onclick = () => pushToRepliz(blob, num, btn);
+        item.appendChild(btn); resArea.appendChild(item);
     }
 
-    async function sendToRepliz(blob, part, btn) {
-        btn.innerText = "⏳ Mengirim..."; btn.disabled = true;
+    async function pushToRepliz(blob, num, btn) {
+        btn.innerText = "⏳ MENGIRIM..."; btn.disabled = true;
         const reader = new FileReader();
         reader.readAsDataURL(blob);
         reader.onloadend = async () => {
             const payload = {
                 videoData: reader.result.split(',')[1],
-                fileName: `Part_${part}.mp4`,
-                title: document.getElementById('c_title').value || `Video Part ${part}`,
-                description: document.getElementById('c_desc').value,
-                privacy: document.getElementById('c_privacy').value,
-                schedule: document.getElementById('c_schedule').value
+                fileName: `Part_${num}.mp4`,
+                title: document.getElementById('r_title').value || `Video Part ${num}`,
+                description: document.getElementById('r_desc').value,
+                privacy: document.getElementById('r_privacy').value,
+                schedule: document.getElementById('r_schedule').value
             };
             try {
                 await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-                btn.innerText = "✅ TERKIRIM KE JADWAL"; btn.style.background = "#00ff00";
+                btn.innerText = "✅ MASUK PENJADWALAN"; btn.style.background = "#00ff00";
             } catch (e) { btn.innerText = "❌ GAGAL"; btn.disabled = false; }
         };
     }
 
-    async function convertTo916(start, end) {
-        return new Promise((resolve) => {
-            const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-            canvas.width = 720; canvas.height = 1280;
-            vSource.currentTime = start;
-            vSource.onseeked = () => {
-                const audioCtx = new AudioContext();
-                const source = audioCtx.createMediaElementSource(vSource);
-                const dest = audioCtx.createMediaStreamDestination();
-                source.connect(dest);
-                const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
-                const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
-                const chunks = [];
-                rec.ondataavailable = e => chunks.push(e.data);
-                rec.onstop = () => { audioCtx.close(); resolve(new Blob(chunks, { type: 'video/mp4' })); };
-                const render = () => {
-                    if (vSource.currentTime < end && !vSource.paused) {
-                        const s = 1280/vSource.videoHeight; const nw = vSource.videoWidth*s;
-                        ctx.drawImage(vSource, -(nw-720)/2, 0, nw, 1280);
-                        requestAnimationFrame(render);
-                    } else { rec.stop(); }
+    async function convert916(s, e) {
+        return new Promise((res) => {
+            const cvs = document.createElement('canvas'); const ctx = cvs.getContext('2d');
+            cvs.width = 720; cvs.height = 1280;
+            vSrc.currentTime = s;
+            vSrc.onseeked = () => {
+                const aCtx = new AudioContext();
+                const src = aCtx.createMediaElementSource(vSrc);
+                const dst = aCtx.createMediaStreamDestination();
+                src.connect(dst);
+                const strm = new MediaStream([...cvs.captureStream(30).getVideoTracks(), ...dst.stream.getAudioTracks()]);
+                const rc = new MediaRecorder(strm, { mimeType: 'video/webm' });
+                const chnk = [];
+                rc.ondataavailable = x => chnk.push(x.data);
+                rc.onstop = () => { aCtx.close(); res(new Blob(chnk, {type:'video/mp4'})); };
+                const draw = () => {
+                    if(vSrc.currentTime < e && !vSrc.paused) {
+                        const r = 1280/vSrc.videoHeight; const nw = vSrc.videoWidth*r;
+                        ctx.drawImage(vSrc, -(nw-720)/2, 0, nw, 1280);
+                        requestAnimationFrame(draw);
+                    } else { rc.stop(); }
                 };
-                rec.start(); vSource.play(); render();
-                setTimeout(() => { vSource.pause(); if(rec.state === "recording") rec.stop(); }, (end - start) * 1000);
+                rc.start(); vSrc.play(); draw();
+                setTimeout(() => { vSrc.pause(); if(rc.state === "recording") rc.stop(); }, (e-s)*1000);
             };
         });
     }
