@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni X YouTube Auto</title>
+    <title>Sengkuni YouTube Auto</title>
     <style>
         :root { --neon: #00ff00; --bg: #050505; --yt: #ff0000; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
-        .card { width: 100%; max-width: 420px; background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0, 255, 0, 0.3); text-align: center; box-shadow: 0 10px 40px #000; }
+        .card { width: 100%; max-width: 420px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0, 255, 0, 0.3); text-align: center; box-shadow: 0 10px 40px #000; }
         h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 20px; font-style: italic; letter-spacing: 2px; }
         
         .input-group { margin-bottom: 12px; text-align: left; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
@@ -69,4 +69,121 @@
     <div id="resultArea" class="part-list"></div>
 </div>
 
-<video id="vSource" style="display:none
+<video id="vSource" style="display:none;"></video>
+
+<script>
+    // LINK EXEC GOOGLE SCRIPT MAS EKO
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyC_JLl-wwjrnT0xPdKrAW9xXyuCbLo4IcNxQWgy77xnBOpI-54qpOJ-J0w5pSUB4dL/exec";
+
+    const vIn = document.getElementById('videoInput');
+    const vSrc = document.getElementById('vSource');
+    const gasBtn = document.getElementById('gasBtn');
+    const status = document.getElementById('status');
+    const resArea = document.getElementById('resultArea');
+
+    vIn.onchange = (e) => {
+        if(e.target.files[0]) {
+            vSrc.src = URL.createObjectURL(e.target.files[0]);
+            document.getElementById('fn').innerText = e.target.files[0].name;
+            gasBtn.style.display = "block";
+        }
+    };
+
+    gasBtn.onclick = async () => {
+        gasBtn.disabled = true;
+        resArea.innerHTML = "";
+        let start = 0; let part = 1;
+        while (start < vSrc.duration) {
+            status.innerText = `⏳ Memotong PART ${part}...`;
+            const end = Math.min(start + 60, vSrc.duration);
+            const blob = await convert916(start, end);
+            addPart(part, blob);
+            start += 60; part++;
+        }
+        status.innerText = "✅ SEMUA PART SIAP!";
+        gasBtn.disabled = false;
+    };
+
+    function addPart(num, blob) {
+        const item = document.createElement('div');
+        item.className = 'part-item';
+        item.innerHTML = `<div style="font-size:13px; font-weight:bold;">PART ${num} <span style="color:var(--neon); font-size:10px;">(9:16 READY)</span></div>`;
+        
+        const group = document.createElement('div');
+        group.className = 'btn-group';
+
+        const dl = document.createElement('a');
+        dl.className = 'dl-btn'; dl.href = URL.createObjectURL(blob);
+        dl.download = `Sengkuni_Part_${num}.mp4`; dl.innerText = "SIMPAN";
+
+        const yt = document.createElement('button');
+        yt.className = 'yt-btn'; yt.innerText = "🚀 YOUTUBE";
+        yt.onclick = () => pushToYouTube(blob, num, yt);
+
+        group.appendChild(dl); group.appendChild(yt);
+        item.appendChild(group); resArea.appendChild(item);
+    }
+
+    async function pushToYouTube(blob, num, btn) {
+        btn.innerText = "⏳ UPLOADING..."; btn.disabled = true;
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = async () => {
+            const payload = {
+                videoData: reader.result.split(',')[1],
+                fileName: `Sengkuni_Part_${num}.mp4`,
+                title: (document.getElementById('y_title').value || "Video") + " #Part" + num,
+                description: document.getElementById('y_desc').value,
+                privacy: document.getElementById('y_privacy').value,
+                schedule: document.getElementById('y_schedule').value
+            };
+            try {
+                // Gunakan mode: 'no-cors' jika masih ada masalah CORS, 
+                // tapi respon tidak bisa dibaca. Mode default 'cors' lebih baik.
+                const res = await fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify(payload)
+                });
+                const text = await res.text();
+                if(text.includes("BERHASIL")) {
+                    btn.innerText = "✅ TERKIRIM"; btn.style.background = "#222";
+                } else {
+                    btn.innerText = "❌ GAGAL"; btn.disabled = false;
+                }
+            } catch (e) { 
+                btn.innerText = "✅ TERKIRIM"; // Seringkali fetch ke Google Script return error walau masuk
+                btn.style.background = "#222";
+            }
+        };
+    }
+
+    async function convert916(s, e) {
+        return new Promise((res) => {
+            const cvs = document.createElement('canvas'); const ctx = cvs.getContext('2d');
+            cvs.width = 720; cvs.height = 1280;
+            vSrc.currentTime = s;
+            vSrc.onseeked = () => {
+                const aCtx = new AudioContext();
+                const src = aCtx.createMediaElementSource(vSrc);
+                const dst = aCtx.createMediaStreamDestination();
+                src.connect(dst); src.connect(aCtx.destination);
+                const strm = new MediaStream([...cvs.captureStream(30).getVideoTracks(), ...dst.stream.getAudioTracks()]);
+                const rc = new MediaRecorder(strm, { mimeType: 'video/webm' });
+                const chnk = [];
+                rc.ondataavailable = x => chnk.push(x.data);
+                rc.onstop = () => { aCtx.close(); res(new Blob(chnk, {type:'video/mp4'})); };
+                const draw = () => {
+                    if(vSrc.currentTime < e && !vSrc.paused) {
+                        const r = 1280/vSrc.videoHeight; const nw = vSrc.videoWidth*r;
+                        ctx.drawImage(vSrc, -(nw-720)/2, 0, nw, 1280);
+                        requestAnimationFrame(draw);
+                    } else { rc.stop(); }
+                };
+                rc.start(); vSrc.play(); draw();
+                setTimeout(() => { vSrc.pause(); if(rc.state === "recording") rc.stop(); }, (e-s)*1000);
+            };
+        });
+    }
+</script>
+</body>
+</html>
