@@ -1,36 +1,72 @@
-<script>
-    const SCRIPT_URL =  "https://script.google.com/macros/s/AKfycbyC_JLl-wwjrnT0xPdKrAW9xXyuCbLo4IcNxQWgy77xnBOpI-54qpOJ-J0w5pSUB4dL/exec";
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sengkuni X YouTube Auto</title>
+    <style>
+        :root { --neon: #00ff00; --bg: #050505; --yt: #ff0000; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
+        .card { width: 100%; max-width: 420px; background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0, 255, 0, 0.3); text-align: center; box-shadow: 0 10px 40px #000; }
+        h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 20px; font-style: italic; letter-spacing: 2px; }
+        
+        .input-group { margin-bottom: 12px; text-align: left; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        label { display: block; font-size: 10px; color: var(--neon); font-weight: bold; margin-bottom: 6px; text-transform: uppercase; }
+        input, textarea, select { width: 100%; background: #000; border: 1px solid #333; padding: 12px; border-radius: 10px; color: #fff; box-sizing: border-box; font-size: 13px; outline: none; }
+        textarea { height: 70px; resize: none; }
 
-    async function sendToYouTube(blob, part, btn) {
-        btn.innerText = "⏳ SEDANG UPLOAD...";
-        btn.disabled = true;
+        .upload-area { border: 2px dashed rgba(0,255,0,0.2); padding: 20px; border-radius: 15px; margin: 15px 0; cursor: pointer; }
+        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; background: var(--neon); color: #000; cursor: pointer; display: none; box-shadow: 0 0 25px rgba(0, 255, 0, 0.4); text-transform: uppercase; }
+        
+        #status { margin-top: 15px; font-size: 11px; color: var(--neon); font-weight: bold; }
+        .part-list { margin-top: 20px; display: grid; gap: 12px; }
+        .part-item { background: #111; border: 1px solid #222; padding: 15px; border-radius: 18px; border-left: 5px solid var(--neon); text-align: left; }
+        
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .yt-btn { flex: 1; background: var(--yt); color: #fff; padding: 10px; border-radius: 10px; font-size: 11px; font-weight: bold; border: none; cursor: pointer; text-transform: uppercase; }
+        .dl-btn { flex: 1; background: #333; color: #fff; padding: 10px; border-radius: 10px; font-size: 11px; font-weight: bold; border: none; text-align: center; text-decoration: none; text-transform: uppercase; }
+        video { display: none; }
+    </style>
+</head>
+<body>
 
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        reader.onloadend = async () => {
-            const payload = {
-                videoData: reader.result.split(',')[1],
-                fileName: `Sengkuni_Part_${part}.mp4`,
-                title: document.getElementById('r_title').value + " - Part " + part,
-                description: document.getElementById('r_desc').value,
-                privacy: document.getElementById('r_privacy').value,
-                schedule: document.getElementById('r_schedule').value
-            };
+<div class="card">
+    <h2>🎬 SENGKUNI YOUTUBE</h2>
 
-            try {
-                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-                const text = await res.text();
-                if(text.includes("BERHASIL")) {
-                    btn.innerText = "✅ MASUK YOUTUBE";
-                    btn.style.background = "#ff0000"; // Warna YouTube
-                    btn.style.color = "#fff";
-                } else {
-                    btn.innerText = "❌ GAGAL";
-                    console.log(text);
-                }
-            } catch (e) {
-                btn.innerText = "❌ ERROR";
-            }
-        };
-    }
-</script>
+    <div class="input-group">
+        <label>Judul Video</label>
+        <input type="text" id="y_title" placeholder="Judul untuk YouTube Shorts...">
+    </div>
+    
+    <div class="input-group">
+        <label>Deskripsi</label>
+        <textarea id="y_desc" placeholder="Isi deskripsi & hashtag..."></textarea>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="input-group">
+            <label>Privasi</label>
+            <select id="y_privacy">
+                <option value="private">🔒 PRIBADI (DRAFT)</option>
+                <option value="public">🌍 PUBLIK</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Jadwal Tayang</label>
+            <input type="datetime-local" id="y_schedule">
+        </div>
+    </div>
+
+    <div class="upload-area" onclick="document.getElementById('videoInput').click()">
+        <label style="cursor:pointer; color:var(--neon); font-size: 13px;">📁 UPLOAD VIDEO UTAMA</label>
+        <p id="fn" style="font-size: 10px; color: #666; margin-top: 8px;">Otomatis Potong 60s & 9:16</p>
+        <input type="file" id="videoInput" accept="video/*" style="display:none;">
+    </div>
+
+    <button id="gasBtn">PROSES POTONG VIDEO</button>
+    <div id="status">Ready Mas Eko! Silakan pilih video.</div>
+    
+    <div id="resultArea" class="part-list"></div>
+</div>
+
+<video id="vSource" style="display:none
