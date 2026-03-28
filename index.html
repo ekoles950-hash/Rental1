@@ -3,212 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Pro - Audio Fix</title>
+    <title>Sengkuni TikTok Cutter - Suara Gler</title>
     <style>
-        :root { --neon: #00ff00; --bg: #0a0a0a; --glass: rgba(255, 255, 255, 0.05); }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 15px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #003300, transparent); }
-        .card { width: 100%; max-width: 450px; background: var(--glass); backdrop-filter: blur(10px); padding: 20px; border-radius: 24px; border: 1px solid rgba(0, 255, 0, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
-        h2 { color: var(--neon); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0, 255, 0, 0.5); margin-bottom: 20px; }
-        .input-group { margin-bottom: 12px; text-align: left; }
-        label { display: block; font-size: 10px; color: var(--neon); text-transform: uppercase; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid #333; padding: 12px; border-radius: 12px; color: #fff; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; background: var(--neon); color: #000; box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); }
-        #status { margin-top: 15px; font-size: 12px; color: var(--neon); font-weight: bold; }
-        #thumbCanvas { width: 100%; border-radius: 14px; margin-top: 15px; border: 2px solid var(--neon); display: none; }
-        #previewVideo { width: 100%; border-radius: 14px; margin-top: 15px; display: none; border: 1px solid #333; }
-        canvas, .raw-video { display: none; }
+        :root { --neon: #00ff00; --bg: #050505; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 15px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
+        .card { width: 100%; max-width: 400px; background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0,255,0,0.3); text-align: center; box-shadow: 0 10px 30px #000; }
+        h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 25px; font-style: italic; letter-spacing: 2px; }
+        .upload-box { background: rgba(0,0,0,0.5); border: 2px dashed rgba(0,255,0,0.2); padding: 30px; border-radius: 20px; margin-bottom: 20px; cursor: pointer; }
+        .file-label { cursor: pointer; color: var(--neon); font-weight: bold; font-size: 14px; }
+        input[type="file"] { display: none; }
+        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; background: var(--neon); color: #000; font-size: 14px; display: none; box-shadow: 0 0 20px rgba(0, 255, 0, 0.3); }
+        #status { margin-top: 20px; font-size: 12px; color: var(--neon); font-weight: bold; }
+        .part-list { margin-top: 25px; display: grid; gap: 12px; }
+        .part-item { background: #111; border: 1px solid #333; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--neon); }
+        .dl-link { background: var(--neon); color: #000; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        video { display: none; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🎬 SENGKUNI PRO</h2>
-    
-    <div class="input-group">
-        <label>Pilih Detik Jepretan Thumbnail</label>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <input type="range" id="snap_time" min="1" max="60" value="5" oninput="updateTimeLabel(this.value)">
-            <span id="time_label" style="font-size:12px; color:var(--neon); width:50px;">5s</span>
-        </div>
+    <h2>🎬 TIKTOK CUTTER</h2>
+    <div class="upload-box" onclick="document.getElementById('videoInput').click()">
+        <label class="file-label">
+            <span>📁 UPLOAD VIDEO LONG</span>
+            <p style="font-size: 10px; color: #888; margin-top: 10px;" id="fileName">Otomatis Potong & Suara Glerrr</p>
+        </label>
+        <input type="file" id="videoInput" accept="video/*">
     </div>
-
-    <div class="input-group">
-        <label>Teks 1 (Kuning Racing)</label>
-        <input type="text" id="v_title1" placeholder="Judul Atas..." oninput="updateThumbnail()">
-        <label style="font-size:8px; margin-top:5px; color:#aaa;">Posisi Teks 1 (Naik/Turun)</label>
-        <input type="range" id="t1_pos" min="50" max="1200" value="150" oninput="updateThumbnail()">
-    </div>
-
-    <div class="input-group">
-        <label>Teks 2 (Putih Sport)</label>
-        <input type="text" id="v_title2" placeholder="Judul Bawah..." oninput="updateThumbnail()">
-        <label style="font-size:8px; margin-top:5px; color:#aaa;">Posisi Teks 2 (Naik/Turun)</label>
-        <input type="range" id="t2_pos" min="50" max="1200" value="1150" oninput="updateThumbnail()">
-    </div>
-
-    <div class="input-group">
-        <label>Gaya Tulisan (Font)</label>
-        <select id="font_style" onchange="updateThumbnail()">
-            <option value="bold 85px Impact">Racing Bold (Impact)</option>
-            <option value="italic bold 75px Arial">Sport Italic (Arial)</option>
-            <option value="bold 65px 'Segoe UI'">Modern Pro (Segoe)</option>
-        </select>
-    </div>
-
-    <div class="input-group">
-        <label>Ukuran Video</label>
-        <select id="ratio" onchange="updateSize()">
-            <option value="9:16">Shorts (9:16)</option>
-            <option value="16:9">YouTube (16:9)</option>
-        </select>
-    </div>
-
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div class="input-group"><label>Vidio Horeg</label><input type="file" id="v1_in" accept="video/*"></div>
-        <div class="input-group"><label>Vidio Reaksi</label><input type="file" id="v2_in" accept="video/*"></div>
-    </div>
-
-    <button id="gasBtn">GABUNG & REKAM (SUARA ON)</button>
-    <div id="status">Ready Mas Eko! Silakan pilih video.</div>
-
-    <video id="previewVideo" controls></video>
-    <canvas id="thumbCanvas"></canvas>
-    <button id="dlThumb" style="display:none; background:#333; color:#fff;">📥 DOWNLOAD THUMBNAIL GRATIS</button>
+    <button id="gasBtn">MULAI POTONG PART (SUARA ON)</button>
+    <div id="status">Silakan upload video Mas Eko.</div>
+    <div class="part-list" id="resultArea"></div>
 </div>
 
-<video id="v1" class="raw-video" crossorigin="anonymous" playsinline></video>
-<video id="v2" class="raw-video" loop muted crossorigin="anonymous" playsinline></video>
-<canvas id="c"></canvas>
+<video id="vSource" crossorigin="anonymous"></video>
 
 <script>
-    const v1 = document.getElementById('v1');
-    const v2 = document.getElementById('v2');
-    const canvas = document.getElementById('c');
-    const ctx = canvas.getContext('2d');
-    const thumbCanvas = document.getElementById('thumbCanvas');
-    const tCtx = thumbCanvas.getContext('2d');
-    const status = document.getElementById('status');
+    const videoInput = document.getElementById('videoInput');
+    const vSource = document.getElementById('vSource');
     const gasBtn = document.getElementById('gasBtn');
-    const dlBtn = document.getElementById('dlThumb');
-    const snapTime = document.getElementById('snap_time');
-    
-    const t1Input = document.getElementById('v_title1');
-    const t2Input = document.getElementById('v_title2');
-    const t1Pos = document.getElementById('t1_pos');
-    const t2Pos = document.getElementById('t2_pos');
+    const status = document.getElementById('status');
+    const resultArea = document.getElementById('resultArea');
 
-    let capturedFrame = null;
-
-    document.getElementById('v1_in').onchange = (e) => {
+    videoInput.onchange = (e) => {
         const file = e.target.files[0];
-        v1.src = URL.createObjectURL(file);
-        v1.onloadedmetadata = () => { snapTime.max = Math.floor(v1.duration); };
+        if (file) {
+            vSource.src = URL.createObjectURL(file);
+            document.getElementById('fileName').innerText = file.name;
+            gasBtn.style.display = "block";
+        }
     };
-    document.getElementById('v2_in').onchange = (e) => v2.src = URL.createObjectURL(e.target.files[0]);
-
-    function updateTimeLabel(val) { document.getElementById('time_label').innerText = val + "s"; }
-
-    function updateSize() {
-        const mode = document.getElementById('ratio').value;
-        thumbCanvas.width = (mode === "9:16") ? 720 : 1280;
-        thumbCanvas.height = (mode === "9:16") ? 1280 : 720;
-        t1Pos.max = thumbCanvas.height - 50;
-        t2Pos.max = thumbCanvas.height - 50;
-    }
-    updateSize();
 
     gasBtn.onclick = async () => {
-        if(!v1.src || !v2.src) return alert("Pilih video dulu Mas!");
-        const mode = document.getElementById('ratio').value;
-        const sTime = parseInt(snapTime.value);
-
-        canvas.width = (mode === "9:16") ? 720 : 1280;
-        canvas.height = (mode === "9:16") ? 1280 : 720;
-        
         gasBtn.disabled = true;
-        status.innerText = "⏳ SEDANG MEREKAM VIDEO & SUARA...";
+        resultArea.innerHTML = "";
+        const duration = vSource.duration;
+        const totalParts = Math.ceil(duration / 60);
+        let start = 0;
+        let part = 1;
 
-        // AUDIO FIX: Menangkap suara dari Video 1
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioCtx.createMediaElementSource(v1);
-        const dest = audioCtx.createMediaStreamDestination();
-        source.connect(dest);
-        source.connect(audioCtx.destination);
-
-        const stream = new MediaStream([
-            ...canvas.captureStream(30).getVideoTracks(), 
-            ...dest.stream.getAudioTracks()
-        ]);
-
-        const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
-        let chunks = [];
-
-        v1.currentTime = 0; v2.currentTime = 0;
-        v1.play(); v2.play();
-
-        // Jepret Thumbnail
-        setTimeout(() => {
-            capturedFrame = document.createElement('canvas');
-            capturedFrame.width = canvas.width;
-            capturedFrame.height = canvas.height;
-            capturedFrame.getContext('2d').drawImage(v1, 0, 0, canvas.width, canvas.height);
-            updateThumbnail(); 
-            thumbCanvas.style.display = "block";
-            dlBtn.style.display = "block";
-        }, sTime * 1000);
-
-        rec.ondataavailable = e => chunks.push(e.data);
-        rec.onstop = () => {
-            const blob = new Blob(chunks, { type: 'video/mp4' });
-            document.getElementById('previewVideo').src = URL.createObjectURL(blob);
-            document.getElementById('previewVideo').style.display = "block";
-            status.innerText = "✅ REKAMAN SELESAI! SUARA AMAN.";
-            gasBtn.disabled = false;
-        };
-
-        v1.onended = () => rec.stop();
-        rec.start();
-
-        function draw() {
-            if(rec.state === "recording") {
-                ctx.drawImage(v1, 0, 0, canvas.width, canvas.height);
-                if(mode === "9:16") ctx.drawImage(v2, 40, 930, 220, 300);
-                else ctx.drawImage(v2, canvas.width-320, canvas.height-240, 280, 200);
-                requestAnimationFrame(draw);
-            }
+        while (start < duration) {
+            status.innerText = `⏳ Memproses PART ${part} dari ${totalParts} (Sabar Mas Eko)...`;
+            const end = Math.min(start + 60, duration);
+            const partBlob = await convertTo916WithAudio(start, end);
+            
+            const item = document.createElement('div');
+            item.className = 'part-item';
+            item.innerHTML = `
+                <div style="font-size:13px; font-weight:bold;">PART ${part} <span style="color:var(--neon)">(9:16)</span></div>
+                <a href="${URL.createObjectURL(partBlob)}" download="Sengkuni_Part_${part}.mp4" class="dl-link">UNDUH</a>
+            `;
+            resultArea.appendChild(item);
+            start += 60; part++;
         }
-        draw();
+        status.innerText = "✅ SELESAI! SEMUA ADA SUARANYA.";
+        gasBtn.disabled = false;
     };
 
-    function updateThumbnail() {
-        if(!capturedFrame) return;
-        tCtx.drawImage(capturedFrame, 0, 0, thumbCanvas.width, thumbCanvas.height);
-        const teks1 = t1Input.value.toUpperCase();
-        const teks2 = t2Input.value.toUpperCase();
-        const gaya = document.getElementById('font_style').value;
-        const x = thumbCanvas.width / 2;
-        tCtx.font = gaya;
-        tCtx.textAlign = "center";
-        tCtx.strokeStyle = "black";
-        tCtx.lineWidth = 12;
-        if(teks1) {
-            tCtx.fillStyle = "#ffff00";
-            tCtx.strokeText(teks1, x, parseInt(t1Pos.value));
-            tCtx.fillText(teks1, x, parseInt(t1Pos.value));
-        }
-        if(teks2) {
-            tCtx.fillStyle = "#ffffff";
-            tCtx.strokeText(teks2, x, parseInt(t2Pos.value));
-            tCtx.fillText(teks2, x, parseInt(t2Pos.value));
-        }
+    async function convertTo916WithAudio(start, end) {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 720; canvas.height = 1280;
+
+            vSource.currentTime = start;
+            vSource.onseeked = () => {
+                // --- KUNCI SUARA DI SINI ---
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioCtx.createMediaElementSource(vSource);
+                const dest = audioCtx.createMediaStreamDestination();
+                source.connect(dest);
+                source.connect(audioCtx.destination); // Supaya Mas bisa dengar pas proses
+
+                const stream = new MediaStream([
+                    ...canvas.captureStream(30).getVideoTracks(),
+                    ...dest.stream.getAudioTracks()
+                ]);
+
+                const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+                const chunks = [];
+
+                recorder.ondataavailable = e => chunks.push(e.data);
+                recorder.onstop = () => {
+                    audioCtx.close();
+                    resolve(new Blob(chunks, { type: 'video/mp4' }));
+                };
+
+                const render = () => {
+                    if (vSource.currentTime < end && !vSource.paused) {
+                        const scale = canvas.height / vSource.videoHeight;
+                        const newWidth = vSource.videoWidth * scale;
+                        const offset = (newWidth - canvas.width) / 2;
+                        ctx.drawImage(vSource, -offset, 0, newWidth, canvas.height);
+                        requestAnimationFrame(render);
+                    } else {
+                        recorder.stop();
+                    }
+                };
+
+                recorder.start();
+                vSource.play();
+                render();
+
+                setTimeout(() => {
+                    vSource.pause();
+                    if(recorder.state === "recording") recorder.stop();
+                }, (end - start) * 1000);
+            };
+        });
     }
-
-    dlBtn.onclick = () => {
-        const link = document.createElement('a');
-        link.download = 'THUMB_SENGKUNI.jpg';
-        link.href = thumbCanvas.toDataURL('image/jpeg', 0.95);
-        link.click();
-    };
 </script>
 </body>
 </html>
