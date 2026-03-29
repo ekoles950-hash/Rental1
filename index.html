@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni YouTube - Sekali Login</title>
+    <title>Sengkuni YouTube - Final</title>
     <style>
         :root { --neon: #00ff00; --bg: #050505; --yt: #ff0000; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
@@ -51,18 +51,18 @@
     </div>
 
     <button id="gasBtn">PROSES POTONG VIDEO</button>
-    <div id="status">Silakan pilih video Mas Eko.</div>
+    <div id="status">Ready Mas Eko! Silakan pilih video.</div>
     <div id="resultArea" class="part-list"></div>
 </div>
 
 <video id="vSource" style="display:none;"></video>
 
 <script>
-    // DATA DARI SCREENSHOT MAS EKO
-    const CLIENT_ID = "486560659777-eg51upbieqp81jm4jc1pd3jf04icv5et.apps.googleusercontent.com";
+    // MAS EKO: INI CLIENT ID BARU DARI SCREENSHOT TERAKHIR
+    const CLIENT_ID = "486560659777-81rdgaaqbo1252ricp53l0n5mvcprvpi.apps.googleusercontent.com";
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyC_JLl-wwjrnT0xPdKrAW9xXyuCbLo4IcNxQWgy77xnBOpI-54qpOJ-J0w5pSUB4dL/exec";
     
-    let accessToken = null; // Kunci login akan disimpan di sini
+    let accessToken = null;
 
     const vIn = document.getElementById('videoInput');
     const vSrc = document.getElementById('vSource');
@@ -100,7 +100,7 @@
         group.className = 'btn-group';
         const dl = document.createElement('a');
         dl.className = 'dl-btn'; dl.href = URL.createObjectURL(blob);
-        dl.download = `Sengkuni_Part_${num}.mp4`; dl.innerText = "SIMPAN";
+        dl.download = `Part_${num}.mp4`; dl.innerText = "SIMPAN";
         const yt = document.createElement('button');
         yt.className = 'yt-btn'; yt.innerText = "🚀 YOUTUBE";
         yt.onclick = () => handleYouTubeUpload(blob, num, yt);
@@ -108,17 +108,14 @@
         item.appendChild(group); resArea.appendChild(item);
     }
 
-    // FUNGSI PINTAR: Cek login dulu, kalau sudah ada kunci langsung gas
     async function handleYouTubeUpload(blob, num, btn) {
         if (!accessToken) {
-            // Jika belum login (biasanya di Part 1), minta izin dulu
             try {
                 accessToken = await getGoogleAuth();
             } catch (err) {
                 return alert("Gagal login: " + err);
             }
         }
-        // Kalau sudah ada token, langsung kirim ke Google Script
         pushToYouTube(blob, num, btn, accessToken);
     }
 
@@ -127,7 +124,6 @@
             const scope = "https://www.googleapis.com/auth/youtube.upload";
             const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=https://rental1-five.vercel.app&response_type=token&scope=${scope}`;
             
-            // Buka popup login
             const win = window.open(authUrl, "Login YouTube", "width=500,height=600");
             
             const checkTimer = setInterval(() => {
@@ -139,8 +135,8 @@
                         clearInterval(checkTimer);
                         resolve(token);
                     }
-                } catch (e) { /* Menunggu redirect */ }
-                if (win.closed) { clearInterval(checkTimer); reject("Login dibatalkan"); }
+                } catch (e) {}
+                if (win.closed) { clearInterval(checkTimer); reject("Dibatalkan"); }
             }, 500);
         });
     }
@@ -157,7 +153,7 @@
                 description: document.getElementById('y_desc').value,
                 privacy: document.getElementById('y_privacy').value,
                 schedule: document.getElementById('y_schedule').value,
-                token: token // Kirim token ke Apps Script
+                token: token
             };
             try {
                 const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
