@@ -3,28 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni YouTube Auto</title>
+    <title>Sengkuni YouTube - Sekali Login</title>
     <style>
         :root { --neon: #00ff00; --bg: #050505; --yt: #ff0000; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
         .card { width: 100%; max-width: 420px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0, 255, 0, 0.3); text-align: center; box-shadow: 0 10px 40px #000; }
         h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 20px; font-style: italic; letter-spacing: 2px; }
-        
         .input-group { margin-bottom: 12px; text-align: left; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
         label { display: block; font-size: 10px; color: var(--neon); font-weight: bold; margin-bottom: 6px; text-transform: uppercase; }
         input, textarea, select { width: 100%; background: #000; border: 1px solid #333; padding: 12px; border-radius: 10px; color: #fff; box-sizing: border-box; font-size: 13px; outline: none; }
         textarea { height: 70px; resize: none; }
-
         .upload-area { border: 2px dashed rgba(0,255,0,0.2); padding: 20px; border-radius: 15px; margin: 15px 0; cursor: pointer; }
         #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; background: var(--neon); color: #000; cursor: pointer; display: none; box-shadow: 0 0 25px rgba(0, 255, 0, 0.4); text-transform: uppercase; }
-        
         #status { margin-top: 15px; font-size: 11px; color: var(--neon); font-weight: bold; }
         .part-list { margin-top: 20px; display: grid; gap: 12px; }
         .part-item { background: #111; border: 1px solid #222; padding: 15px; border-radius: 18px; border-left: 5px solid var(--neon); text-align: left; }
-        
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }
         .yt-btn { flex: 1; background: var(--yt); color: #fff; padding: 10px; border-radius: 10px; font-size: 11px; font-weight: bold; border: none; cursor: pointer; text-transform: uppercase; }
-        .dl-btn { flex: 1; background: #333; color: #fff; padding: 10px; border-radius: 10px; font-size: 11px; font-weight: bold; border: none; text-align: center; text-decoration: none; text-transform: uppercase; }
+        .dl-btn { flex: 1; background: #333; color: #fff; padding: 10px; border-radius: 10px; font-size: 11px; font-weight: bold; border: none; text-align: center; text-decoration: none; }
         video { display: none; }
     </style>
 </head>
@@ -35,26 +31,17 @@
 
     <div class="input-group">
         <label>Judul Video</label>
-        <input type="text" id="y_title" placeholder="Judul untuk YouTube Shorts...">
+        <input type="text" id="y_title" placeholder="Judul Shorts...">
     </div>
     
     <div class="input-group">
         <label>Deskripsi</label>
-        <textarea id="y_desc" placeholder="Isi deskripsi & hashtag..."></textarea>
+        <textarea id="y_desc" placeholder="Isi deskripsi..."></textarea>
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div class="input-group">
-            <label>Privasi</label>
-            <select id="y_privacy">
-                <option value="private">🔒 PRIBADI (DRAFT)</option>
-                <option value="public">🌍 PUBLIK</option>
-            </select>
-        </div>
-        <div class="input-group">
-            <label>Jadwal Tayang</label>
-            <input type="datetime-local" id="y_schedule">
-        </div>
+        <div class="input-group"><label>Privasi</label><select id="y_privacy"><option value="private">🔒 PRIBADI</option><option value="public">🌍 PUBLIK</option></select></div>
+        <div class="input-group"><label>Jadwal</label><input type="datetime-local" id="y_schedule"></div>
     </div>
 
     <div class="upload-area" onclick="document.getElementById('videoInput').click()">
@@ -64,21 +51,22 @@
     </div>
 
     <button id="gasBtn">PROSES POTONG VIDEO</button>
-    <div id="status">Ready Mas Eko! Silakan pilih video.</div>
-    
+    <div id="status">Silakan pilih video Mas Eko.</div>
     <div id="resultArea" class="part-list"></div>
 </div>
 
 <video id="vSource" style="display:none;"></video>
 
 <script>
-    // LINK EXEC GOOGLE SCRIPT MAS EKO
+    // DATA DARI SCREENSHOT MAS EKO
+    const CLIENT_ID = "486560659777-eg51upbieqp81jm4jc1pd3jf04icv5et.apps.googleusercontent.com";
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyC_JLl-wwjrnT0xPdKrAW9xXyuCbLo4IcNxQWgy77xnBOpI-54qpOJ-J0w5pSUB4dL/exec";
+    
+    let accessToken = null; // Kunci login akan disimpan di sini
 
     const vIn = document.getElementById('videoInput');
     const vSrc = document.getElementById('vSource');
     const gasBtn = document.getElementById('gasBtn');
-    const status = document.getElementById('status');
     const resArea = document.getElementById('resultArea');
 
     vIn.onchange = (e) => {
@@ -94,13 +82,13 @@
         resArea.innerHTML = "";
         let start = 0; let part = 1;
         while (start < vSrc.duration) {
-            status.innerText = `⏳ Memotong PART ${part}...`;
+            document.getElementById('status').innerText = `⏳ Memotong PART ${part}...`;
             const end = Math.min(start + 60, vSrc.duration);
             const blob = await convert916(start, end);
             addPart(part, blob);
             start += 60; part++;
         }
-        status.innerText = "✅ SEMUA PART SIAP!";
+        document.getElementById('status').innerText = "✅ SEMUA PART SIAP!";
         gasBtn.disabled = false;
     };
 
@@ -108,52 +96,75 @@
         const item = document.createElement('div');
         item.className = 'part-item';
         item.innerHTML = `<div style="font-size:13px; font-weight:bold;">PART ${num} <span style="color:var(--neon); font-size:10px;">(9:16 READY)</span></div>`;
-        
         const group = document.createElement('div');
         group.className = 'btn-group';
-
         const dl = document.createElement('a');
         dl.className = 'dl-btn'; dl.href = URL.createObjectURL(blob);
         dl.download = `Sengkuni_Part_${num}.mp4`; dl.innerText = "SIMPAN";
-
         const yt = document.createElement('button');
         yt.className = 'yt-btn'; yt.innerText = "🚀 YOUTUBE";
-        yt.onclick = () => pushToYouTube(blob, num, yt);
-
+        yt.onclick = () => handleYouTubeUpload(blob, num, yt);
         group.appendChild(dl); group.appendChild(yt);
         item.appendChild(group); resArea.appendChild(item);
     }
 
-    async function pushToYouTube(blob, num, btn) {
+    // FUNGSI PINTAR: Cek login dulu, kalau sudah ada kunci langsung gas
+    async function handleYouTubeUpload(blob, num, btn) {
+        if (!accessToken) {
+            // Jika belum login (biasanya di Part 1), minta izin dulu
+            try {
+                accessToken = await getGoogleAuth();
+            } catch (err) {
+                return alert("Gagal login: " + err);
+            }
+        }
+        // Kalau sudah ada token, langsung kirim ke Google Script
+        pushToYouTube(blob, num, btn, accessToken);
+    }
+
+    function getGoogleAuth() {
+        return new Promise((resolve, reject) => {
+            const scope = "https://www.googleapis.com/auth/youtube.upload";
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=https://rental1-five.vercel.app&response_type=token&scope=${scope}`;
+            
+            // Buka popup login
+            const win = window.open(authUrl, "Login YouTube", "width=500,height=600");
+            
+            const checkTimer = setInterval(() => {
+                try {
+                    if (win.location.href.includes("access_token")) {
+                        const params = new URLSearchParams(win.location.hash.substring(1));
+                        const token = params.get("access_token");
+                        win.close();
+                        clearInterval(checkTimer);
+                        resolve(token);
+                    }
+                } catch (e) { /* Menunggu redirect */ }
+                if (win.closed) { clearInterval(checkTimer); reject("Login dibatalkan"); }
+            }, 500);
+        });
+    }
+
+    async function pushToYouTube(blob, num, btn, token) {
         btn.innerText = "⏳ UPLOADING..."; btn.disabled = true;
         const reader = new FileReader();
         reader.readAsDataURL(blob);
         reader.onloadend = async () => {
             const payload = {
                 videoData: reader.result.split(',')[1],
-                fileName: `Sengkuni_Part_${num}.mp4`,
+                fileName: `Part_${num}.mp4`,
                 title: (document.getElementById('y_title').value || "Video") + " #Part" + num,
                 description: document.getElementById('y_desc').value,
                 privacy: document.getElementById('y_privacy').value,
-                schedule: document.getElementById('y_schedule').value
+                schedule: document.getElementById('y_schedule').value,
+                token: token // Kirim token ke Apps Script
             };
             try {
-                // Gunakan mode: 'no-cors' jika masih ada masalah CORS, 
-                // tapi respon tidak bisa dibaca. Mode default 'cors' lebih baik.
-                const res = await fetch(SCRIPT_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify(payload)
-                });
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const text = await res.text();
-                if(text.includes("BERHASIL")) {
-                    btn.innerText = "✅ TERKIRIM"; btn.style.background = "#222";
-                } else {
-                    btn.innerText = "❌ GAGAL"; btn.disabled = false;
-                }
-            } catch (e) { 
-                btn.innerText = "✅ TERKIRIM"; // Seringkali fetch ke Google Script return error walau masuk
-                btn.style.background = "#222";
-            }
+                btn.innerText = text.includes("BERHASIL") ? "✅ TERKIRIM" : "❌ GAGAL";
+                if(text.includes("BERHASIL")) btn.style.background = "#222";
+            } catch (e) { btn.innerText = "❌ ERROR"; btn.disabled = false; }
         };
     }
 
