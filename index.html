@@ -1,69 +1,42 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni YouTube - Final</title>
+    <title>Sengkuni Neon Pro</title>
     <style>
-        :root { --neon: #00ff00; --bg: #050505; --yt: #ff0000; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
-        .card { width: 100%; max-width: 420px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0, 255, 0, 0.3); text-align: center; box-shadow: 0 10px 40px #000; }
-        h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 20px; font-style: italic; letter-spacing: 2px; }
-        .input-group { margin-bottom: 12px; text-align: left; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
-        label { display: block; font-size: 10px; color: var(--neon); font-weight: bold; margin-bottom: 6px; text-transform: uppercase; }
-        input, textarea, select { width: 100%; background: #000; border: 1px solid #333; padding: 12px; border-radius: 10px; color: #fff; box-sizing: border-box; font-size: 13px; outline: none; }
-        textarea { height: 70px; resize: none; }
-        .upload-area { border: 2px dashed rgba(0,255,0,0.2); padding: 20px; border-radius: 15px; margin: 15px 0; cursor: pointer; }
-        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; background: var(--neon); color: #000; cursor: pointer; display: none; box-shadow: 0 0 25px rgba(0, 255, 0, 0.4); text-transform: uppercase; }
-        #status { margin-top: 15px; font-size: 11px; color: var(--neon); font-weight: bold; }
-        .part-list { margin-top: 20px; display: grid; gap: 12px; }
-        .part-item { background: #111; border: 1px solid #222; padding: 15px; border-radius: 18px; border-left: 5px solid var(--neon); text-align: left; }
-        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
-        .yt-btn { flex: 1; background: var(--yt); color: #fff; padding: 10px; border-radius: 10px; font-size: 11px; font-weight: bold; border: none; cursor: pointer; text-transform: uppercase; }
-        .dl-btn { flex: 1; background: #333; color: #fff; padding: 10px; border-radius: 10px; font-size: 11px; font-weight: bold; border: none; text-align: center; text-decoration: none; }
+        :root { --neon: #00ff00; --bg: #050505; }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; padding: 10px; display: flex; justify-content: center; }
+        .card { width: 100%; max-width: 400px; background: #111; padding: 20px; border-radius: 25px; border: 1px solid var(--neon); box-shadow: 0 0 15px rgba(0,255,0,0.2); }
+        h2 { color: var(--neon); text-shadow: 0 0 10px var(--neon); text-align: center; }
+        input, textarea, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #333; background: #000; color: #fff; box-sizing: border-box; }
+        #gasBtn { background: var(--neon); color: #000; font-weight: bold; border: none; cursor: pointer; }
+        .part-item { background: #1a1a1a; padding: 15px; border-radius: 15px; margin-top: 10px; border-left: 5px solid var(--neon); text-align: left; }
+        .yt-btn { background: #ff0000; border: none; font-weight: bold; cursor: pointer; }
         video { display: none; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🎬 SENGKUNI YOUTUBE</h2>
-
-    <div class="input-group">
-        <label>Judul Video</label>
-        <input type="text" id="y_title" placeholder="Judul Shorts...">
-    </div>
+    <h2>🎬 SENGKUNI NEON</h2>
+    <input type="text" id="y_title" placeholder="Judul Dasar...">
+    <textarea id="y_desc" placeholder="Caption/Subtitle..."></textarea>
     
-    <div class="input-group">
-        <label>Deskripsi</label>
-        <textarea id="y_desc" placeholder="Isi deskripsi..."></textarea>
-    </div>
-
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div class="input-group"><label>Privasi</label><select id="y_privacy"><option value="private">🔒 PRIBADI</option><option value="public">🌍 PUBLIK</option></select></div>
-        <div class="input-group"><label>Jadwal</label><input type="datetime-local" id="y_schedule"></div>
-    </div>
-
-    <div class="upload-area" onclick="document.getElementById('videoInput').click()">
-        <label style="cursor:pointer; color:var(--neon); font-size: 13px;">📁 UPLOAD VIDEO UTAMA</label>
-        <p id="fn" style="font-size: 10px; color: #666; margin-top: 8px;">Otomatis Potong 60s & 9:16</p>
+    <div style="border: 2px dashed var(--neon); padding: 15px; margin: 10px 0; border-radius: 15px;" onclick="document.getElementById('videoInput').click()">
+        <span style="color:var(--neon)">📁 PILIH VIDEO</span>
         <input type="file" id="videoInput" accept="video/*" style="display:none;">
     </div>
 
-    <button id="gasBtn">PROSES POTONG VIDEO</button>
-    <div id="status">Ready Mas Eko! Silakan pilih video.</div>
-    <div id="resultArea" class="part-list"></div>
+    <button id="gasBtn" style="display:none;">GAS POTONG & NEON!</button>
+    <div id="status" style="font-size:12px; color:var(--neon); margin: 10px 0;"></div>
+    <div id="resultArea"></div>
 </div>
 
-<video id="vSource" style="display:none;"></video>
+<video id="vSource"></video>
 
 <script>
-    // MAS EKO: INI CLIENT ID BARU DARI SCREENSHOT TERAKHIR
-    const CLIENT_ID = "486560659777-81rdgaaqbo1252ricp53l0n5mvcprvpi.apps.googleusercontent.com";
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyC_JLl-wwjrnT0xPdKrAW9xXyuCbLo4IcNxQWgy77xnBOpI-54qpOJ-J0w5pSUB4dL/exec";
-    
-    let accessToken = null;
-
     const vIn = document.getElementById('videoInput');
     const vSrc = document.getElementById('vSource');
     const gasBtn = document.getElementById('gasBtn');
@@ -72,8 +45,8 @@
     vIn.onchange = (e) => {
         if(e.target.files[0]) {
             vSrc.src = URL.createObjectURL(e.target.files[0]);
-            document.getElementById('fn').innerText = e.target.files[0].name;
             gasBtn.style.display = "block";
+            document.getElementById('status').innerText = "Video Terpilih: " + e.target.files[0].name;
         }
     };
 
@@ -82,9 +55,9 @@
         resArea.innerHTML = "";
         let start = 0; let part = 1;
         while (start < vSrc.duration) {
-            document.getElementById('status').innerText = `⏳ Memotong PART ${part}...`;
+            document.getElementById('status').innerText = `⏳ Memproses PART ${part} + Efek Neon...`;
             const end = Math.min(start + 60, vSrc.duration);
-            const blob = await convert916(start, end);
+            const blob = await processNeon(start, end);
             addPart(part, blob);
             start += 60; part++;
         }
@@ -95,94 +68,64 @@
     function addPart(num, blob) {
         const item = document.createElement('div');
         item.className = 'part-item';
-        item.innerHTML = `<div style="font-size:13px; font-weight:bold;">PART ${num} <span style="color:var(--neon); font-size:10px;">(9:16 READY)</span></div>`;
-        const group = document.createElement('div');
-        group.className = 'btn-group';
-        const dl = document.createElement('a');
-        dl.className = 'dl-btn'; dl.href = URL.createObjectURL(blob);
-        dl.download = `Part_${num}.mp4`; dl.innerText = "SIMPAN";
+        item.innerHTML = `<b>PART ${num} (NEON OK)</b>`;
         const yt = document.createElement('button');
-        yt.className = 'yt-btn'; yt.innerText = "🚀 YOUTUBE";
-        yt.onclick = () => handleYouTubeUpload(blob, num, yt);
-        group.appendChild(dl); group.appendChild(yt);
-        item.appendChild(group); resArea.appendChild(item);
-    }
-
-    async function handleYouTubeUpload(blob, num, btn) {
-        if (!accessToken) {
-            try {
-                accessToken = await getGoogleAuth();
-            } catch (err) {
-                return alert("Gagal login: " + err);
-            }
-        }
-        pushToYouTube(blob, num, btn, accessToken);
-    }
-
-    function getGoogleAuth() {
-        return new Promise((resolve, reject) => {
-            const scope = "https://www.googleapis.com/auth/youtube.upload";
-            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=https://rental1-five.vercel.app&response_type=token&scope=${scope}`;
-            
-            const win = window.open(authUrl, "Login YouTube", "width=500,height=600");
-            
-            const checkTimer = setInterval(() => {
-                try {
-                    if (win.location.href.includes("access_token")) {
-                        const params = new URLSearchParams(win.location.hash.substring(1));
-                        const token = params.get("access_token");
-                        win.close();
-                        clearInterval(checkTimer);
-                        resolve(token);
-                    }
-                } catch (e) {}
-                if (win.closed) { clearInterval(checkTimer); reject("Dibatalkan"); }
-            }, 500);
-        });
-    }
-
-    async function pushToYouTube(blob, num, btn, token) {
-        btn.innerText = "⏳ UPLOADING..."; btn.disabled = true;
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        reader.onloadend = async () => {
-            const payload = {
-                videoData: reader.result.split(',')[1],
-                fileName: `Part_${num}.mp4`,
-                title: (document.getElementById('y_title').value || "Video") + " #Part" + num,
-                description: document.getElementById('y_desc').value,
-                privacy: document.getElementById('y_privacy').value,
-                schedule: document.getElementById('y_schedule').value,
-                token: token
-            };
-            try {
-                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        yt.className = 'yt-btn'; yt.innerText = "🚀 GAS YOUTUBE";
+        yt.onclick = () => {
+            yt.innerText = "⏳ UPLOADING..."; yt.disabled = true;
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = async () => {
+                const fd = new FormData();
+                fd.append('video_data', reader.result.split(',')[1]);
+                fd.append('title', document.getElementById('y_title').value + " #Part" + num);
+                fd.append('desc', document.getElementById('y_desc').value);
+                fd.append('privacy', 'public');
+                const res = await fetch('', { method: 'POST', body: fd });
                 const text = await res.text();
-                btn.innerText = text.includes("BERHASIL") ? "✅ TERKIRIM" : "❌ GAGAL";
-                if(text.includes("BERHASIL")) btn.style.background = "#222";
-            } catch (e) { btn.innerText = "❌ ERROR"; btn.disabled = false; }
+                yt.innerText = text === "BERHASIL" ? "✅ TERKIRIM" : "❌ GAGAL";
+            };
         };
+        item.appendChild(yt);
+        resArea.appendChild(item);
     }
 
-    async function convert916(s, e) {
+    // --- FUNGSI SAKTI: POTONG + BINGKAI NEON + SUBTITLE ---
+    async function processNeon(s, e) {
         return new Promise((res) => {
             const cvs = document.createElement('canvas'); const ctx = cvs.getContext('2d');
-            cvs.width = 720; cvs.height = 1280;
+            cvs.width = 720; cvs.height = 1280; // Ukuran 9:16 Shorts
             vSrc.currentTime = s;
             vSrc.onseeked = () => {
-                const aCtx = new AudioContext();
-                const src = aCtx.createMediaElementSource(vSrc);
-                const dst = aCtx.createMediaStreamDestination();
-                src.connect(dst); src.connect(aCtx.destination);
-                const strm = new MediaStream([...cvs.captureStream(30).getVideoTracks(), ...dst.stream.getAudioTracks()]);
-                const rc = new MediaRecorder(strm, { mimeType: 'video/webm' });
+                const stream = cvs.captureStream(30);
+                const rc = new MediaRecorder(stream, { mimeType: 'video/webm' });
                 const chnk = [];
                 rc.ondataavailable = x => chnk.push(x.data);
-                rc.onstop = () => { aCtx.close(); res(new Blob(chnk, {type:'video/mp4'})); };
+                rc.onstop = () => res(new Blob(chnk, {type:'video/mp4'}));
+                
                 const draw = () => {
                     if(vSrc.currentTime < e && !vSrc.paused) {
+                        // 1. Gambar Video Asli (Crop Tengah)
                         const r = 1280/vSrc.videoHeight; const nw = vSrc.videoWidth*r;
                         ctx.drawImage(vSrc, -(nw-720)/2, 0, nw, 1280);
+
+                        // 2. GAMBAR BINGKAI NEON (Lampu Hijau)
+                        ctx.strokeStyle = '#00ff00';
+                        ctx.lineWidth = 20; // Ketebalan bingkai
+                        ctx.shadowBlur = 20; // Efek cahaya neon
+                        ctx.shadowColor = '#00ff00';
+                        ctx.strokeRect(10, 10, 700, 1260);
+
+                        // 3. GAMBAR SUBTITLE (Teks di Tengah Bawah)
+                        const subTeks = document.getElementById('y_desc').value;
+                        if(subTeks) {
+                            ctx.font = "bold 40px Arial";
+                            ctx.fillStyle = "white";
+                            ctx.textAlign = "center";
+                            ctx.shadowBlur = 10; ctx.shadowColor = "black";
+                            ctx.fillText(subTeks, 360, 1150); // Posisi subtitle
+                        }
+
                         requestAnimationFrame(draw);
                     } else { rc.stop(); }
                 };
