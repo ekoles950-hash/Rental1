@@ -3,138 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni TikTok Cutter - Subtitle</title>
+    <title>Sengkuni TikTok - Ringan</title>
     <style>
         :root { --neon: #00ff00; --bg: #050505; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
-        .card { width: 100%; max-width: 400px; background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0,255,0,0.3); text-align: center; box-shadow: 0 10px 30px #000; }
-        h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 20px; font-style: italic; letter-spacing: 2px; }
-        .input-group { margin-bottom: 15px; text-align: left; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 15px; }
-        label { display: block; font-size: 10px; color: var(--neon); font-weight: bold; margin-bottom: 5px; }
-        input { width: 100%; background: #000; border: 1px solid #333; padding: 10px; border-radius: 10px; color: #fff; box-sizing: border-box; }
-        .upload-box { background: rgba(0,0,0,0.5); border: 2px dashed rgba(0,255,0,0.2); padding: 20px; border-radius: 15px; margin-bottom: 15px; cursor: pointer; }
-        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; background: var(--neon); color: #000; font-size: 14px; display: none; box-shadow: 0 0 20px rgba(0, 255, 0, 0.3); cursor: pointer; }
-        #status { margin-top: 15px; font-size: 12px; color: var(--neon); font-weight: bold; }
-        .part-list { margin-top: 20px; display: grid; gap: 10px; }
-        .part-item { background: #111; border: 1px solid #333; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--neon); }
-        .dl-link { background: var(--neon); color: #000; padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 10px; font-weight: bold; }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; padding: 15px; text-align: center; }
+        .card { max-width: 400px; margin: auto; background: #111; padding: 25px; border-radius: 20px; border: 1px solid var(--neon); }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #333; background: #000; color: #fff; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; border-radius: 15px; border: none; font-weight: bold; background: var(--neon); color: #000; cursor: pointer; }
+        .part-item { background: #1a1a1a; padding: 15px; border-radius: 15px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--neon); }
+        .unduh { background: var(--neon); color: #000; padding: 8px 15px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 12px; }
         video { display: none; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🎬 TIKTOK SUBTITLE</h2>
-
-    <div class="input-group">
-        <label>Teks Subtitle (Bawah)</label>
-        <input type="text" id="subText" placeholder="Ketik kalimat subtitle di sini...">
+    <h2 style="color:var(--neon)">🎬 TIKTOK SUBTITLE</h2>
+    <input type="text" id="subText" placeholder="Teks Subtitle (Bawah)">
+    <div style="border:2px dashed #333; padding:20px; margin:10px 0; border-radius:10px;" onclick="document.getElementById('videoInput').click()">
+        📁 KLIK PILIH VIDEO
+        <input type="file" id="videoInput" accept="video/*" style="display:none">
     </div>
-
-    <div class="upload-box" onclick="document.getElementById('videoInput').click()">
-        <label class="file-label" style="cursor:pointer; color:var(--neon); font-size:12px; font-weight:bold;">
-            📁 UPLOAD VIDEO LONG
-            <p style="font-size: 9px; color: #888; margin-top: 5px;" id="fileName">Otomatis Potong & Tambah Teks</p>
-        </label>
-        <input type="file" id="videoInput" accept="video/*">
-    </div>
-
-    <button id="gasBtn">GAS POTONG + SUBTITLE</button>
-    <div id="status">Ready Mas Eko! Ketik subtitle dulu ya.</div>
-    <div class="part-list" id="resultArea"></div>
+    <button id="gasBtn" class="btn" style="display:none">GAS POTONG + SUBTITLE</button>
+    <div id="status" style="font-size:12px; margin-top:10px; color:var(--neon)">Ready Mas Eko!</div>
+    <div id="resultArea"></div>
 </div>
 
-<video id="vSource" crossorigin="anonymous"></video>
+<video id="vSource"></video>
 
 <script>
-    const videoInput = document.getElementById('videoInput');
-    const vSource = document.getElementById('vSource');
+    const vIn = document.getElementById('videoInput');
+    const vSrc = document.getElementById('vSource');
     const gasBtn = document.getElementById('gasBtn');
     const status = document.getElementById('status');
-    const resultArea = document.getElementById('resultArea');
+    const resArea = document.getElementById('resultArea');
 
-    videoInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            vSource.src = URL.createObjectURL(file);
-            document.getElementById('fileName').innerText = file.name;
+    vIn.onchange = (e) => {
+        if(e.target.files[0]) {
+            vSrc.src = URL.createObjectURL(e.target.files[0]);
             gasBtn.style.display = "block";
+            status.innerText = "Video siap diproses!";
         }
     };
 
     gasBtn.onclick = async () => {
         gasBtn.disabled = true;
-        resultArea.innerHTML = "";
-        const duration = vSource.duration;
-        const totalParts = Math.ceil(duration / 60);
-        let start = 0;
-        let part = 1;
+        resArea.innerHTML = "";
+        let start = 0; let part = 1;
+        const sub = document.getElementById('subText').value;
 
-        while (start < duration) {
-            status.innerText = `⏳ Memproses PART ${part} (Dengan Subtitle)...`;
-            const end = Math.min(start + 60, duration);
-            const partBlob = await convertWithSub(start, end);
+        while (start < vSrc.duration) {
+            status.innerText = `⏳ Memproses PART ${part}...`;
+            const end = Math.min(start + 60, vSrc.duration);
             
-            const item = document.createElement('div');
-            item.className = 'part-item';
-            item.innerHTML = `
-                <div style="font-size:12px; font-weight:bold;">PART ${part}</div>
-                <a href="${URL.createObjectURL(partBlob)}" download="Part_${part}_Subtitle.mp4" class="dl-link">UNDUH</a>
-            `;
-            resultArea.appendChild(item);
-            start += 60; part++;
+            // JEDA ISTIRAHAT RAM (1 Detik) biar gak stuck
+            await new Promise(r => setTimeout(r, 1000));
+            
+            try {
+                const blob = await processVideo(start, end, sub);
+                addPart(part, blob);
+                start += 60; part++;
+            } catch (e) {
+                status.innerText = "❌ Memori HP Penuh, kurangi durasi!";
+                break;
+            }
         }
-        status.innerText = "✅ SELESAI! SEMUA SUDAH BERTEKS.";
+        status.innerText = "✅ SEMUA SELESAI!";
         gasBtn.disabled = false;
     };
 
-    async function convertWithSub(start, end) {
-        return new Promise((resolve) => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 720; canvas.height = 1280;
+    function addPart(num, blob) {
+        const url = URL.createObjectURL(blob);
+        const div = document.createElement('div');
+        div.className = 'part-item';
+        div.innerHTML = `<div>PART ${num}</div><a href="${url}" download="Sengkuni_${num}.mp4" class="unduh">UNDUH</a>`;
+        resArea.appendChild(div);
+    }
 
-            vSource.currentTime = start;
-            vSource.onseeked = () => {
-                const audioCtx = new AudioContext();
-                const source = audioCtx.createMediaElementSource(vSource);
-                const dest = audioCtx.createMediaStreamDestination();
-                source.connect(dest); source.connect(audioCtx.destination);
+    async function processVideo(s, e, text) {
+        return new Promise((res) => {
+            const cvs = document.createElement('canvas'); const ctx = cvs.getContext('2d');
+            cvs.width = 720; cvs.height = 1280; // Resolusi standar Shorts
+            vSrc.currentTime = s;
 
-                const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
-                const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
-                const chunks = [];
-
-                recorder.ondataavailable = e => chunks.push(e.data);
-                recorder.onstop = () => { audioCtx.close(); resolve(new Blob(chunks, { type: 'video/mp4' })); };
-
-                const render = () => {
-                    if (vSource.currentTime < end && !vSource.paused) {
-                        // Zoom 9:16
-                        const scale = canvas.height / vSource.videoHeight;
-                        const newWidth = vSource.videoWidth * scale;
-                        const offset = (newWidth - canvas.width) / 2;
-                        ctx.drawImage(vSource, -offset, 0, newWidth, canvas.height);
+            vSrc.onseeked = () => {
+                const aCtx = new AudioContext();
+                const src = aCtx.createMediaElementSource(vSrc);
+                const dst = aCtx.createMediaStreamDestination();
+                src.connect(dst); src.connect(aCtx.destination);
+                
+                const strm = new MediaStream([...cvs.captureStream(25).getVideoTracks(), ...dst.stream.getAudioTracks()]);
+                const rc = new MediaRecorder(strm, { mimeType: 'video/webm' });
+                const chnk = [];
+                
+                rc.ondataavailable = x => chnk.push(x.data);
+                rc.onstop = () => { aCtx.close(); res(new Blob(chnk, {type:'video/mp4'})); };
+                
+                const draw = () => {
+                    if(vSrc.currentTime < e && !vSrc.paused) {
+                        const r = 1280/vSrc.videoHeight; const nw = vSrc.videoWidth*r;
+                        ctx.drawImage(vSrc, -(nw-720)/2, 0, nw, 1280);
                         
-                        // --- GAMBAR SUBTITLE ---
-                        const text = document.getElementById('subText').value.toUpperCase();
-                        if(text) {
-                            ctx.font = "bold 40px Arial";
-                            ctx.textAlign = "center";
-                            // Background Hitam Transparan buat Teks
-                            ctx.fillStyle = "rgba(0,0,0,0.5)";
-                            ctx.fillRect(50, 1100, 620, 80);
-                            // Teks Putih
-                            ctx.fillStyle = "#fff";
-                            ctx.fillText(text, 360, 1155);
-                        }
-
-                        requestAnimationFrame(render);
-                    } else { recorder.stop(); }
+                        // GAMBAR SUBTITLE
+                        ctx.fillStyle = "rgba(0,0,0,0.5)";
+                        ctx.fillRect(50, 1100, 620, 100);
+                        ctx.fillStyle = "#fff"; ctx.font = "bold 40px sans-serif";
+                        ctx.textAlign = "center";
+                        ctx.fillText(text, 360, 1165);
+                        
+                        requestAnimationFrame(draw);
+                    } else { rc.stop(); }
                 };
-
-                recorder.start(); vSource.play(); render();
-                setTimeout(() => { vSource.pause(); if(recorder.state === "recording") recorder.stop(); }, (end - start) * 1000);
+                rc.start(); vSrc.play(); draw();
+                setTimeout(() => { if(rc.state === "recording") { vSrc.pause(); rc.stop(); } }, (e-s + 2) * 1000);
             };
         });
     }
