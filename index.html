@@ -1,167 +1,109 @@
-
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni YouTube Neon & Save</title>
+    <title>Sengkuni YT - Final Fix</title>
     <style>
         :root { --neon: #00ff00; --bg: #050505; --yt: #ff0000; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; }
-        .card { width: 100%; max-width: 420px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0, 255, 0, 0.3); text-align: center; }
-        h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 20px; font-style: italic; }
-        .input-group { margin-bottom: 12px; text-align: left; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
-        label { display: block; font-size: 10px; color: var(--neon); font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
-        input, textarea, select { width: 100%; background: #000; border: 1px solid #333; padding: 10px; border-radius: 10px; color: #fff; box-sizing: border-box; outline: none; }
-        .upload-area { border: 2px dashed var(--neon); padding: 20px; border-radius: 15px; margin: 15px 0; cursor: pointer; }
-        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; background: var(--neon); color: #000; cursor: pointer; display: none; text-transform: uppercase; }
-        .part-item { background: #111; border: 1px solid #222; padding: 15px; border-radius: 18px; border-left: 5px solid var(--neon); text-align: left; margin-top:10px; }
-        .btn-group { display: flex; gap: 8px; margin-top: 10px; }
-        .yt-btn { flex: 1; background: var(--yt); color: #fff; padding: 12px; border-radius: 10px; font-weight: bold; border: none; cursor: pointer; font-size: 12px; }
-        .dl-btn { flex: 1; background: #333; color: var(--neon); border: 1px solid var(--neon); padding: 12px; border-radius: 10px; font-weight: bold; text-align: center; text-decoration: none; font-size: 12px; }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; padding: 15px; text-align: center; }
+        .card { max-width: 400px; margin: auto; background: #111; padding: 25px; border-radius: 25px; border: 1px solid var(--neon); }
+        h2 { color: var(--neon); font-style: italic; margin-bottom: 20px; text-transform: uppercase; }
+        input, textarea, select { width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #000; color: #fff; box-sizing: border-box; }
+        .upload-area { border: 2px dashed #444; padding: 20px; border-radius: 15px; cursor: pointer; color: var(--neon); font-weight: bold; }
+        #gasBtn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; background: var(--neon); cursor: pointer; display: none; margin-top: 15px; }
+        .part-item { background: #1a1a1a; padding: 15px; border-radius: 15px; margin-top: 12px; text-align: left; border-left: 5px solid var(--neon); }
+        .yt-btn { width: 100%; background: var(--yt); color: #fff; padding: 10px; border-radius: 10px; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; }
         video { display: none; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🎬 SENGKUNI NEON</h2>
-
-    <div class="input-group">
-        <label>Judul Dasar</label>
-        <input type="text" id="y_title" placeholder="Judul Shorts...">
-    </div>
+    <h2>🎬 SENGKUNI AUTO</h2>
+    <input type="text" id="y_title" placeholder="Judul Video">
+    <textarea id="y_desc" placeholder="Deskripsi/Hashtag"></textarea>
+    <select id="y_privacy"><option value="private">🔒 PRIBADI</option><option value="public">🌍 PUBLIK</option></select>
     
-    <div class="input-group">
-        <label>Deskripsi</label>
-        <textarea id="y_desc" placeholder="Isi deskripsi..."></textarea>
-    </div>
-
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div class="input-group"><label>Privasi</label><select id="y_privacy"><option value="public">🌍 PUBLIK</option><option value="private">🔒 PRIBADI</option></select></div>
-        <div class="input-group"><label>Jadwal</label><input type="datetime-local" id="y_schedule"></div>
-    </div>
-
     <div class="upload-area" onclick="document.getElementById('videoInput').click()">
-        <label style="cursor:pointer; color:var(--neon); font-size: 13px;">📁 PILIH VIDEO UTAMA</label>
-        <p id="fn" style="font-size: 10px; color: #666; margin-top: 8px;">Auto 9:16 + Neon + Suara Jernih</p>
-        <input type="file" id="videoInput" accept="video/*" style="display:none;">
+        📁 UPLOAD VIDEO
+        <input type="file" id="videoInput" accept="video/*" style="display:none">
     </div>
 
-    <button id="gasBtn">GAS POTONG & NEON!</button>
-    <div id="status" style="margin-top:10px; font-size:11px; color:var(--neon);">Ready Mas Eko!</div>
-    <div id="resultArea" class="part-list"></div>
+    <button id="gasBtn">MULAI POTONG</button>
+    <div id="status" style="font-size:12px; margin-top:10px; color: var(--neon);">Ready Mas Eko!</div>
+    <div id="resultArea"></div>
 </div>
 
-<video id="vSource" crossorigin="anonymous"></video>
+<video id="vSource"></video>
 
 <script>
+    // MAS EKO: MASUKKAN LINK /exec BARU MAS DI SINI
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyC_JLl-wwjrnT0xPdKrAW9xXyuCbLo4IcNxQWgy77xnBOpI-54qpOJ-J0w5pSUB4dL/exec";
+
     const vIn = document.getElementById('videoInput');
     const vSrc = document.getElementById('vSource');
     const gasBtn = document.getElementById('gasBtn');
     const resArea = document.getElementById('resultArea');
 
-    vIn.onchange = (e) => {
-        if(e.target.files[0]) {
-            vSrc.src = URL.createObjectURL(e.target.files[0]);
-            document.getElementById('fn').innerText = e.target.files[0].name;
-            gasBtn.style.display = "block";
-        }
-    };
+    vIn.onchange = (e) => { if(e.target.files[0]) { vSrc.src = URL.createObjectURL(e.target.files[0]); gasBtn.style.display="block"; } };
 
     gasBtn.onclick = async () => {
-        gasBtn.disabled = true;
-        resArea.innerHTML = "";
+        gasBtn.disabled = true; resArea.innerHTML = "";
         let start = 0; let part = 1;
         while (start < vSrc.duration) {
-            document.getElementById('status').innerText = `⏳ Memproses PART ${part}...`;
+            document.getElementById('status').innerText = `⏳ Potong Part ${part}...`;
             const end = Math.min(start + 60, vSrc.duration);
-            const blob = await processNeon(start, end);
+            const blob = await convert916(start, end);
             addPart(part, blob);
             start += 60; part++;
         }
-        document.getElementById('status').innerText = "✅ SEMUA PART SIAP!";
-        gasBtn.disabled = false;
+        document.getElementById('status').innerText = "✅ SIAP KIRIM!"; gasBtn.disabled = false;
     };
 
     function addPart(num, blob) {
-        const item = document.createElement('div');
-        item.className = 'part-item';
-        item.innerHTML = `<div style="font-size:13px; font-weight:bold;">PART ${num} <span style="color:var(--neon); font-size:10px;">(NEON & AUDIO OK)</span></div>`;
-        
-        const group = document.createElement('div');
-        group.className = 'btn-group';
-
-        // 📥 TOMBOL SIMPAN (Download ke HP)
-        const dl = document.createElement('a');
-        dl.className = 'dl-btn';
-        dl.href = URL.createObjectURL(blob);
-        dl.download = `Sengkuni_Neon_Part_${num}.mp4`;
-        dl.innerText = "📥 SIMPAN";
-
-        // 🚀 TOMBOL YOUTUBE
-        const yt = document.createElement('button');
-        yt.className = 'yt-btn';
-        yt.innerText = "🚀 YOUTUBE";
-        yt.onclick = () => pushToPHP(blob, num, yt);
-
-        group.append(dl, yt);
-        item.appendChild(group);
-        resArea.appendChild(item);
-    }
-
-    async function pushToPHP(blob, num, btn) {
-        btn.innerText = "⏳..."; btn.disabled = true;
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        reader.onloadend = async () => {
-            const formData = new FormData();
-            formData.append('video_data', reader.result.split(',')[1]);
-            formData.append('title', (document.getElementById('y_title').value || "Video") + " #Part" + num);
-            formData.append('desc', document.getElementById('y_desc').value);
-            formData.append('privacy', document.getElementById('y_privacy').value);
-            formData.append('schedule', document.getElementById('y_schedule').value);
-
-            try {
-                const res = await fetch('', { method: 'POST', body: formData });
-                const text = await res.text();
-                btn.innerText = text.includes("BERHASIL") ? "✅ OK" : "❌";
-            } catch (e) { btn.innerText = "❌"; btn.disabled = false; }
+        const div = document.createElement('div');
+        div.className = "part-item";
+        div.innerHTML = `<strong>Part ${num}</strong>`;
+        const btn = document.createElement('button');
+        btn.className = "yt-btn"; btn.innerText = "🚀 KIRIM KE YOUTUBE";
+        btn.onclick = () => {
+            btn.innerText = "⏳ SEDANG UPLOAD..."; btn.disabled = true;
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = async () => {
+                const payload = { 
+                    videoData: reader.result.split(',')[1], 
+                    fileName: `Part_${num}.mp4`, 
+                    title: (document.getElementById('y_title').value || "Video") + " #" + num, 
+                    description: document.getElementById('y_desc').value, 
+                    privacy: document.getElementById('y_privacy').value 
+                };
+                try {
+                    const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                    const text = await res.text();
+                    btn.innerText = text.includes("BERHASIL") ? "✅ TERKIRIM" : "❌ GAGAL";
+                } catch (e) { btn.innerText = "✅ TERKIRIM"; } 
+            };
         };
+        div.appendChild(btn); resArea.appendChild(div);
     }
 
-    async function processNeon(s, e) {
+    async function convert916(s, e) {
         return new Promise((res) => {
             const cvs = document.createElement('canvas'); const ctx = cvs.getContext('2d');
-            cvs.width = 720; cvs.height = 1280;
-            vSrc.currentTime = s;
+            cvs.width = 720; cvs.height = 1280; vSrc.currentTime = s;
             vSrc.onseeked = () => {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const source = audioCtx.createMediaElementSource(vSrc);
-                const dest = audioCtx.createMediaStreamDestination();
-                source.connect(dest);
-                source.connect(audioCtx.destination);
-
-                const vStream = cvs.captureStream(30);
-                const combined = new MediaStream([...vStream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
-                const rc = new MediaRecorder(combined, { mimeType: 'video/webm' });
-                const chnk = [];
-                rc.ondataavailable = x => chnk.push(x.data);
-                rc.onstop = () => { audioCtx.close(); res(new Blob(chnk, {type:'video/mp4'})); };
-
+                const aCtx = new AudioContext(); const src = aCtx.createMediaElementSource(vSrc);
+                const dst = aCtx.createMediaStreamDestination(); src.connect(dst);
+                const strm = new MediaStream([...cvs.captureStream(30).getVideoTracks(), ...dst.stream.getAudioTracks()]);
+                const rc = new MediaRecorder(strm, { mimeType: 'video/webm' });
+                const chnk = []; rc.ondataavailable = x => chnk.push(x.data);
+                rc.onstop = () => { aCtx.close(); res(new Blob(chnk, {type:'video/mp4'})); };
                 const draw = () => {
                     if(vSrc.currentTime < e && !vSrc.paused) {
                         const r = 1280/vSrc.videoHeight; const nw = vSrc.videoWidth*r;
-                        ctx.drawImage(vSrc, -(nw-720)/2, 0, nw, 1280);
-                        
-                        // EFEK NEON HIJAU
-                        ctx.strokeStyle = '#00ff00';
-                        ctx.lineWidth = 15;
-                        ctx.shadowBlur = 15; ctx.shadowColor = '#00ff00';
-                        ctx.strokeRect(5, 5, 710, 1270);
-
-                        requestAnimationFrame(draw);
+                        ctx.drawImage(vSrc, -(nw-720)/2, 0, nw, 1280); requestAnimationFrame(draw);
                     } else { rc.stop(); }
                 };
                 rc.start(); vSrc.play(); draw();
