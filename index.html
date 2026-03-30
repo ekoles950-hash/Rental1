@@ -3,111 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni YT - Final Fix</title>
+    <title>Sengkuni Cutter - Suara Fix</title>
     <style>
-        :root { --neon: #00ff00; --bg: #050505; --yt: #ff0000; }
+        :root { --neon: #00ff00; --bg: #050505; }
         body { font-family: sans-serif; background: var(--bg); color: #fff; padding: 15px; text-align: center; }
-        .card { max-width: 400px; margin: auto; background: #111; padding: 25px; border-radius: 25px; border: 1px solid var(--neon); }
-        h2 { color: var(--neon); font-style: italic; margin-bottom: 20px; text-transform: uppercase; }
-        input, textarea, select { width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #000; color: #fff; box-sizing: border-box; }
-        .upload-area { border: 2px dashed #444; padding: 20px; border-radius: 15px; cursor: pointer; color: var(--neon); font-weight: bold; }
-        #gasBtn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; background: var(--neon); cursor: pointer; display: none; margin-top: 15px; }
-        .part-item { background: #1a1a1a; padding: 15px; border-radius: 15px; margin-top: 12px; text-align: left; border-left: 5px solid var(--neon); }
-        .yt-btn { width: 100%; background: var(--yt); color: #fff; padding: 10px; border-radius: 10px; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; }
+        .card { max-width: 420px; margin: auto; background: #111; padding: 25px; border-radius: 25px; border: 1px solid var(--neon); }
+        .upload-area { border: 2px dashed #444; padding: 25px; border-radius: 15px; cursor: pointer; color: var(--neon); margin: 20px 0; }
+        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; background: var(--neon); color: #000; cursor: pointer; display: none; }
+        .part-item { background: #1a1a1a; padding: 15px; border-radius: 15px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--neon); }
+        .dl-btn { background: var(--neon); color: #000; padding: 10px 15px; border-radius: 10px; font-weight: bold; text-decoration: none; font-size: 12px; }
         video { display: none; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🎬 SENGKUNI AUTO</h2>
-    <input type="text" id="y_title" placeholder="Judul Video">
-    <textarea id="y_desc" placeholder="Deskripsi/Hashtag"></textarea>
-    <select id="y_privacy"><option value="private">🔒 PRIBADI</option><option value="public">🌍 PUBLIK</option></select>
-    
+    <h2 style="color:var(--neon); font-style: italic;">🎬 SENGKUNI FIX SUARA</h2>
     <div class="upload-area" onclick="document.getElementById('videoInput').click()">
-        📁 UPLOAD VIDEO
-        <input type="file" id="videoInput" accept="video/*" style="display:none">
+        📁 PILIH VIDEO
+        <input type="file" id="videoInput" accept="video/*" style="display:none;">
     </div>
-
-    <button id="gasBtn">MULAI POTONG</button>
-    <div id="status" style="font-size:12px; margin-top:10px; color: var(--neon);">Ready Mas Eko!</div>
+    <button id="gasBtn">MULAI POTONG PART</button>
+    <div id="status" style="margin-top:10px; color:var(--neon); font-size:12px;">Ready Mas Eko!</div>
     <div id="resultArea"></div>
 </div>
 
 <video id="vSource"></video>
 
 <script>
-    // MAS EKO: MASUKKAN LINK /exec BARU MAS DI SINI
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyC_JLl-wwjrnT0xPdKrAW9xXyuCbLo4IcNxQWgy77xnBOpI-54qpOJ-J0w5pSUB4dL/exec";
-
     const vIn = document.getElementById('videoInput');
     const vSrc = document.getElementById('vSource');
     const gasBtn = document.getElementById('gasBtn');
+    const status = document.getElementById('status');
     const resArea = document.getElementById('resultArea');
 
-    vIn.onchange = (e) => { if(e.target.files[0]) { vSrc.src = URL.createObjectURL(e.target.files[0]); gasBtn.style.display="block"; } };
+    vIn.onchange = (e) => {
+        if(e.target.files[0]) {
+            vSrc.src = URL.createObjectURL(e.target.files[0]);
+            gasBtn.style.display = "block";
+            status.innerText = "Video siap dipotong!";
+        }
+    };
 
     gasBtn.onclick = async () => {
-        gasBtn.disabled = true; resArea.innerHTML = "";
+        gasBtn.disabled = true;
+        resArea.innerHTML = "";
         let start = 0; let part = 1;
         while (start < vSrc.duration) {
-            document.getElementById('status').innerText = `⏳ Potong Part ${part}...`;
+            status.innerText = `⏳ Memproses PART ${part} (Cek Suara)...`;
             const end = Math.min(start + 60, vSrc.duration);
             const blob = await convert916(start, end);
             addPart(part, blob);
             start += 60; part++;
         }
-        document.getElementById('status').innerText = "✅ SIAP KIRIM!"; gasBtn.disabled = false;
+        status.innerText = "✅ SEMUA PART BERES!";
+        gasBtn.disabled = false;
     };
 
     function addPart(num, blob) {
-        const div = document.createElement('div');
-        div.className = "part-item";
-        div.innerHTML = `<strong>Part ${num}</strong>`;
-        const btn = document.createElement('button');
-        btn.className = "yt-btn"; btn.innerText = "🚀 KIRIM KE YOUTUBE";
-        btn.onclick = () => {
-            btn.innerText = "⏳ SEDANG UPLOAD..."; btn.disabled = true;
-            const reader = new FileReader();
-            reader.readAsDataURL(blob);
-            reader.onloadend = async () => {
-                const payload = { 
-                    videoData: reader.result.split(',')[1], 
-                    fileName: `Part_${num}.mp4`, 
-                    title: (document.getElementById('y_title').value || "Video") + " #" + num, 
-                    description: document.getElementById('y_desc').value, 
-                    privacy: document.getElementById('y_privacy').value 
-                };
-                try {
-                    const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-                    const text = await res.text();
-                    btn.innerText = text.includes("BERHASIL") ? "✅ TERKIRIM" : "❌ GAGAL";
-                } catch (e) { btn.innerText = "✅ TERKIRIM"; } 
-            };
-        };
-        div.appendChild(btn); resArea.appendChild(div);
+        const url = URL.createObjectURL(blob);
+        const item = document.createElement('div');
+        item.className = 'part-item';
+        item.innerHTML = `<div><strong>PART ${num}</strong></div><a href="${url}" download="Part_${num}.mp4" class="dl-btn">💾 SIMPAN</a>`;
+        resArea.appendChild(item);
     }
 
     async function convert916(s, e) {
         return new Promise((res) => {
             const cvs = document.createElement('canvas'); const ctx = cvs.getContext('2d');
-            cvs.width = 720; cvs.height = 1280; vSrc.currentTime = s;
-            vSrc.onseeked = () => {
-                const aCtx = new AudioContext(); const src = aCtx.createMediaElementSource(vSrc);
-                const dst = aCtx.createMediaStreamDestination(); src.connect(dst);
+            cvs.width = 720; cvs.height = 1280;
+            vSrc.currentTime = s;
+
+            vSrc.onseeked = async () => {
+                // JEDA 500ms biar Audio Engine browser "bangun" di posisi baru
+                await new Promise(r => setTimeout(r, 500));
+
+                const aCtx = new AudioContext();
+                const src = aCtx.createMediaElementSource(vSrc);
+                const dst = aCtx.createMediaStreamDestination();
+                src.connect(dst); src.connect(aCtx.destination);
+                
                 const strm = new MediaStream([...cvs.captureStream(30).getVideoTracks(), ...dst.stream.getAudioTracks()]);
                 const rc = new MediaRecorder(strm, { mimeType: 'video/webm' });
-                const chnk = []; rc.ondataavailable = x => chnk.push(x.data);
+                const chnk = [];
+                
+                rc.ondataavailable = x => chnk.push(x.data);
                 rc.onstop = () => { aCtx.close(); res(new Blob(chnk, {type:'video/mp4'})); };
+                
                 const draw = () => {
                     if(vSrc.currentTime < e && !vSrc.paused) {
                         const r = 1280/vSrc.videoHeight; const nw = vSrc.videoWidth*r;
-                        ctx.drawImage(vSrc, -(nw-720)/2, 0, nw, 1280); requestAnimationFrame(draw);
+                        ctx.drawImage(vSrc, -(nw-720)/2, 0, nw, 1280);
+                        requestAnimationFrame(draw);
                     } else { rc.stop(); }
                 };
+                
                 rc.start(); vSrc.play(); draw();
-                setTimeout(() => { vSrc.pause(); if(rc.state === "recording") rc.stop(); }, (e-s)*1000);
+                setTimeout(() => { if(rc.state === "recording") { vSrc.pause(); rc.stop(); } }, (e-s + 1) * 1000);
             };
         });
     }
