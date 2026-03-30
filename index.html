@@ -5,18 +5,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Neon Pro</title>
+    <title>Sengkuni YouTube Neon</title>
     <style>
-        :root { --neon: #00ff00; --bg: #050505; }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; padding: 10px; display: flex; justify-content: center; }
-        .card { width: 100%; max-width: 400px; background: #111; padding: 25px; border-radius: 30px; border: 1px solid var(--neon); box-shadow: 0 0 20px rgba(0,255,0,0.2); }
-        h2 { color: var(--neon); text-shadow: 0 0 10px var(--neon); text-align: center; margin-top:0; }
-        input, textarea, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 12px; border: 1px solid #333; background: #000; color: #fff; box-sizing: border-box; }
-        #gasBtn { background: var(--neon); color: #000; font-weight: bold; border: none; cursor: pointer; font-size: 16px; }
-        .part-item { background: #1a1a1a; padding: 15px; border-radius: 20px; margin-top: 15px; border-left: 5px solid var(--neon); }
-        .btn-group { display: flex; gap: 8px; margin-top: 10px; }
-        .yt-btn { background: #ff0000; border: none; font-weight: bold; cursor: pointer; flex: 1; }
-        .dl-btn { background: #333; color: var(--neon); border: 1px solid var(--neon); font-weight: bold; cursor: pointer; flex: 1; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+        :root { --neon: #00ff00; --bg: #050505; --yt: #ff0000; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; }
+        .card { width: 100%; max-width: 420px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0, 255, 0, 0.3); text-align: center; }
+        h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 20px; font-style: italic; }
+        .input-group { margin-bottom: 12px; text-align: left; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        label { display: block; font-size: 10px; color: var(--neon); font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+        input, textarea, select { width: 100%; background: #000; border: 1px solid #333; padding: 10px; border-radius: 10px; color: #fff; box-sizing: border-box; outline: none; }
+        .upload-area { border: 2px dashed var(--neon); padding: 20px; border-radius: 15px; margin: 15px 0; cursor: pointer; }
+        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; background: var(--neon); color: #000; cursor: pointer; display: none; text-transform: uppercase; }
+        #status { margin-top: 15px; font-size: 11px; color: var(--neon); }
+        .part-list { margin-top: 20px; display: grid; gap: 12px; }
+        .part-item { background: #111; border: 1px solid #222; padding: 15px; border-radius: 18px; border-left: 5px solid var(--neon); text-align: left; }
+        .yt-btn { width: 100%; background: var(--yt); color: #fff; padding: 12px; border-radius: 10px; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; }
         video { display: none; }
     </style>
 </head>
@@ -24,21 +27,34 @@
 
 <div class="card">
     <h2>🎬 SENGKUNI NEON</h2>
-    <input type="text" id="y_title" placeholder="Judul Dasar...">
-    <textarea id="y_desc" placeholder="Caption/Subtitle Video..."></textarea>
+
+    <div class="input-group">
+        <label>Judul Dasar</label>
+        <input type="text" id="y_title" placeholder="Judul Shorts...">
+    </div>
     
-    <div style="border: 2px dashed var(--neon); padding: 20px; margin: 15px 0; border-radius: 15px; text-align:center; cursor:pointer;" onclick="document.getElementById('videoInput').click()">
-        <span style="color:var(--neon); font-weight:bold;">📁 PILIH VIDEO UTAMA</span>
-        <input type="file" id="videoInput" accept="video/*" style="display:none;">
-        <p id="fn" style="font-size: 10px; color: #666; margin-top: 5px;">Otomatis 9:16 + Neon + Subtitle</p>
+    <div class="input-group">
+        <label>Deskripsi</label>
+        <textarea id="y_desc" placeholder="Isi deskripsi..."></textarea>
     </div>
 
-    <button id="gasBtn" style="display:none;">GAS POTONG & EDIT!</button>
-    <div id="status" style="font-size:12px; color:var(--neon); margin: 10px 0; text-align:center;"></div>
-    <div id="resultArea"></div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="input-group"><label>Privasi</label><select id="y_privacy"><option value="public">🌍 PUBLIK</option><option value="private">🔒 PRIBADI</option></select></div>
+        <div class="input-group"><label>Jadwal (Opsional)</label><input type="datetime-local" id="y_schedule"></div>
+    </div>
+
+    <div class="upload-area" onclick="document.getElementById('videoInput').click()">
+        <label style="cursor:pointer; color:var(--neon); font-size: 13px;">📁 PILIH VIDEO PANJANG</label>
+        <p id="fn" style="font-size: 10px; color: #666; margin-top: 8px;">Otomatis Potong 60s, 9:16 & Bingkai Neon</p>
+        <input type="file" id="videoInput" accept="video/*" style="display:none;">
+    </div>
+
+    <button id="gasBtn">GAS POTONG & NEON!</button>
+    <div id="status">Ready Mas Eko! Silakan pilih video.</div>
+    <div id="resultArea" class="part-list"></div>
 </div>
 
-<video id="vSource"></video>
+<video id="vSource" crossorigin="anonymous"></video>
 
 <script>
     const vIn = document.getElementById('videoInput');
@@ -49,8 +65,8 @@
     vIn.onchange = (e) => {
         if(e.target.files[0]) {
             vSrc.src = URL.createObjectURL(e.target.files[0]);
-            gasBtn.style.display = "block";
             document.getElementById('fn').innerText = e.target.files[0].name;
+            gasBtn.style.display = "block";
         }
     };
 
@@ -59,7 +75,7 @@
         resArea.innerHTML = "";
         let start = 0; let part = 1;
         while (start < vSrc.duration) {
-            document.getElementById('status').innerText = `⏳ Memproses PART ${part}...`;
+            document.getElementById('status').innerText = `⏳ Memotong & Memberi Neon PART ${part}...`;
             const end = Math.min(start + 60, vSrc.duration);
             const blob = await processNeon(start, end);
             addPart(part, blob);
@@ -72,81 +88,87 @@
     function addPart(num, blob) {
         const item = document.createElement('div');
         item.className = 'part-item';
-        item.innerHTML = `<div style="font-size:14px; font-weight:bold;">PART ${num} <span style="color:var(--neon); font-size:10px;">(NEON READY)</span></div>`;
-        
-        const group = document.createElement('div');
-        group.className = 'btn-group';
-
-        // 📥 TOMBOL SIMPAN KE HP (Untuk FB Pro)
-        const dl = document.createElement('a');
-        dl.className = 'dl-btn';
-        dl.href = URL.createObjectURL(blob);
-        dl.download = `Sengkuni_Part_${num}.mp4`;
-        dl.innerText = "📥 SIMPAN";
-
-        // 🚀 TOMBOL GAS YOUTUBE (Otomatis)
+        item.innerHTML = `<div style="font-size:13px; font-weight:bold;">PART ${num} <span style="color:var(--neon); font-size:10px;">(NEON READY)</span></div>`;
         const yt = document.createElement('button');
-        yt.className = 'yt-btn';
-        yt.innerText = "🚀 YOUTUBE";
-        yt.onclick = () => {
-            yt.innerText = "⏳..."; yt.disabled = true;
-            const reader = new FileReader();
-            reader.readAsDataURL(blob);
-            reader.onloadend = async () => {
-                const fd = new FormData();
-                fd.append('video_data', reader.result.split(',')[1]);
-                fd.append('title', document.getElementById('y_title').value + " #Part" + num);
-                fd.append('desc', document.getElementById('y_desc').value);
-                fd.append('privacy', 'public');
-                const res = await fetch('', { method: 'POST', body: fd });
-                const text = await res.text();
-                yt.innerText = text === "BERHASIL" ? "✅ OK" : "❌";
-            };
-        };
-
-        group.appendChild(dl);
-        group.appendChild(yt);
-        item.appendChild(group);
+        yt.className = 'yt-btn'; yt.innerText = "🚀 GAS KE YOUTUBE";
+        yt.onclick = () => pushToPHP(blob, num, yt);
+        item.appendChild(yt);
         resArea.appendChild(item);
+    }
+
+    async function pushToPHP(blob, num, btn) {
+        btn.innerText = "⏳ UPLOADING..."; btn.disabled = true;
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = async () => {
+            const formData = new FormData();
+            formData.append('video_data', reader.result.split(',')[1]);
+            formData.append('title', (document.getElementById('y_title').value || "Video") + " #Part" + num);
+            formData.append('desc', document.getElementById('y_desc').value);
+            formData.append('privacy', document.getElementById('y_privacy').value);
+            formData.append('schedule', document.getElementById('y_schedule').value);
+
+            try {
+                const res = await fetch('', { method: 'POST', body: formData });
+                const text = await res.text();
+                btn.innerText = text.includes("BERHASIL") ? "✅ TERKIRIM" : "❌ GAGAL";
+                if(text.includes("BERHASIL")) btn.style.background = "#222";
+            } catch (e) { btn.innerText = "❌ ERROR"; btn.disabled = false; }
+        };
     }
 
     async function processNeon(s, e) {
         return new Promise((res) => {
             const cvs = document.createElement('canvas'); const ctx = cvs.getContext('2d');
-            cvs.width = 720; cvs.height = 1280;
+            cvs.width = 720; cvs.height = 1280; 
+            
             vSrc.currentTime = s;
             vSrc.onseeked = () => {
-                const stream = cvs.captureStream(30);
-                const rc = new MediaRecorder(stream, { mimeType: 'video/webm' });
+                // Ambil Audio dari Video Asli
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioCtx.createMediaElementSource(vSrc);
+                const dest = audioCtx.createMediaStreamDestination();
+                source.connect(dest);
+                source.connect(audioCtx.destination);
+
+                const videoStream = cvs.captureStream(30);
+                const combinedStream = new MediaStream([
+                    ...videoStream.getVideoTracks(),
+                    ...dest.stream.getAudioTracks()
+                ]);
+
+                const rc = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
                 const chnk = [];
                 rc.ondataavailable = x => chnk.push(x.data);
-                rc.onstop = () => res(new Blob(chnk, {type:'video/mp4'}));
-                
+                rc.onstop = () => {
+                    audioCtx.close();
+                    res(new Blob(chnk, {type:'video/mp4'}));
+                };
+
                 const draw = () => {
                     if(vSrc.currentTime < e && !vSrc.paused) {
+                        // 1. Gambar Video (Crop Tengah)
                         const r = 1280/vSrc.videoHeight; const nw = vSrc.videoWidth*r;
                         ctx.drawImage(vSrc, -(nw-720)/2, 0, nw, 1280);
 
-                        // BINGKAI NEON HIJAU
+                        // 2. Gambar Bingkai Neon
                         ctx.strokeStyle = '#00ff00';
-                        ctx.lineWidth = 15;
-                        ctx.shadowBlur = 15; ctx.shadowColor = '#00ff00';
-                        ctx.strokeRect(5, 5, 710, 1270);
+                        ctx.lineWidth = 20;
+                        ctx.shadowBlur = 20;
+                        ctx.shadowColor = '#00ff00';
+                        ctx.strokeRect(10, 10, 700, 1260);
 
-                        // SUBTITLE (TEKS BAWAH)
-                        const subTeks = document.getElementById('y_desc').value;
-                        if(subTeks) {
-                            ctx.font = "bold 45px sans-serif";
-                            ctx.fillStyle = "white";
-                            ctx.textAlign = "center";
-                            ctx.shadowBlur = 10; ctx.shadowColor = "black";
-                            ctx.fillText(subTeks, 360, 1180);
-                        }
                         requestAnimationFrame(draw);
                     } else { rc.stop(); }
                 };
-                rc.start(); vSrc.play(); draw();
-                setTimeout(() => { vSrc.pause(); if(rc.state === "recording") rc.stop(); }, (e-s)*1000);
+
+                rc.start();
+                vSrc.play();
+                draw();
+                setTimeout(() => {
+                    vSrc.pause();
+                    if(rc.state === "recording") rc.stop();
+                }, (e - s) * 1000);
             };
         });
     }
