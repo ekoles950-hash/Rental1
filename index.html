@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni YouTube Neon</title>
+    <title>Sengkuni YouTube Neon & Save</title>
     <style>
         :root { --neon: #00ff00; --bg: #050505; --yt: #ff0000; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; }
@@ -16,10 +16,10 @@
         input, textarea, select { width: 100%; background: #000; border: 1px solid #333; padding: 10px; border-radius: 10px; color: #fff; box-sizing: border-box; outline: none; }
         .upload-area { border: 2px dashed var(--neon); padding: 20px; border-radius: 15px; margin: 15px 0; cursor: pointer; }
         #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; background: var(--neon); color: #000; cursor: pointer; display: none; text-transform: uppercase; }
-        #status { margin-top: 15px; font-size: 11px; color: var(--neon); }
-        .part-list { margin-top: 20px; display: grid; gap: 12px; }
-        .part-item { background: #111; border: 1px solid #222; padding: 15px; border-radius: 18px; border-left: 5px solid var(--neon); text-align: left; }
-        .yt-btn { width: 100%; background: var(--yt); color: #fff; padding: 12px; border-radius: 10px; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; }
+        .part-item { background: #111; border: 1px solid #222; padding: 15px; border-radius: 18px; border-left: 5px solid var(--neon); text-align: left; margin-top:10px; }
+        .btn-group { display: flex; gap: 8px; margin-top: 10px; }
+        .yt-btn { flex: 1; background: var(--yt); color: #fff; padding: 12px; border-radius: 10px; font-weight: bold; border: none; cursor: pointer; font-size: 12px; }
+        .dl-btn { flex: 1; background: #333; color: var(--neon); border: 1px solid var(--neon); padding: 12px; border-radius: 10px; font-weight: bold; text-align: center; text-decoration: none; font-size: 12px; }
         video { display: none; }
     </style>
 </head>
@@ -40,17 +40,17 @@
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div class="input-group"><label>Privasi</label><select id="y_privacy"><option value="public">🌍 PUBLIK</option><option value="private">🔒 PRIBADI</option></select></div>
-        <div class="input-group"><label>Jadwal (Opsional)</label><input type="datetime-local" id="y_schedule"></div>
+        <div class="input-group"><label>Jadwal</label><input type="datetime-local" id="y_schedule"></div>
     </div>
 
     <div class="upload-area" onclick="document.getElementById('videoInput').click()">
-        <label style="cursor:pointer; color:var(--neon); font-size: 13px;">📁 PILIH VIDEO PANJANG</label>
-        <p id="fn" style="font-size: 10px; color: #666; margin-top: 8px;">Otomatis Potong 60s, 9:16 & Bingkai Neon</p>
+        <label style="cursor:pointer; color:var(--neon); font-size: 13px;">📁 PILIH VIDEO UTAMA</label>
+        <p id="fn" style="font-size: 10px; color: #666; margin-top: 8px;">Auto 9:16 + Neon + Suara Jernih</p>
         <input type="file" id="videoInput" accept="video/*" style="display:none;">
     </div>
 
     <button id="gasBtn">GAS POTONG & NEON!</button>
-    <div id="status">Ready Mas Eko! Silakan pilih video.</div>
+    <div id="status" style="margin-top:10px; font-size:11px; color:var(--neon);">Ready Mas Eko!</div>
     <div id="resultArea" class="part-list"></div>
 </div>
 
@@ -75,7 +75,7 @@
         resArea.innerHTML = "";
         let start = 0; let part = 1;
         while (start < vSrc.duration) {
-            document.getElementById('status').innerText = `⏳ Memotong & Memberi Neon PART ${part}...`;
+            document.getElementById('status').innerText = `⏳ Memproses PART ${part}...`;
             const end = Math.min(start + 60, vSrc.duration);
             const blob = await processNeon(start, end);
             addPart(part, blob);
@@ -88,16 +88,31 @@
     function addPart(num, blob) {
         const item = document.createElement('div');
         item.className = 'part-item';
-        item.innerHTML = `<div style="font-size:13px; font-weight:bold;">PART ${num} <span style="color:var(--neon); font-size:10px;">(NEON READY)</span></div>`;
+        item.innerHTML = `<div style="font-size:13px; font-weight:bold;">PART ${num} <span style="color:var(--neon); font-size:10px;">(NEON & AUDIO OK)</span></div>`;
+        
+        const group = document.createElement('div');
+        group.className = 'btn-group';
+
+        // 📥 TOMBOL SIMPAN (Download ke HP)
+        const dl = document.createElement('a');
+        dl.className = 'dl-btn';
+        dl.href = URL.createObjectURL(blob);
+        dl.download = `Sengkuni_Neon_Part_${num}.mp4`;
+        dl.innerText = "📥 SIMPAN";
+
+        // 🚀 TOMBOL YOUTUBE
         const yt = document.createElement('button');
-        yt.className = 'yt-btn'; yt.innerText = "🚀 GAS KE YOUTUBE";
+        yt.className = 'yt-btn';
+        yt.innerText = "🚀 YOUTUBE";
         yt.onclick = () => pushToPHP(blob, num, yt);
-        item.appendChild(yt);
+
+        group.append(dl, yt);
+        item.appendChild(group);
         resArea.appendChild(item);
     }
 
     async function pushToPHP(blob, num, btn) {
-        btn.innerText = "⏳ UPLOADING..."; btn.disabled = true;
+        btn.innerText = "⏳..."; btn.disabled = true;
         const reader = new FileReader();
         reader.readAsDataURL(blob);
         reader.onloadend = async () => {
@@ -111,64 +126,46 @@
             try {
                 const res = await fetch('', { method: 'POST', body: formData });
                 const text = await res.text();
-                btn.innerText = text.includes("BERHASIL") ? "✅ TERKIRIM" : "❌ GAGAL";
-                if(text.includes("BERHASIL")) btn.style.background = "#222";
-            } catch (e) { btn.innerText = "❌ ERROR"; btn.disabled = false; }
+                btn.innerText = text.includes("BERHASIL") ? "✅ OK" : "❌";
+            } catch (e) { btn.innerText = "❌"; btn.disabled = false; }
         };
     }
 
     async function processNeon(s, e) {
         return new Promise((res) => {
             const cvs = document.createElement('canvas'); const ctx = cvs.getContext('2d');
-            cvs.width = 720; cvs.height = 1280; 
-            
+            cvs.width = 720; cvs.height = 1280;
             vSrc.currentTime = s;
             vSrc.onseeked = () => {
-                // Ambil Audio dari Video Asli
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const source = audioCtx.createMediaElementSource(vSrc);
                 const dest = audioCtx.createMediaStreamDestination();
                 source.connect(dest);
                 source.connect(audioCtx.destination);
 
-                const videoStream = cvs.captureStream(30);
-                const combinedStream = new MediaStream([
-                    ...videoStream.getVideoTracks(),
-                    ...dest.stream.getAudioTracks()
-                ]);
-
-                const rc = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
+                const vStream = cvs.captureStream(30);
+                const combined = new MediaStream([...vStream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
+                const rc = new MediaRecorder(combined, { mimeType: 'video/webm' });
                 const chnk = [];
                 rc.ondataavailable = x => chnk.push(x.data);
-                rc.onstop = () => {
-                    audioCtx.close();
-                    res(new Blob(chnk, {type:'video/mp4'}));
-                };
+                rc.onstop = () => { audioCtx.close(); res(new Blob(chnk, {type:'video/mp4'})); };
 
                 const draw = () => {
                     if(vSrc.currentTime < e && !vSrc.paused) {
-                        // 1. Gambar Video (Crop Tengah)
                         const r = 1280/vSrc.videoHeight; const nw = vSrc.videoWidth*r;
                         ctx.drawImage(vSrc, -(nw-720)/2, 0, nw, 1280);
-
-                        // 2. Gambar Bingkai Neon
+                        
+                        // EFEK NEON HIJAU
                         ctx.strokeStyle = '#00ff00';
-                        ctx.lineWidth = 20;
-                        ctx.shadowBlur = 20;
-                        ctx.shadowColor = '#00ff00';
-                        ctx.strokeRect(10, 10, 700, 1260);
+                        ctx.lineWidth = 15;
+                        ctx.shadowBlur = 15; ctx.shadowColor = '#00ff00';
+                        ctx.strokeRect(5, 5, 710, 1270);
 
                         requestAnimationFrame(draw);
                     } else { rc.stop(); }
                 };
-
-                rc.start();
-                vSrc.play();
-                draw();
-                setTimeout(() => {
-                    vSrc.pause();
-                    if(rc.state === "recording") rc.stop();
-                }, (e - s) * 1000);
+                rc.start(); vSrc.play(); draw();
+                setTimeout(() => { vSrc.pause(); if(rc.state === "recording") rc.stop(); }, (e-s)*1000);
             };
         });
     }
