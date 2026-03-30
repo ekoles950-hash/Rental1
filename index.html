@@ -3,103 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sengkuni Cutter - Suara Fix</title>
+    <title>Sengkuni TikTok Cutter - Suara Gler</title>
     <style>
         :root { --neon: #00ff00; --bg: #050505; }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; padding: 15px; text-align: center; }
-        .card { max-width: 420px; margin: auto; background: #111; padding: 25px; border-radius: 25px; border: 1px solid var(--neon); }
-        .upload-area { border: 2px dashed #444; padding: 25px; border-radius: 15px; cursor: pointer; color: var(--neon); margin: 20px 0; }
-        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; background: var(--neon); color: #000; cursor: pointer; display: none; }
-        .part-item { background: #1a1a1a; padding: 15px; border-radius: 15px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--neon); }
-        .dl-btn { background: var(--neon); color: #000; padding: 10px 15px; border-radius: 10px; font-weight: bold; text-decoration: none; font-size: 12px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 15px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #002200, transparent); }
+        .card { width: 100%; max-width: 400px; background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); padding: 25px; border-radius: 30px; border: 1px solid rgba(0,255,0,0.3); text-align: center; box-shadow: 0 10px 30px #000; }
+        h2 { color: var(--neon); text-transform: uppercase; text-shadow: 0 0 15px var(--neon); margin-bottom: 25px; font-style: italic; letter-spacing: 2px; }
+        .upload-box { background: rgba(0,0,0,0.5); border: 2px dashed rgba(0,255,0,0.2); padding: 30px; border-radius: 20px; margin-bottom: 20px; cursor: pointer; }
+        .file-label { cursor: pointer; color: var(--neon); font-weight: bold; font-size: 14px; }
+        input[type="file"] { display: none; }
+        #gasBtn { width: 100%; padding: 18px; border-radius: 15px; border: none; font-weight: bold; text-transform: uppercase; cursor: pointer; background: var(--neon); color: #000; font-size: 14px; display: none; box-shadow: 0 0 20px rgba(0, 255, 0, 0.3); }
+        #status { margin-top: 20px; font-size: 12px; color: var(--neon); font-weight: bold; }
+        .part-list { margin-top: 25px; display: grid; gap: 12px; }
+        .part-item { background: #111; border: 1px solid #333; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--neon); }
+        .dl-link { background: var(--neon); color: #000; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         video { display: none; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2 style="color:var(--neon); font-style: italic;">🎬 SENGKUNI FIX SUARA</h2>
-    <div class="upload-area" onclick="document.getElementById('videoInput').click()">
-        📁 PILIH VIDEO
-        <input type="file" id="videoInput" accept="video/*" style="display:none;">
+    <h2>🎬 TIKTOK CUTTER</h2>
+    <div class="upload-box" onclick="document.getElementById('videoInput').click()">
+        <label class="file-label">
+            <span>📁 UPLOAD VIDEO LONG</span>
+            <p style="font-size: 10px; color: #888; margin-top: 10px;" id="fileName">Otomatis Potong & Suara Glerrr</p>
+        </label>
+        <input type="file" id="videoInput" accept="video/*">
     </div>
-    <button id="gasBtn">MULAI POTONG PART</button>
-    <div id="status" style="margin-top:10px; color:var(--neon); font-size:12px;">Ready Mas Eko!</div>
-    <div id="resultArea"></div>
+    <button id="gasBtn">MULAI POTONG PART (SUARA ON)</button>
+    <div id="status">Silakan upload video Mas Eko.</div>
+    <div class="part-list" id="resultArea"></div>
 </div>
 
-<video id="vSource"></video>
+<video id="vSource" crossorigin="anonymous"></video>
 
 <script>
-    const vIn = document.getElementById('videoInput');
-    const vSrc = document.getElementById('vSource');
+    const videoInput = document.getElementById('videoInput');
+    const vSource = document.getElementById('vSource');
     const gasBtn = document.getElementById('gasBtn');
     const status = document.getElementById('status');
-    const resArea = document.getElementById('resultArea');
+    const resultArea = document.getElementById('resultArea');
 
-    vIn.onchange = (e) => {
-        if(e.target.files[0]) {
-            vSrc.src = URL.createObjectURL(e.target.files[0]);
+    videoInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            vSource.src = URL.createObjectURL(file);
+            document.getElementById('fileName').innerText = file.name;
             gasBtn.style.display = "block";
-            status.innerText = "Video siap dipotong!";
         }
     };
 
     gasBtn.onclick = async () => {
         gasBtn.disabled = true;
-        resArea.innerHTML = "";
-        let start = 0; let part = 1;
-        while (start < vSrc.duration) {
-            status.innerText = `⏳ Memproses PART ${part} (Cek Suara)...`;
-            const end = Math.min(start + 60, vSrc.duration);
-            const blob = await convert916(start, end);
-            addPart(part, blob);
+        resultArea.innerHTML = "";
+        const duration = vSource.duration;
+        const totalParts = Math.ceil(duration / 60);
+        let start = 0;
+        let part = 1;
+
+        while (start < duration) {
+            status.innerText = `⏳ Memproses PART ${part} dari ${totalParts} (Sabar Mas Eko)...`;
+            const end = Math.min(start + 60, duration);
+            const partBlob = await convertTo916WithAudio(start, end);
+            
+            const item = document.createElement('div');
+            item.className = 'part-item';
+            item.innerHTML = `
+                <div style="font-size:13px; font-weight:bold;">PART ${part} <span style="color:var(--neon)">(9:16)</span></div>
+                <a href="${URL.createObjectURL(partBlob)}" download="Sengkuni_Part_${part}.mp4" class="dl-link">UNDUH</a>
+            `;
+            resultArea.appendChild(item);
             start += 60; part++;
         }
-        status.innerText = "✅ SEMUA PART BERES!";
+        status.innerText = "✅ SELESAI! SEMUA ADA SUARANYA.";
         gasBtn.disabled = false;
     };
 
-    function addPart(num, blob) {
-        const url = URL.createObjectURL(blob);
-        const item = document.createElement('div');
-        item.className = 'part-item';
-        item.innerHTML = `<div><strong>PART ${num}</strong></div><a href="${url}" download="Part_${num}.mp4" class="dl-btn">💾 SIMPAN</a>`;
-        resArea.appendChild(item);
-    }
+    async function convertTo916WithAudio(start, end) {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 720; canvas.height = 1280;
 
-    async function convert916(s, e) {
-        return new Promise((res) => {
-            const cvs = document.createElement('canvas'); const ctx = cvs.getContext('2d');
-            cvs.width = 720; cvs.height = 1280;
-            vSrc.currentTime = s;
+            vSource.currentTime = start;
+            vSource.onseeked = () => {
+                // --- KUNCI SUARA DI SINI ---
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioCtx.createMediaElementSource(vSource);
+                const dest = audioCtx.createMediaStreamDestination();
+                source.connect(dest);
+                source.connect(audioCtx.destination); // Supaya Mas bisa dengar pas proses
 
-            vSrc.onseeked = async () => {
-                // JEDA 500ms biar Audio Engine browser "bangun" di posisi baru
-                await new Promise(r => setTimeout(r, 500));
+                const stream = new MediaStream([
+                    ...canvas.captureStream(30).getVideoTracks(),
+                    ...dest.stream.getAudioTracks()
+                ]);
 
-                const aCtx = new AudioContext();
-                const src = aCtx.createMediaElementSource(vSrc);
-                const dst = aCtx.createMediaStreamDestination();
-                src.connect(dst); src.connect(aCtx.destination);
-                
-                const strm = new MediaStream([...cvs.captureStream(30).getVideoTracks(), ...dst.stream.getAudioTracks()]);
-                const rc = new MediaRecorder(strm, { mimeType: 'video/webm' });
-                const chnk = [];
-                
-                rc.ondataavailable = x => chnk.push(x.data);
-                rc.onstop = () => { aCtx.close(); res(new Blob(chnk, {type:'video/mp4'})); };
-                
-                const draw = () => {
-                    if(vSrc.currentTime < e && !vSrc.paused) {
-                        const r = 1280/vSrc.videoHeight; const nw = vSrc.videoWidth*r;
-                        ctx.drawImage(vSrc, -(nw-720)/2, 0, nw, 1280);
-                        requestAnimationFrame(draw);
-                    } else { rc.stop(); }
+                const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+                const chunks = [];
+
+                recorder.ondataavailable = e => chunks.push(e.data);
+                recorder.onstop = () => {
+                    audioCtx.close();
+                    resolve(new Blob(chunks, { type: 'video/mp4' }));
                 };
-                
-                rc.start(); vSrc.play(); draw();
-                setTimeout(() => { if(rc.state === "recording") { vSrc.pause(); rc.stop(); } }, (e-s + 1) * 1000);
+
+                const render = () => {
+                    if (vSource.currentTime < end && !vSource.paused) {
+                        const scale = canvas.height / vSource.videoHeight;
+                        const newWidth = vSource.videoWidth * scale;
+                        const offset = (newWidth - canvas.width) / 2;
+                        ctx.drawImage(vSource, -offset, 0, newWidth, canvas.height);
+                        requestAnimationFrame(render);
+                    } else {
+                        recorder.stop();
+                    }
+                };
+
+                recorder.start();
+                vSource.play();
+                render();
+
+                setTimeout(() => {
+                    vSource.pause();
+                    if(recorder.state === "recording") recorder.stop();
+                }, (end - start) * 1000);
             };
         });
     }
